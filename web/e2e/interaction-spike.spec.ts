@@ -295,6 +295,50 @@ test.describe('interaction spike', () => {
       .toBe(true);
   });
 
+  test('shows a progress strip that actually advances', async ({ page }) => {
+    // Regression: the strip was a 4px hairline at the card's bottom edge that never
+    // filled, so a player watching a 6-second job saw nothing happen at all.
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
+
+    const aide = await cardIdFor(page, 'staff-policy-aide');
+    const report = await cardIdFor(page, 'evidence-rent-burden-report');
+
+    const readProgress = () =>
+      page.evaluate((id) => {
+        const probe = (window as unknown as {
+          __congressGameCamera: { getProgress: (c: string) => number | undefined };
+        }).__congressGameCamera;
+        return probe.getProgress(id);
+      }, aide);
+
+    expect(await readProgress()).toBeUndefined();
+
+    await combine(page, aide, report);
+    expect(await readProgress()).toBe(0);
+
+    const tick = (ms: number) =>
+      page.evaluate((delta) => {
+        const api = window.__congressGameTestApi!;
+        api.dispatch({ type: 'SET_PAUSED', paused: false });
+        api.dispatch({ type: 'TICK', deltaMs: delta });
+        api.dispatch({ type: 'SET_PAUSED', paused: true });
+      }, ms);
+
+    await tick(1000);
+    await tick(1000);
+    const third = await readProgress();
+    expect(third).toBeGreaterThan(0.3);
+    expect(third).toBeLessThan(0.4);
+
+    await tick(1000);
+    await tick(1000);
+    const twoThirds = await readProgress();
+    expect(twoThirds).toBeGreaterThan(0.6);
+    expect(twoThirds).toBeLessThan(0.7);
+    expect(twoThirds).toBeGreaterThan(third!);
+  });
+
   test('a rejected stack separates without changing state', async ({ page }) => {
     const before = await getState(page);
     const voucher = await cardIdFor(page, 'policy-housing-choice-voucher');

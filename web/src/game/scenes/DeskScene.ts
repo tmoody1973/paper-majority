@@ -78,12 +78,14 @@ export class DeskScene extends Phaser.Scene {
           __congressGameCamera?: {
             getZoom: () => number;
             getViewY: (cardId: string) => number | undefined;
+            getProgress: (cardId: string) => number | undefined;
             getScreenPoint: (cardId: string) => { x: number; y: number } | undefined;
           };
         }
       ).__congressGameCamera = {
         getZoom: () => this.cameras.main.zoom,
         getViewY: (cardId: string) => this.views.get(cardId)?.y,
+        getProgress: (cardId: string) => this.views.get(cardId)?.progress01,
         getScreenPoint: (cardId: string) => {
           const view = this.views.get(cardId);
           if (!view) return undefined;

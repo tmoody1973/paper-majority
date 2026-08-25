@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import type { CardDefinition, CardInstance, CardKind, SourceClass } from '@/domain/types';
+import { progressFraction } from '@/game/objects/progress';
 
 /**
  * The resting card face.
@@ -54,6 +55,13 @@ export class CardView extends Phaser.GameObjects.Container {
   private readonly progress: Phaser.GameObjects.Graphics;
   private definition: CardDefinition;
   private instance: CardInstance;
+  /**
+   * How long the current assignment was when it started.
+   *
+   * `CardInstance` only carries what is left, and the domain has no business knowing
+   * about progress bars — so the view remembers the total it first saw.
+   */
+  private workTotalMs = 0;
 
   constructor(scene: Phaser.Scene, options: CardViewOptions) {
     super(scene, options.instance.x, options.instance.y);
@@ -146,11 +154,12 @@ export class CardView extends Phaser.GameObjects.Container {
       .setOrigin(1, 0);
     this.add(this.deadline);
 
-    this.progress = scene.add.graphics();
-    this.add(this.progress);
-
     this.outline = scene.add.graphics();
     this.add(this.outline);
+
+    // Added last so it draws over the title and cost text.
+    this.progress = scene.add.graphics();
+    this.add(this.progress);
 
     this.setSize(CARD_WIDTH, CARD_HEIGHT);
     this.setInteractive(
@@ -193,12 +202,38 @@ export class CardView extends Phaser.GameObjects.Container {
       this.setAlpha(1);
     }
 
-    this.progress.clear();
-    if (instance.status === 'working') {
-      // The universal progress strip: an assignment is visibly attached to its cards.
-      this.progress.fillStyle(0x3d754e, 1);
-      this.progress.fillRect(-CARD_WIDTH / 2 + 2, CARD_HEIGHT / 2 - 10, CARD_WIDTH - 4, 6);
+    // The universal progress strip. It has to be readable at 65% zoom across a
+    // crowded desk, so it is a real bar with a track, not a hairline.
+    if (instance.status !== 'working') {
+      this.workTotalMs = 0;
+      this.progress.clear();
+      this.progress.setVisible(false);
+      return;
     }
+
+    if (this.workTotalMs === 0 || instance.remainingMs > this.workTotalMs) {
+      this.workTotalMs = instance.remainingMs;
+    }
+
+    const done = progressFraction(instance.remainingMs, this.workTotalMs);
+    const trackWidth = CARD_WIDTH - 28;
+    const trackX = -trackWidth / 2;
+    const trackY = CARD_HEIGHT / 2 - 30;
+
+    this.progress.clear();
+    this.progress.setVisible(true);
+    this.progress.fillStyle(0xd8cdb8, 1);
+    this.progress.fillRoundedRect(trackX, trackY, trackWidth, 14, 7);
+    this.progress.fillStyle(0x3d754e, 1);
+    this.progress.fillRoundedRect(
+      trackX,
+      trackY,
+      Math.max(14, trackWidth * done),
+      14,
+      7,
+    );
+    this.progress.lineStyle(1.5, INK, 1);
+    this.progress.strokeRoundedRect(trackX, trackY, trackWidth, 14, 7);
   }
 
   setHighlight(kind: 'none' | 'valid' | 'invalid' | 'lifted'): void {
@@ -214,6 +249,12 @@ export class CardView extends Phaser.GameObjects.Container {
       CARD_HEIGHT + 6,
       14,
     );
+  }
+
+  /** The strip's current fill, or undefined when no assignment is running. */
+  get progress01(): number | undefined {
+    if (this.instance.status !== 'working') return undefined;
+    return progressFraction(this.instance.remainingMs, this.workTotalMs);
   }
 
   get status(): CardInstance['status'] {
