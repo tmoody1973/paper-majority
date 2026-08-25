@@ -139,6 +139,17 @@ select:focus-visible {
   color: var(--ink);
 }
 
+/* The paused nudge has to be noticed by someone who has never seen the game, so it
+   carries weight and a marker as well as colour. */
+.hud__result--nudge {
+  font-weight: 700;
+  color: var(--family-policy);
+}
+
+.hud__result--nudge::before {
+  content: "⏸ ";
+}
+
 /* ----------------------------------------------------------------- body */
 
 .shell__body {

@@ -267,6 +267,34 @@ test.describe('interaction spike', () => {
     expect(working.resources.billMomentum).toBe(start.resources.billMomentum);
   });
 
+  test('tells the player to resume when a paused desk freezes their first job', async ({
+    page,
+  }) => {
+    // The desk opens paused and still accepts stacking, so a first-time player can
+    // start a job and watch its progress bar sit still. Say so.
+    expect((await getState(page)).paused).toBe(true);
+    await expect(page.getByTestId('hud-paused-nudge')).toHaveCount(0);
+
+    const aide = await cardIdFor(page, 'staff-policy-aide');
+    const report = await cardIdFor(page, 'evidence-rent-burden-report');
+    await combine(page, aide, report);
+
+    await expect(page.getByTestId('hud-paused-nudge')).toHaveText(
+      'Paused — press Resume to let the work happen.',
+    );
+
+    // Pressing the button the message names clears it and the work proceeds.
+    await page.getByTestId('hud-pause').click();
+    await expect(page.getByTestId('hud-paused-nudge')).toHaveCount(0);
+
+    await expect
+      .poll(async () => {
+        const state = await getState(page);
+        return state.cards.some((card) => card.definitionId === 'evidence-housing-summary');
+      }, { timeout: 15_000 })
+      .toBe(true);
+  });
+
   test('a rejected stack separates without changing state', async ({ page }) => {
     const before = await getState(page);
     const voucher = await cardIdFor(page, 'policy-housing-choice-voucher');

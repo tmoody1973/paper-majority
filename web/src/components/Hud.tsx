@@ -28,6 +28,9 @@ export function Hud({
   handbookOpen,
   onToggleReducedMotion,
 }: HudProps) {
+  const workIsFrozen = state.paused && state.cards.some((card) => card.status === 'working');
+  const pausedNudge = workIsFrozen ? 'Paused — press Resume to let the work happen.' : undefined;
+
   return (
     <header className="hud" aria-label="Office status">
       <div className="hud__row">
@@ -72,9 +75,19 @@ export function Hud({
       </div>
 
       {/* The one-line result phrase. Announced politely so a screen-reader user
-          learns the outcome without movement. */}
+          learns the outcome without movement.
+
+          A paused desk still accepts stacking, so a player can start a job and watch
+          its progress bar sit still forever. When that happens, say so here — it
+          outranks whatever the last result was. */}
       <p className="hud__result" data-testid="hud-result" role="status" aria-live="polite">
-        {lastResult ?? ''}
+        {pausedNudge ? (
+          <span className="hud__result--nudge" data-testid="hud-paused-nudge">
+            {pausedNudge}
+          </span>
+        ) : (
+          (lastResult ?? '')
+        )}
       </p>
     </header>
   );
