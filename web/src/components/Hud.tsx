@@ -39,6 +39,15 @@ export function Hud({
           <strong>{state.week}</strong>
         </p>
 
+        {/* Same-party and opposing-party are relative to the player. Without this,
+            the party badge on a member office means nothing. */}
+        <p className="hud__week" data-testid="hud-party">
+          <span className="hud__week-label">Your office</span>
+          <strong className="hud__party">
+            {state.player.party === 'democratic' ? 'Democratic' : 'Republican'}
+          </strong>
+        </p>
+
         <ul className="hud__resources">
           {RESOURCE_LABELS.map(({ key, label, max }) => (
             <li key={key} className="hud__resource" data-testid={`hud-${key}`}>

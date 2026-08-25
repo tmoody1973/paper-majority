@@ -23,8 +23,18 @@ export function AccessibleCardControls({
   const [sourceId, setSourceId] = useState('');
   const [targetId, setTargetId] = useState('');
 
-  const titleOf = (definitionId: string) =>
-    scenario.cards.find((card) => card.id === definitionId)?.title ?? definitionId;
+  const definitionOf = (definitionId: string) =>
+    scenario.cards.find((card) => card.id === definitionId);
+
+  const titleOf = (definitionId: string) => {
+    const definition = definitionOf(definitionId);
+    if (!definition) return definitionId;
+    // Party is part of a member office's identity, so it belongs in the spoken name.
+    const party = definition.officeParty
+      ? ` (${definition.officeParty === 'democratic' ? 'Democratic' : 'Republican'})`
+      : '';
+    return `${definition.title}${party}`;
+  };
 
   const label = (cardId: string) => {
     const card = state.cards.find((candidate) => candidate.id === cardId);

@@ -69,6 +69,11 @@ body {
   font-size: 22px;
 }
 
+.hud__party {
+  font-size: 15px !important;
+  line-height: 1.5;
+}
+
 .hud__resources {
   display: flex;
   gap: 18px;

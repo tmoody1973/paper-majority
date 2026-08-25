@@ -130,6 +130,43 @@ export class CardView extends Phaser.GameObjects.Container {
       );
     }
 
+    // Party badge. Required by the art spec for every member-office card, and the
+    // only visible reason one office accepts your bill and another refuses it.
+    // Deliberately ink-coloured rather than red/blue: the letter carries the meaning,
+    // so party never becomes a dominant colour area or a second family system.
+    if (options.definition.officeParty) {
+      const letter = options.definition.officeParty === 'democratic' ? 'D' : 'R';
+      const word = options.definition.officeParty === 'democratic' ? 'Democratic' : 'Republican';
+
+      const badge = scene.add.graphics();
+      badge.fillStyle(PAPER, 1);
+      badge.fillCircle(-42, 54, 11);
+      badge.lineStyle(2, INK, 1);
+      badge.strokeCircle(-42, 54, 11);
+      this.add(badge);
+
+      this.add(
+        scene.add
+          .text(-42, 54, letter, {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '13px',
+            fontStyle: 'bold',
+            color: '#203b49',
+          })
+          .setOrigin(0.5, 0.5),
+      );
+
+      this.add(
+        scene.add
+          .text(-26, 54, word, {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '12px',
+            color: '#4a5c68',
+          })
+          .setOrigin(0, 0.5),
+      );
+    }
+
     if (options.definition.workload > 0) {
       this.add(
         scene.add
