@@ -103,6 +103,9 @@ test.describe('desk foundation', () => {
     const before = await cardScreenPoint(page, cardId);
 
     // Sample the RENDERED card every frame — the end state alone hid this bug.
+    // Sample until the pointer is released rather than for a fixed slice of time: a
+    // loaded machine can finish the timer before the drag finishes, which made this
+    // fail intermittently for reasons that had nothing to do with the behaviour.
     const sampling = page.evaluate((id) => {
       const probe = (window as unknown as {
         __congressGameCamera: { getViewY: (cardId: string) => number | undefined };
@@ -110,10 +113,12 @@ test.describe('desk foundation', () => {
       const samples: number[] = [];
       const start = performance.now();
       return new Promise<number[]>((resolve) => {
+        let released = false;
+        window.addEventListener('pointerup', () => { released = true; }, { once: true, capture: true });
         const tick = () => {
           const y = probe.getViewY(id);
           if (y !== undefined) samples.push(y);
-          if (performance.now() - start > 1800) { resolve(samples); return; }
+          if (released || performance.now() - start > 15_000) { resolve(samples); return; }
           requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
@@ -125,8 +130,8 @@ test.describe('desk foundation', () => {
     for (let step = 1; step <= 40; step += 1) {
       await page.mouse.move(before.x, before.y - step * 3);
     }
-    const samples = await sampling;
     await page.mouse.up();
+    const samples = await sampling;
 
     // The card must actually travel with the pointer, not sit in a lift-sized band.
     const travelled = Math.max(...samples) - Math.min(...samples);
