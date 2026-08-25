@@ -78,6 +78,55 @@ test.describe('desk foundation', () => {
     expect(Math.abs(card.x - startCard.x) + Math.abs(card.y - startCard.y)).toBeGreaterThan(40);
   });
 
+  test('a pointer drag still moves a card while the clock is running', async ({ page }) => {
+    // Regression. The clock redraws the desk from authoritative state ~10x a second.
+    // That redraw used to reset the held card's position AND its depth, and the lost
+    // depth made the pan handler mistake a card drag for a desk pan. The card stayed
+    // pinned within 6px of its resting spot no matter how far the pointer travelled.
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
+    await page.getByTestId('hud-pause').click();
+    await expect.poll(async () => (await getState(page)).paused).toBe(false);
+    await page.waitForTimeout(300);
+
+    const cardId = await cardIdFor(page, 'staff-policy-aide');
+    const startCard = (await getState(page)).cards.find((card) => card.id === cardId)!;
+    const before = await cardScreenPoint(page, cardId);
+
+    // Sample the RENDERED card every frame — the end state alone hid this bug.
+    const sampling = page.evaluate((id) => {
+      const probe = (window as unknown as {
+        __congressGameCamera: { getViewY: (cardId: string) => number | undefined };
+      }).__congressGameCamera;
+      const samples: number[] = [];
+      const start = performance.now();
+      return new Promise<number[]>((resolve) => {
+        const tick = () => {
+          const y = probe.getViewY(id);
+          if (y !== undefined) samples.push(y);
+          if (performance.now() - start > 1800) { resolve(samples); return; }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    }, cardId);
+
+    await page.mouse.move(before.x, before.y);
+    await page.mouse.down();
+    for (let step = 1; step <= 40; step += 1) {
+      await page.mouse.move(before.x, before.y - step * 3);
+    }
+    const samples = await sampling;
+    await page.mouse.up();
+
+    // The card must actually travel with the pointer, not sit in a lift-sized band.
+    const travelled = Math.max(...samples) - Math.min(...samples);
+    expect(travelled).toBeGreaterThan(60);
+
+    const card = (await getState(page)).cards.find((candidate) => candidate.id === cardId)!;
+    expect(Math.abs(card.x - startCard.x) + Math.abs(card.y - startCard.y)).toBeGreaterThan(40);
+  });
+
   test('a valid stack snaps into one stack', async ({ page }) => {
     const staffId = await cardIdFor(page, 'staff-policy-aide');
     const evidenceId = await cardIdFor(page, 'evidence-rent-burden-report');

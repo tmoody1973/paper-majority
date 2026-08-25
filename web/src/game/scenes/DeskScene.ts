@@ -31,6 +31,14 @@ export class DeskScene extends Phaser.Scene {
   private onResult!: (phrase: string) => void;
   private views = new Map<string, CardView>();
   private dragOrigin = { x: 0, y: 0 };
+  /**
+   * The card the pointer is currently holding.
+   *
+   * The clock redraws the desk from authoritative state ten times a second. Without
+   * this, that redraw fights the pointer: it resets the held card's position and its
+   * depth, and the lost depth made the pan handler mistake a card drag for a desk pan.
+   */
+  private draggingCardId?: string;
   private lastTickAt = 0;
 
   constructor() {
@@ -130,8 +138,17 @@ export class DeskScene extends Phaser.Scene {
 
         const existing = this.views.get(cardId);
         if (existing) {
-          existing.refresh(placed, this.definitionFor(instance));
-          existing.setDepth(indexInStack);
+          if (cardId === this.draggingCardId) {
+            // Held by the pointer: refresh its state, but leave the pointer in charge
+            // of where it is and what it sits on top of.
+            existing.refresh(
+              { ...placed, x: existing.x, y: existing.y },
+              this.definitionFor(instance),
+            );
+          } else {
+            existing.refresh(placed, this.definitionFor(instance));
+            existing.setDepth(indexInStack);
+          }
         } else {
           const view = new CardView(this, {
             instance: placed,
@@ -210,6 +227,7 @@ export class DeskScene extends Phaser.Scene {
     // Dragging works while paused: planning is never a timed activity.
     this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, view: CardView) => {
       this.dragOrigin = { x: view.x, y: view.y };
+      this.draggingCardId = view.cardId;
       view.setDepth(1_000);
       view.setHighlight('lifted');
       if (this.reducedMotion) return;
@@ -248,6 +266,8 @@ export class DeskScene extends Phaser.Scene {
           x: Math.round(view.x),
           y: Math.round(view.y),
         });
+        view.setDepth(0);
+        this.draggingCardId = undefined;
         return;
       }
 
@@ -279,8 +299,7 @@ export class DeskScene extends Phaser.Scene {
     // Pan empty desk space.
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.isDown || this.input.activePointer.getDistance() === 0) return;
-      const dragging = [...this.views.values()].some((view) => view.depth === 1_000);
-      if (dragging) return;
+      if (this.draggingCardId) return;
       const camera = this.cameras.main;
       camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
       camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
@@ -293,6 +312,7 @@ export class DeskScene extends Phaser.Scene {
     if (this.reducedMotion) {
       view.setPosition(this.dragOrigin.x, this.dragOrigin.y);
       view.setHighlight('invalid');
+      this.draggingCardId = undefined;
       this.time.delayedCall(REJECT_MS, () => view.setHighlight('none'));
       return;
     }
@@ -304,13 +324,17 @@ export class DeskScene extends Phaser.Scene {
       y: { from: view.y, to: this.dragOrigin.y },
       duration: REJECT_MS,
       ease: 'Back.easeOut',
-      onComplete: () => view.setHighlight('none'),
+      onComplete: () => {
+        view.setHighlight('none');
+        this.draggingCardId = undefined;
+      },
     });
   }
 
   private snap(view: CardView): void {
     view.setDepth(0);
     if (this.reducedMotion) {
+      this.draggingCardId = undefined;
       this.syncViews();
       return;
     }
@@ -319,7 +343,10 @@ export class DeskScene extends Phaser.Scene {
       scale: { from: 1.04, to: 1 },
       duration: SNAP_MS,
       ease: 'Quad.easeOut',
-      onComplete: () => this.syncViews(),
+      onComplete: () => {
+        this.draggingCardId = undefined;
+        this.syncViews();
+      },
     });
   }
 
