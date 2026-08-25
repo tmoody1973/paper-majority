@@ -543,7 +543,7 @@ Official federal sources feed a normalized civic-data layer. Editors transform r
 | Classification | Meaning | Example |
 | --- | --- | --- |
 | Official record | Directly supported by an authoritative source | Committee referral |
-| Derived context | Calculated or summarized from cited data | Housing pressure relative to a benchmark |
+| Based on records | Calculated or summarized from cited data | Housing pressure relative to a benchmark |
 | Simulated | Exists only inside the player's run | Requested compromise |
 
 ### 14.4 Real lawmakers

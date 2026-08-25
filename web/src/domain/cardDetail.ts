@@ -13,7 +13,7 @@ export interface CardDetail {
   definitionId: string;
   title: string;
   familyLabel: string;
-  sourceLabel: 'Official record' | 'Derived context' | 'Simulated';
+  sourceLabel: 'Official record' | 'Based on records' | 'Simulated';
   contextualSubtitle?: string;
   plainLanguage?: string;
   /** Present only for simulated content. */
@@ -39,13 +39,15 @@ const FAMILY_LABELS: Record<CardKind, string> = {
 
 const SOURCE_LABELS: Record<SourceClass, CardDetail['sourceLabel']> = {
   official: 'Official record',
-  derived: 'Derived context',
+  derived: 'Based on records',
   simulated: 'Simulated',
 };
 
 /**
- * The label alone teaches nobody anything — "Derived context" in particular is our
- * own coinage rather than real congressional vocabulary. Never show one without this.
+ * The label alone is not enough, so never show one without this.
+ *
+ * The three read as a ladder of distance from the source: the record itself, then
+ * something built from it, then something invented for the run.
  */
 const SOURCE_EXPLAINERS: Record<SourceClass, string> = {
   official: 'Real public information, from a real source.',

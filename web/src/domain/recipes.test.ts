@@ -116,7 +116,7 @@ describe('matchPattern', () => {
       ...patterns[3],
       id: 'p-narrow',
       slots: [
-        { kind: 'institution', requiredTags: ['working-bill'], quantity: 1 },
+        { kind: 'policy', requiredTags: ['working-bill'], quantity: 1 },
         { kind: 'coalition', anyTags: ['same-party'], quantity: 1 },
       ],
     };
@@ -124,15 +124,19 @@ describe('matchPattern', () => {
       ...narrow,
       id: 'p-widened',
       slots: [
-        { kind: 'institution', requiredTags: ['working-bill'], quantity: 1 },
+        { kind: 'policy', requiredTags: ['working-bill'], quantity: 1 },
         { kind: 'coalition', anyTags: ['same-party', 'opposing-party', 'caucus'], quantity: 1 },
       ],
     };
 
-    const inputs = [input('institution-working-bill', 'a'), input('coalition-office-fifth-district', 'b')];
+    const inputs = [input('policy-working-bill', 'a'), input('coalition-office-fifth-district', 'b')];
     const narrowMatch = matchPattern(inputs, [narrow], [], tacticExpansions);
     const widenedMatch = matchPattern(inputs, [widened], [], tacticExpansions);
 
+    // Both must actually match, or this compares undefined to undefined and proves
+    // nothing.
+    expect(narrowMatch).toBeDefined();
+    expect(widenedMatch).toBeDefined();
     expect(widenedMatch?.specificity).toBe(narrowMatch?.specificity);
   });
 
@@ -191,7 +195,7 @@ describe('matchPattern', () => {
   });
 
   it('rejects an opposing-party office before the Tactic and accepts it after', () => {
-    const stack = ['institution-working-bill', 'coalition-office-fourth-district'];
+    const stack = ['policy-working-bill', 'coalition-office-fourth-district'];
 
     expect(match(stack)).toBeUndefined();
     expect(match(stack, ['expansion-bipartisan-outreach'])?.pattern.id).toBe(
@@ -200,7 +204,7 @@ describe('matchPattern', () => {
   });
 
   it('keeps the same-party base rule working after the expansion', () => {
-    const stack = ['institution-working-bill', 'coalition-office-fifth-district'];
+    const stack = ['policy-working-bill', 'coalition-office-fifth-district'];
 
     expect(match(stack)?.pattern.id).toBe('pattern-coalition-outreach');
     expect(match(stack, ['expansion-bipartisan-outreach'])?.pattern.id).toBe(
@@ -210,7 +214,7 @@ describe('matchPattern', () => {
 
   it('reports the active expansion ids that applied to the winning pattern', () => {
     const result = match(
-      ['institution-working-bill', 'coalition-office-fourth-district'],
+      ['policy-working-bill', 'coalition-office-fourth-district'],
       ['expansion-bipartisan-outreach'],
     );
 

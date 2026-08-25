@@ -32,7 +32,7 @@ export const SOURCE_TOKENS: Record<
   { color: number; label: string; glyph: string; shape: 'rounded-square' | 'diamond' | 'hexagon' }
 > = {
   official: { color: 0x2878a8, label: 'Official record', glyph: '✓', shape: 'rounded-square' },
-  derived: { color: 0x267783, label: 'Derived context', glyph: '∑', shape: 'diamond' },
+  derived: { color: 0x267783, label: 'Based on records', glyph: '∑', shape: 'diamond' },
   simulated: { color: 0x9a6816, label: 'Simulated', glyph: '✦', shape: 'hexagon' },
 };
 

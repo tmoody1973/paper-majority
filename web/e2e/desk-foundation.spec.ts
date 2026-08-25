@@ -196,7 +196,7 @@ test.describe('desk foundation', () => {
   test('one Working Bill can reach both member offices', async ({ page }) => {
     // Regression: outreach consumed the bill, so there was nothing left to try on the
     // second office. Your bill must survive a conversation.
-    const billId = await cardIdFor(page, 'institution-working-bill');
+    const billId = await cardIdFor(page, 'policy-working-bill');
     const allyId = await cardIdFor(page, 'coalition-office-hillcrest');
 
     await page.evaluate(
@@ -214,9 +214,9 @@ test.describe('desk foundation', () => {
     );
 
     const state = await getState(page);
-    expect(state.cards.some((card) => card.definitionId === 'institution-working-bill')).toBe(true);
+    expect(state.cards.some((card) => card.definitionId === 'policy-working-bill')).toBe(true);
     expect(state.cards.some((card) => card.definitionId === 'coalition-outreach-result')).toBe(true);
-    const bill = state.cards.find((card) => card.definitionId === 'institution-working-bill')!;
+    const bill = state.cards.find((card) => card.definitionId === 'policy-working-bill')!;
     expect(bill.status).toBe('idle');
   });
 

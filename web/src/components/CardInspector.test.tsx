@@ -16,7 +16,7 @@ function detailFor(state: TermState, definitionId: string) {
 
 describe('CardInspector', () => {
   it('says what the card is in plain language', () => {
-    render(<CardInspector detail={detailFor(fresh, 'institution-working-bill')} onClose={vi.fn()} />);
+    render(<CardInspector detail={detailFor(fresh, 'policy-working-bill')} onClose={vi.fn()} />);
 
     expect(screen.getByTestId('inspector-plain')).toHaveTextContent(/bill you are building/i);
   });

@@ -83,9 +83,9 @@ const cards: CardDefinition[] = [
     contextualSubtitle: 'Renter policy',
   },
   {
-    id: 'institution-working-bill',
+    id: 'policy-working-bill',
     title: 'Working Bill',
-    kind: 'institution',
+    kind: 'policy',
     tags: ['working-bill', 'housing'],
     sourceClass: 'simulated',
     citations: [],
@@ -227,7 +227,7 @@ const patterns: RecipePattern[] = [
   {
     id: 'pattern-coalition-outreach',
     slots: [
-      { kind: 'institution', requiredTags: ['working-bill'], quantity: 1, consumed: false },
+      { kind: 'policy', requiredTags: ['working-bill'], quantity: 1, consumed: false },
       { kind: 'coalition', anyTags: ['same-party'], quantity: 1 },
     ],
     output: {

@@ -386,7 +386,7 @@ Use these answers **after** the session, not during it.
 | **Policy Integrity** | How close your bill still is to what you promised. |
 | **Staff Morale** | How your staff are holding up. |
 | **Official record** | Real public information from a real source. |
-| **Derived context** | Worked out or summarised from real information. Not a direct quote. |
+| **Based on records** | Someone worked this out or summarised it from real information. Not a direct quote. |
 | **Simulated** | Invented for your run. Not a claim about anyone real. |
 | **Member office** | Another representative's office, whose support you need. |
 | **Tactic** | A way of working your office can learn, which changes a rule for the rest of the term. |

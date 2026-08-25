@@ -23,7 +23,7 @@
     "evidence-rent-burden-report",
     "evidence-tenant-survey",
     "policy-housing-choice-voucher",
-    "institution-working-bill",
+    "policy-working-bill",
     "coalition-office-hillcrest",
     "coalition-office-ridgeline",
     "tactic-bipartisan-working-group"
@@ -50,7 +50,7 @@
       "y": 160
     },
     {
-      "definitionId": "institution-working-bill",
+      "definitionId": "policy-working-bill",
       "x": 940,
       "y": 160
     },
@@ -198,9 +198,9 @@
         "plainLanguage": "A policy idea that helps renters afford housing. On its own it is only an idea \u2014 it has to be written into your bill."
       },
       {
-        "id": "institution-working-bill",
+        "id": "policy-working-bill",
         "title": "Working Bill",
-        "kind": "institution",
+        "kind": "policy",
         "tags": [
           "working-bill"
         ],
@@ -379,7 +379,7 @@
         "id": "pattern-coalition-outreach",
         "slots": [
           {
-            "kind": "institution",
+            "kind": "policy",
             "requiredTags": [
               "working-bill"
             ],

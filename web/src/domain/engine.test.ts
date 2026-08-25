@@ -212,7 +212,7 @@ describe('SEPARATE_STACK and MOVE_CARD', () => {
 
 describe('ACTIVATE_TACTIC', () => {
   const start = makeState([
-    'institution-working-bill',
+    'policy-working-bill',
     'coalition-office-fourth-district',
     'tactic-bipartisan-working-group',
   ]);
@@ -264,7 +264,7 @@ describe('ACTIVATE_TACTIC', () => {
 
   it('refuses a second copy of the same Tactic once the rule is already widened', () => {
     const twoCopies = makeState([
-      'institution-working-bill',
+      'policy-working-bill',
       'coalition-office-fourth-district',
       'tactic-bipartisan-working-group',
       'tactic-bipartisan-working-group',
@@ -310,7 +310,7 @@ describe('START_ASSIGNMENT', () => {
   const start = makeState([
     'staff-policy-aide',
     'tactic-bipartisan-working-group',
-    'institution-working-bill',
+    'policy-working-bill',
     'coalition-office-fourth-district',
   ]);
   const study: GameCommand = {
@@ -502,7 +502,7 @@ describe('TICK completes an action', () => {
     const start = makeState([
       'staff-policy-aide',
       'tactic-bipartisan-working-group',
-      'institution-working-bill',
+      'policy-working-bill',
       'coalition-office-fourth-district',
     ]);
     const studying = run(start, {
@@ -601,21 +601,21 @@ describe('catalyst inputs survive their pattern', () => {
   }
 
   it('keeps the Working Bill on the desk after outreach completes', () => {
-    const start = makeState(['institution-working-bill', 'coalition-office-fifth-district']);
+    const start = makeState(['policy-working-bill', 'coalition-office-fifth-district']);
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
     const done = runToCompletion(stacked.state, 6_000);
 
     const definitions = done.state.cards.map((card) => card.definitionId).sort();
-    expect(definitions).toEqual(['coalition-outreach-result', 'institution-working-bill']);
+    expect(definitions).toEqual(['coalition-outreach-result', 'policy-working-bill']);
     expectOneStackPerCard(done.state);
   });
 
   it('returns the surviving bill to idle in a stack of its own', () => {
-    const start = makeState(['institution-working-bill', 'coalition-office-fifth-district']);
+    const start = makeState(['policy-working-bill', 'coalition-office-fifth-district']);
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
     const done = runToCompletion(stacked.state, 6_000);
 
-    const bill = done.state.cards.find((c) => c.definitionId === 'institution-working-bill')!;
+    const bill = done.state.cards.find((c) => c.definitionId === 'policy-working-bill')!;
     expect(bill.status).toBe('idle');
     expect(bill.remainingMs).toBe(0);
     expect(done.state.stacks.find((s) => s.id === bill.stackId)?.cardIds).toEqual([bill.id]);
@@ -623,7 +623,7 @@ describe('catalyst inputs survive their pattern', () => {
 
   it('lets one bill reach a second office, which is the whole point', () => {
     const start = makeState([
-      'institution-working-bill',
+      'policy-working-bill',
       'coalition-office-fifth-district',
       'coalition-office-fourth-district',
       'tactic-bipartisan-working-group',
@@ -631,7 +631,7 @@ describe('catalyst inputs survive their pattern', () => {
 
     const first = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
     const afterFirst = runToCompletion(first.state, 6_000);
-    const bill = afterFirst.state.cards.find((c) => c.definitionId === 'institution-working-bill')!;
+    const bill = afterFirst.state.cards.find((c) => c.definitionId === 'policy-working-bill')!;
     const opposing = afterFirst.state.cards.find(
       (c) => c.definitionId === 'coalition-office-fourth-district',
     )!;

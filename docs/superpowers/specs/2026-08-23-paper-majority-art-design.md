@@ -214,10 +214,16 @@ Colors may be adjusted slightly after contrast testing, but their hue families a
 
 ### 5.1 Information-class system
 
+> **Label change, August 25 2026.** The middle class was called *Derived context*.
+> That phrase was a project coinage rather than civic vocabulary, so it taught a
+> newcomer nothing. The three labels now read as a ladder of distance from the
+> source. The internal identifier stays `derived`, so icons, manifests and saved
+> files are unaffected. See `docs/decisions/007-plain-labels-for-the-middle-class.md`.
+
 | Class | Color | Shape | Icon | Required label |
 | --- | --- | --- | --- | --- |
 | Official record | Blue `#2878A8` | Rounded square | Check | Official record |
-| Derived context | Teal `#267783` | Diamond | Formula/sigma | Derived context |
+| Based on records | Teal `#267783` | Diamond | Formula/sigma | Based on records |
 | Simulated | Amber `#9A6816` | Hexagon | Spark | Simulated |
 
 Information-class styling is independent of card-family styling. A teal Evidence card can still carry a blue Official-record badge or amber Simulated badge.
@@ -405,7 +411,7 @@ The kit contains eight family icons, three provenance icons, six resource icons,
 The kit follows three independent taxonomies:
 
 1. **Card family** describes a card's mechanical role.
-2. **Provenance** distinguishes Official record, Derived context and Simulated information.
+2. **Provenance** distinguishes Official record, Based on records and Simulated information.
 3. **Issue** identifies the policy subject.
 
 Evidence remains a card family and is never treated as a provenance class. Issue colors are secondary navigation cues and may not replace the family band, family icon or family label on a card.

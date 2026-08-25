@@ -33,6 +33,20 @@ describe('describeCard', () => {
     expect(detail?.simulatedNote).toBeUndefined();
   });
 
+  it('reads as a ladder: the record, something built from it, something invented', () => {
+    const official = describeCard(fresh, scenario, instanceOf(fresh, 'evidence-rent-burden-report'));
+    const derived = describeCard(fresh, scenario, instanceOf(fresh, 'evidence-tenant-survey'));
+    const simulated = describeCard(fresh, scenario, instanceOf(fresh, 'coalition-office-hillcrest'));
+
+    expect(official?.sourceLabel).toBe('Official record');
+    expect(derived?.sourceLabel).toBe('Based on records');
+    expect(simulated?.sourceLabel).toBe('Simulated');
+    // No label may be a phrase nobody says out loud.
+    for (const label of [official, derived, simulated].map((d) => d!.sourceLabel)) {
+      expect(label).not.toMatch(/context|provenance|derived/i);
+    }
+  });
+
   it('explains every information class, including the plain-sounding one', () => {
     const official = describeCard(fresh, scenario, instanceOf(fresh, 'evidence-rent-burden-report'));
     expect(official?.sourceExplainer).toMatch(/real public information/i);
@@ -41,12 +55,21 @@ describe('describeCard', () => {
   it('explains a derived card as a calculation, not a fact', () => {
     const detail = describeCard(fresh, scenario, instanceOf(fresh, 'evidence-tenant-survey'));
 
-    expect(detail?.sourceLabel).toBe('Derived context');
+    expect(detail?.sourceLabel).toBe('Based on records');
     expect(detail?.sourceExplainer).toMatch(/worked out|summar/i);
   });
 
+  it('does not file the player\u2019s own bill under Institution', () => {
+    const detail = describeCard(fresh, scenario, instanceOf(fresh, 'policy-working-bill'));
+
+    // Institution means the machinery Congress works through — committees, the floor,
+    // the calendar. A bill is the thing being pushed through it, not the machinery.
+    expect(detail?.familyLabel).not.toBe('Institution');
+    expect(detail?.familyLabel).toBe('Policy');
+  });
+
   it('says plainly what the card is', () => {
-    const detail = describeCard(fresh, scenario, instanceOf(fresh, 'institution-working-bill'));
+    const detail = describeCard(fresh, scenario, instanceOf(fresh, 'policy-working-bill'));
 
     expect(detail?.plainLanguage).toBeTruthy();
     expect(detail!.plainLanguage!.length).toBeGreaterThan(20);
@@ -75,7 +98,7 @@ describe('describeCard', () => {
       ...fresh,
       discoveredPatternIds: ['pattern-evidence-summary'],
     };
-    const bill = describeCard(discovered, scenario, instanceOf(discovered, 'institution-working-bill'));
+    const bill = describeCard(discovered, scenario, instanceOf(discovered, 'policy-working-bill'));
 
     // The outreach rule is undiscovered, so the bill must advertise nothing.
     expect(bill?.knownUses).toEqual([]);

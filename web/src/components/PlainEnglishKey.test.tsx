@@ -41,14 +41,14 @@ describe('PlainEnglishKey', () => {
     const classes = screen.getByTestId('key-classes');
 
     expect(within(classes).getByText('Official record')).toBeInTheDocument();
-    expect(within(classes).getByText('Derived context')).toBeInTheDocument();
+    expect(within(classes).getByText('Based on records')).toBeInTheDocument();
     expect(within(classes).getByText('Simulated')).toBeInTheDocument();
   });
 
   it('translates the phrase nobody has ever said out loud', () => {
     render(<PlainEnglishKey />);
 
-    // "Derived context" is our own coinage, so it teaches nothing on its own.
+    // The old label was "Derived context" — our own coinage, which taught nobody anything.
     expect(screen.getByTestId('key-classes')).toHaveTextContent(/worked out|summaris/i);
   });
 

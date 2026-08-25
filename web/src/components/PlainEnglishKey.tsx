@@ -26,8 +26,8 @@ const FAMILIES: [string, string][] = [
 const CLASSES: [string, string][] = [
   ['Official record', 'Real public information, from a real source.'],
   [
-    'Derived context',
-    'Worked out or summarised from real information. A summary, not a direct quote.',
+    'Based on records',
+    'Someone worked this out or summarised it from real information. A summary, not a direct quote.',
   ],
   ['Simulated', 'Invented for your run. Not a claim about anyone real.'],
 ];

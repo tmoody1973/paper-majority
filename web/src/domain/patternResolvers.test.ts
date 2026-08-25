@@ -81,9 +81,9 @@ describe('resolvePatternOutput', () => {
   });
 
   it('distinguishes same-party support from an opposing-party counteroffer', () => {
-    const sameParty = resolve(['institution-working-bill', 'coalition-office-fifth-district']);
+    const sameParty = resolve(['policy-working-bill', 'coalition-office-fifth-district']);
     const opposing = resolve(
-      ['institution-working-bill', 'coalition-office-fourth-district'],
+      ['policy-working-bill', 'coalition-office-fourth-district'],
       ['expansion-bipartisan-outreach'],
     );
 

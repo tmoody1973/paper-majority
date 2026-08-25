@@ -1226,7 +1226,7 @@ export interface CardPresentation {
   sourceColor: string;
   sourceShape: 'rounded-square' | 'diamond' | 'hexagon';
   sourceIconPath: string;
-  sourceLabel: 'Official record' | 'Derived context' | 'Simulated';
+  sourceLabel: 'Official record' | 'Based on records' | 'Simulated';
   illustrationPath: string;
   altText: string;
 }
@@ -1251,7 +1251,7 @@ export const FAMILY_TOKENS: Record<CardKind, { color: string; label: string; ico
 };
 ```
 
-Add source tokens for blue rounded-square/check Official record, teal diamond/formula Derived context, and amber hexagon/spark Simulated. Party affiliation is a separate small `D`/`R` badge and may not override family tokens.
+Add source tokens for blue rounded-square/check Official record, teal diamond/formula Based on records, and amber hexagon/spark Simulated. Party affiliation is a separate small `D`/`R` badge and may not override family tokens.
 
 Use the kit's eight `svg/families/`, three `svg/provenance/` and six `svg/resources/` assets as the source masters for these tokens. Copy reviewed runtime exports into the matching `web/public/assets/icons/` folders; do not import files at runtime from `art/masters/`. Preserve the exact family color mapping in `tokens.ts` even when an issue illustration uses a different secondary tint.
 

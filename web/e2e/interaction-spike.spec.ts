@@ -119,7 +119,7 @@ test.describe('interaction spike', () => {
     ).toBe(true);
 
     // 3. Working Bill + eligible Member Office -> Support or Counteroffer
-    const bill = await cardIdFor(page, 'institution-working-bill');
+    const bill = await cardIdFor(page, 'policy-working-bill');
     const office = await cardIdFor(page, 'coalition-office-hillcrest');
     await combine(page, bill, office);
     const thirdEvents = await runClock(page, 6000);
@@ -165,7 +165,7 @@ test.describe('interaction spike', () => {
   test('opposing-party office is refused for free, then works after studying the Tactic', async ({
     page,
   }) => {
-    const bill = await cardIdFor(page, 'institution-working-bill');
+    const bill = await cardIdFor(page, 'policy-working-bill');
     const opposing = await cardIdFor(page, 'coalition-office-ridgeline');
     const before = await getState(page);
 
@@ -224,7 +224,7 @@ test.describe('interaction spike', () => {
     await expect(entry).toContainText('from the other party');
 
     // Retry the previously rejected stack.
-    const bill2 = await cardIdFor(page, 'institution-working-bill').catch(() => undefined);
+    const bill2 = await cardIdFor(page, 'policy-working-bill').catch(() => undefined);
     if (bill2) {
       const retry = await combine(page, bill2, await cardIdFor(page, 'coalition-office-ridgeline'));
       expect(retry.some((event) => event.type === 'STACK_ACCEPTED')).toBe(true);
@@ -356,7 +356,7 @@ test.describe('interaction spike', () => {
       await page.mouse.click(canvas.x + point.x, canvas.y + point.y);
     };
 
-    await clickCard('institution-working-bill');
+    await clickCard('policy-working-bill');
     await expect(page.getByTestId('inspector-plain')).toContainText(/bill you are building/i);
     await expect(page.getByTestId('inspector-simulated')).toContainText(/in this simulation/i);
 
@@ -477,7 +477,7 @@ test.describe('interaction spike', () => {
     await combine(page, summary, voucher);
     await runClock(page, 6000);
 
-    const bill = await cardIdFor(page, 'institution-working-bill');
+    const bill = await cardIdFor(page, 'policy-working-bill');
     const ally = await cardIdFor(page, 'coalition-office-hillcrest');
     await combine(page, bill, ally);
     await runClock(page, 6000);
