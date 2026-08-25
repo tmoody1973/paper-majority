@@ -1,0 +1,848 @@
+{
+  "schemaVersion": 2,
+  "kitId": "paper-majority-civic-illustration-kit",
+  "generatorVersion": "2.0.0",
+  "purpose": "Prototype-safe reusable SVG grammar for Paper Majority",
+  "palette": {
+    "ink": "#203B49",
+    "inkDark": "#182C38",
+    "paper": "#F2EEE6",
+    "card": "#FBF4DF",
+    "official": "#2878A8",
+    "derived": "#267783",
+    "simulated": "#9A6816",
+    "staff": "#6A5485",
+    "policy": "#B6503A",
+    "evidence": "#267783",
+    "coalition": "#9A6816",
+    "constituency": "#3D754E",
+    "institution": "#254F78",
+    "political": "#844263",
+    "tactic": "#58636B",
+    "mustard": "#EDB24A",
+    "creamBlue": "#D8EAF4",
+    "creamTeal": "#D6EEEC",
+    "creamViolet": "#E8E0F1",
+    "creamCoral": "#F6E7DA",
+    "creamGreen": "#DFE8CF",
+    "creamOchre": "#F0DDC4"
+  },
+  "taxonomy": {
+    "families": [
+      "staff",
+      "policy",
+      "evidence",
+      "coalition",
+      "constituency",
+      "institution",
+      "political",
+      "tactic"
+    ],
+    "provenance": [
+      "official",
+      "derived",
+      "simulated"
+    ],
+    "issues": [
+      "housing",
+      "elections",
+      "education",
+      "healthcare",
+      "environment",
+      "transportation",
+      "public-safety",
+      "justice",
+      "taxes-budget",
+      "employment-labor",
+      "immigration",
+      "civil-rights"
+    ]
+  },
+  "rules": {
+    "issueColorNeverOverridesFamilyColor": true,
+    "semanticTextRenderedByGame": true,
+    "realLawmakerLikenessesAllowed": false,
+    "communityScenesRequireSeparateReview": true
+  },
+  "assets": [
+    {
+      "assetId": "family-coalition",
+      "category": "families",
+      "path": "svg/families/coalition.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Handshake symbol for Coalition cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "coalition",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "6a197e19edfa4c6146aa5a149eba558680ce469216bde4e9077f0f6ca0163131"
+    },
+    {
+      "assetId": "family-constituency",
+      "category": "families",
+      "path": "svg/families/constituency.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Two-person symbol for Constituency cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "constituency",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "67deee8c82eb0952cfe1e775b992f0d3a17437cc2ef9084b62cb37eaebd2434f"
+    },
+    {
+      "assetId": "family-evidence",
+      "category": "families",
+      "path": "svg/families/evidence.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Chart symbol for Evidence cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "evidence",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "299c012565f791afe6404974a12fbba9b65643259cd18e0f865f0487e3483f91"
+    },
+    {
+      "assetId": "family-institution",
+      "category": "families",
+      "path": "svg/families/institution.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Civic building symbol for Institution cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "institution",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "ec1439ef397d4812efa009cb0ba562b0dd0e9d27424d7610d6513d6a459ed7c3"
+    },
+    {
+      "assetId": "family-policy",
+      "category": "families",
+      "path": "svg/families/policy.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Document symbol for Policy cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "policy",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "f3d483b79a2d0f9c03977dc0af45f1cf6cc5240cbaf712251b6ac4ad88b1b4f4"
+    },
+    {
+      "assetId": "family-political",
+      "category": "families",
+      "path": "svg/families/political.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Megaphone symbol for Political cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "political",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "5e78d7e723b453406a16549ddb6379be4d09dc3ec62ac0638324d1dcd97ddde2"
+    },
+    {
+      "assetId": "family-staff",
+      "category": "families",
+      "path": "svg/families/staff.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Person symbol for Staff cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "staff",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "5d0580f379daeb3e19f9afa727980beaf3f51fc39e0be43d72d61f5c519dd98f"
+    },
+    {
+      "assetId": "family-tactic",
+      "category": "families",
+      "path": "svg/families/tactic.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Interlocking-piece symbol for Tactic cards",
+      "intendedUse": [
+        "card-family",
+        "filter",
+        "legend"
+      ],
+      "colorRole": "tactic",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "89059857933a9064bb48953485b0597edf1df47bd66f3b958a981a7945c76e02"
+    },
+    {
+      "assetId": "institution-archive",
+      "category": "institutions",
+      "path": "svg/institutions/archive.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Archive box",
+      "intendedUse": [
+        "desk-zone",
+        "procedure",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "8db4871c7468a988f233987cb95218a05987c89230af85b4c5a7234f5bc81cd7"
+    },
+    {
+      "assetId": "institution-bill-docket",
+      "category": "institutions",
+      "path": "svg/institutions/bill-docket.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Bill docket",
+      "intendedUse": [
+        "desk-zone",
+        "procedure",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "6417d736dcdf00c74af6546a00f46e09763ef3f9d6db74c0c727422ff581155a"
+    },
+    {
+      "assetId": "institution-committee",
+      "category": "institutions",
+      "path": "svg/institutions/committee.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Committee building",
+      "intendedUse": [
+        "desk-zone",
+        "procedure",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "034557192232f7984d2d4249633731e9811419db2b21034af30684d0025fdadc"
+    },
+    {
+      "assetId": "institution-house-floor",
+      "category": "institutions",
+      "path": "svg/institutions/house-floor.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "House floor chamber",
+      "intendedUse": [
+        "desk-zone",
+        "procedure",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "5973971ecf0b877c71bfcc545855791c58626255f2c7b5028f1b56703a3a1b20"
+    },
+    {
+      "assetId": "institution-senate",
+      "category": "institutions",
+      "path": "svg/institutions/senate.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Senate chamber",
+      "intendedUse": [
+        "desk-zone",
+        "procedure",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "39bfd27d34545059ca8585b36aaf27c7c2616e7f34a005bebb54a68c2ba33d05"
+    },
+    {
+      "assetId": "institution-sourcebook",
+      "category": "institutions",
+      "path": "svg/institutions/sourcebook.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Sourcebook",
+      "intendedUse": [
+        "desk-zone",
+        "procedure",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "241b393ca44f05c0386d7ffe492fb9d18c433d713eb2b6e49fafe4c96b95f7c3"
+    },
+    {
+      "assetId": "issue-civil-rights",
+      "category": "issues",
+      "path": "svg/issues/civil-rights.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for civil rights",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "pending",
+      "usageStatus": "prototype",
+      "checksumSha256": "3c97f5394dca63d4aa3d113da29704ba4949dc196671b2b6f94ae5b5c583bacf"
+    },
+    {
+      "assetId": "issue-education",
+      "category": "issues",
+      "path": "svg/issues/education.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for education",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "1ac03960e97edfd335f03de38717378507fb6be34919d2dd277fad948d5e2294"
+    },
+    {
+      "assetId": "issue-elections",
+      "category": "issues",
+      "path": "svg/issues/elections.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for elections and voting",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "4406414ca1411aad3eb5fe0641c01b748a561a8f64b6095ee1d917f2e25a7804"
+    },
+    {
+      "assetId": "issue-employment-labor",
+      "category": "issues",
+      "path": "svg/issues/employment-labor.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for employment and labor",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "pending",
+      "usageStatus": "prototype",
+      "checksumSha256": "5f357a6efdbc6f9a7262f32052d435946768714ad25101775166c30afe43cb1c"
+    },
+    {
+      "assetId": "issue-environment",
+      "category": "issues",
+      "path": "svg/issues/environment.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for environment and climate",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "e1e661f2be4c5b7325b4dc7e91adf9e35a00fbfc4775b46822d1724197843451"
+    },
+    {
+      "assetId": "issue-healthcare",
+      "category": "issues",
+      "path": "svg/issues/healthcare.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for healthcare",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "ee72c8c7ce544fdb28c9949b6c38be269de5f1a337d402defd117c65e952949f"
+    },
+    {
+      "assetId": "issue-housing",
+      "category": "issues",
+      "path": "svg/issues/housing.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for housing and rent",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "33e33d1308d23b8d11f3bef1be5c1d7ecf224f66beed6b7e05a1c3fe87fbcb0a"
+    },
+    {
+      "assetId": "issue-immigration",
+      "category": "issues",
+      "path": "svg/issues/immigration.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for immigration",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "pending",
+      "usageStatus": "prototype",
+      "checksumSha256": "4c60f77a06634a5efd357f4d1e747b5d14ee5f506b873413560b657687852b67"
+    },
+    {
+      "assetId": "issue-justice",
+      "category": "issues",
+      "path": "svg/issues/justice.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for justice",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "pending",
+      "usageStatus": "prototype",
+      "checksumSha256": "6ebefce847fb53e11044ae0c7bd7ed220fec321a46f425fbd6eef542336d74d6"
+    },
+    {
+      "assetId": "issue-public-safety",
+      "category": "issues",
+      "path": "svg/issues/public-safety.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for public safety",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "pending",
+      "usageStatus": "prototype",
+      "checksumSha256": "dd9cd4064ff6a8d1e4382e675d0e122558f9d90ffe602776d3fea754b9ccbd88"
+    },
+    {
+      "assetId": "issue-taxes-budget",
+      "category": "issues",
+      "path": "svg/issues/taxes-budget.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for taxes and budget",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "40eba8329cde6343f75773cdf1e158eea7ddc9d4256ad9154064875477119453"
+    },
+    {
+      "assetId": "issue-transportation",
+      "category": "issues",
+      "path": "svg/issues/transportation.svg",
+      "width": 240,
+      "height": 240,
+      "altText": "Issue symbol for transportation",
+      "intendedUse": [
+        "issue-selection",
+        "briefing-pack",
+        "sourcebook"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "e67217a564fd4b142ef00162f98bcc53b9324660d071fcb70303ae3364ba2245"
+    },
+    {
+      "assetId": "provenance-derived",
+      "category": "provenance",
+      "path": "svg/provenance/derived.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Diamond formula symbol for derived context",
+      "intendedUse": [
+        "provenance-badge",
+        "sourcebook",
+        "inspector"
+      ],
+      "colorRole": "derived",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "c8a0637e68f3f932cf89010afa4efbbafbe03914b45640307b40f1f46bf708ce"
+    },
+    {
+      "assetId": "provenance-official",
+      "category": "provenance",
+      "path": "svg/provenance/official.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Rounded-square check for official records",
+      "intendedUse": [
+        "provenance-badge",
+        "sourcebook",
+        "inspector"
+      ],
+      "colorRole": "official",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "e3deb23be1f667a467777a8ca333ca4e88e06b4eef010226bd2c348499f58125"
+    },
+    {
+      "assetId": "provenance-simulated",
+      "category": "provenance",
+      "path": "svg/provenance/simulated.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Hexagon spark for simulated information",
+      "intendedUse": [
+        "provenance-badge",
+        "sourcebook",
+        "inspector"
+      ],
+      "colorRole": "simulated",
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "d45a2d9fe45eaa1b4e63ea1e016159194331a21ff5be405b7f11457ada13c050"
+    },
+    {
+      "assetId": "resource-bill-momentum",
+      "category": "resources",
+      "path": "svg/resources/bill-momentum.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Document and rising arrow for Bill Momentum",
+      "intendedUse": [
+        "hud",
+        "card-cost",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "e0684ed10033cc9f72a40be4d1358f517c4973538d9207d571f9cd98b7d06bb1"
+    },
+    {
+      "assetId": "resource-district-trust",
+      "category": "resources",
+      "path": "svg/resources/district-trust.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "House and heart for District Trust",
+      "intendedUse": [
+        "hud",
+        "card-cost",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "f390e4ebb162027708fa983c8fc844df9f3c45133d6c7c345df73fdf39e7bf06"
+    },
+    {
+      "assetId": "resource-policy-integrity",
+      "category": "resources",
+      "path": "svg/resources/policy-integrity.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Balanced scales for Policy Integrity",
+      "intendedUse": [
+        "hud",
+        "card-cost",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "0216d9c3c991f8affc4cead0ef6901d73ad8eac6f30ef653556b3e4f3f43ac9c"
+    },
+    {
+      "assetId": "resource-political-capital",
+      "category": "resources",
+      "path": "svg/resources/political-capital.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Star token for Political Capital",
+      "intendedUse": [
+        "hud",
+        "card-cost",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "8840f982a77bd72e8aa8c4dc09f553b3484e0a86d6ef78d856728abc04811ae6"
+    },
+    {
+      "assetId": "resource-staff-attention",
+      "category": "resources",
+      "path": "svg/resources/staff-attention.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Clock symbol for Staff Attention",
+      "intendedUse": [
+        "hud",
+        "card-cost",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "1c76c55a7d23ebd3aa726a8187f48caf1ef6ff5a58752fbf3ca782cf136f312b"
+    },
+    {
+      "assetId": "resource-staff-morale",
+      "category": "resources",
+      "path": "svg/resources/staff-morale.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Positive face symbol for Staff Morale",
+      "intendedUse": [
+        "hud",
+        "card-cost",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "5d67fb31e41f6c92c6e8f597953e5b501382ca44f9b47284436420587d41c079"
+    },
+    {
+      "assetId": "status-committed",
+      "category": "statuses",
+      "path": "svg/statuses/committed.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Committed support",
+      "intendedUse": [
+        "card-status",
+        "stack-status",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "842922de4b544774677291c79703e36408d6abd43931e5ea54e4e257748b4c1f"
+    },
+    {
+      "assetId": "status-conditional",
+      "category": "statuses",
+      "path": "svg/statuses/conditional.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Conditional support",
+      "intendedUse": [
+        "card-status",
+        "stack-status",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "4bad6fc7f57fe2ae0420444f7723c5463095baf1837a7de950717b8268dce40a"
+    },
+    {
+      "assetId": "status-expiring",
+      "category": "statuses",
+      "path": "svg/statuses/expiring.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Expiring hourglass",
+      "intendedUse": [
+        "card-status",
+        "stack-status",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "2a6f5d60a0736e603fdd37bd59887c9bbe193140637a90bdb9a25092fbe2a7e7"
+    },
+    {
+      "assetId": "status-locked",
+      "category": "statuses",
+      "path": "svg/statuses/locked.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Locked status",
+      "intendedUse": [
+        "card-status",
+        "stack-status",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "746cd2ac0efd9d41d286746e2d136de157e82ed2e4f65b7c6b359d4d62be4be3"
+    },
+    {
+      "assetId": "status-overextended",
+      "category": "statuses",
+      "path": "svg/statuses/overextended.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Overextended warning",
+      "intendedUse": [
+        "card-status",
+        "stack-status",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "79f03e3edc965aaadc5bc541fc2c5a34ba993522b339f7c93694c36178fd7174"
+    },
+    {
+      "assetId": "status-working",
+      "category": "statuses",
+      "path": "svg/statuses/working.svg",
+      "width": 64,
+      "height": 64,
+      "altText": "Working timer",
+      "intendedUse": [
+        "card-status",
+        "stack-status",
+        "inspector"
+      ],
+      "colorRole": null,
+      "containsSemanticText": false,
+      "localizationSafe": true,
+      "representationReview": "not-required",
+      "usageStatus": "prototype",
+      "checksumSha256": "e9569e70338442df0928a5622ef33e71f236fd7c714b42789e2eae4d58822959"
+    }
+  ]
+}

@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1984" viewBox="0 0 1200 1984">
+<rect width="1200" height="1984" fill="#F2EEE6"/>
+<text x="60" y="60" font-family="Arial" font-size="32" font-weight="700" fill="#182C38">Paper Majority Civic Illustration Kit</text>
+<text x="60" y="92" font-family="Arial" font-size="16" fill="#58636B">Reusable, localization-safe SVG grammar. Labels on this sheet are review-only and are not runtime assets.</text>
+<line x1="60" y1="112" x2="1140" y2="112" stroke="#CDB995" stroke-width="2"/>
+<text x="60" y="162" font-family="Arial" font-size="21" font-weight="700" fill="#182C38">Families</text>
+<g transform="translate(96.00,196.00) scale(1.6875)">
+  
+  <g style="color:#9A6816">  <path d="m8 30 15-12 9 8 9-8 15 12-20 20c-3 3-6 3-9 0Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="m23 18 9 8 9-8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g>
+</g>
+<text x="150.0" y="325" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Coalition</text>
+<text x="150.0" y="343" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-coalition</text>
+<g transform="translate(276.00,196.00) scale(1.6875)">
+  
+  <g style="color:#3D754E">  <circle cx="22" cy="24" r="8" fill="currentColor"/><circle cx="42" cy="24" r="8" fill="currentColor"/><path d="M8 54c1-12 6-19 14-19s13 7 14 19M28 54c1-12 6-19 14-19s13 7 14 19" fill="currentColor"/></g>
+</g>
+<text x="330.0" y="325" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Constituency</text>
+<text x="330.0" y="343" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-constituency</text>
+<g transform="translate(456.00,196.00) scale(1.6875)">
+  
+  <g style="color:#267783">  <path d="M12 52h40M17 47V31M29 47V20M41 47V12" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></g>
+</g>
+<text x="510.0" y="325" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Evidence</text>
+<text x="510.0" y="343" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-evidence</text>
+<g transform="translate(636.00,196.00) scale(1.6875)">
+  
+  <g style="color:#254F78">  <path d="m8 24 24-14 24 14ZM12 52h40M17 26v22M27 26v22M37 26v22M47 26v22" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="690.0" y="325" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Institution</text>
+<text x="690.0" y="343" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-institution</text>
+<g transform="translate(816.00,196.00) scale(1.6875)">
+  
+  <g style="color:#B6503A">  <path d="M16 8h24l10 10v38H16Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M40 8v12h10M24 31h18M24 41h18" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></g>
+</g>
+<text x="870.0" y="325" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Policy</text>
+<text x="870.0" y="343" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-policy</text>
+<g transform="translate(996.00,196.00) scale(1.6875)">
+  
+  <g style="color:#844263">  <path d="M10 30h13l25-12v28L23 34H10Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="m21 35 5 17" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g>
+</g>
+<text x="1050.0" y="325" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Political</text>
+<text x="1050.0" y="343" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-political</text>
+<g transform="translate(96.00,366.00) scale(1.6875)">
+  
+  <g style="color:#6A5485">  <circle cx="32" cy="22" r="10" fill="currentColor"/><path d="M14 54c2-15 9-22 18-22s16 7 18 22Z" fill="currentColor"/></g>
+</g>
+<text x="150.0" y="495" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Staff</text>
+<text x="150.0" y="513" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-staff</text>
+<g transform="translate(276.00,366.00) scale(1.6875)">
+  
+  <g style="color:#58636B">  <path d="M10 14h15c0 7 14 7 14 0h15v15c-7 0-7 14 0 14v11H39c0-7-14-7-14 0H10V39c7 0 7-14 0-14Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></g>
+</g>
+<text x="330.0" y="495" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Tactic</text>
+<text x="330.0" y="513" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">family-tactic</text>
+<text x="60" y="576" font-family="Arial" font-size="21" font-weight="700" fill="#182C38">Provenance</text>
+<g transform="translate(96.00,610.00) scale(1.6875)">
+  
+  <g style="color:#267783">  <path d="m32 6 26 26-26 26L6 32Z" fill="currentColor"/><path d="M20 23h23L30 32l13 9H20" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="150.0" y="739" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Derived</text>
+<text x="150.0" y="757" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">provenance-derived</text>
+<g transform="translate(276.00,610.00) scale(1.6875)">
+  
+  <g style="color:#2878A8">  <rect x="10" y="10" width="44" height="44" rx="10" fill="currentColor"/><path d="m20 32 8 8 17-19" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="330.0" y="739" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Official</text>
+<text x="330.0" y="757" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">provenance-official</text>
+<g transform="translate(456.00,610.00) scale(1.6875)">
+  
+  <g style="color:#9A6816">  <path d="m32 5 24 14v27L32 59 8 46V19Z" fill="currentColor"/><path d="m32 17 4 10 11 1-8 7 3 11-10-6-10 6 3-11-8-7 11-1Z" fill="white"/></g>
+</g>
+<text x="510.0" y="739" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Simulated</text>
+<text x="510.0" y="757" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">provenance-simulated</text>
+<text x="60" y="820" font-family="Arial" font-size="21" font-weight="700" fill="#182C38">Resources</text>
+<g transform="translate(96.00,854.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <path d="M13 8h24l10 10v38H13Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M22 43 43 22m-12 0h12v12" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="150.0" y="983" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Bill Momentum</text>
+<text x="150.0" y="1001" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">resource-bill-momentum</text>
+<g transform="translate(276.00,854.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <path d="m9 30 23-19 23 19v24H9Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M24 38c0-7 8-8 8-2 0-6 8-5 8 2 0 6-8 11-8 11s-8-5-8-11Z" fill="currentColor"/></g>
+</g>
+<text x="330.0" y="983" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">District Trust</text>
+<text x="330.0" y="1001" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">resource-district-trust</text>
+<g transform="translate(456.00,854.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <path d="M32 10v42M14 20h36M14 20 7 40h14Zm36 0-7 20h14Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="510.0" y="983" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Policy Integrity</text>
+<text x="510.0" y="1001" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">resource-policy-integrity</text>
+<g transform="translate(636.00,854.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="5"/><path d="m32 15 5 11 12 1-9 8 3 12-11-7-11 7 3-12-9-8 12-1Z" fill="currentColor"/></g>
+</g>
+<text x="690.0" y="983" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Political Capital</text>
+<text x="690.0" y="1001" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">resource-political-capital</text>
+<g transform="translate(816.00,854.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <circle cx="32" cy="32" r="23" fill="none" stroke="currentColor" stroke-width="5"/><path d="M32 17v17l11 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g>
+</g>
+<text x="870.0" y="983" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Staff Attention</text>
+<text x="870.0" y="1001" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">resource-staff-attention</text>
+<g transform="translate(996.00,854.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" stroke-width="5"/><path d="M21 28h1m20 0h1M21 40c7 8 15 8 22 0" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g>
+</g>
+<text x="1050.0" y="983" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Staff Morale</text>
+<text x="1050.0" y="1001" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">resource-staff-morale</text>
+<text x="60" y="1064" font-family="Arial" font-size="21" font-weight="700" fill="#182C38">Statuses</text>
+<g transform="translate(96.00,1098.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="5"/><path d="m19 32 9 9 18-21" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="150.0" y="1227" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Committed</text>
+<text x="150.0" y="1245" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">status-committed</text>
+<g transform="translate(276.00,1098.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <path d="M11 32h42" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="21" cy="32" r="10" fill="none" stroke="currentColor" stroke-width="5"/><path d="m39 22 14 10-14 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="330.0" y="1227" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Conditional</text>
+<text x="330.0" y="1245" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">status-conditional</text>
+<g transform="translate(456.00,1098.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <path d="M10 52h44M17 12h30l-4 13-11 7 11 7 4 13H17l4-13 11-7-11-7Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></g>
+</g>
+<text x="510.0" y="1227" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Expiring</text>
+<text x="510.0" y="1245" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">status-expiring</text>
+<g transform="translate(636.00,1098.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <rect x="12" y="27" width="40" height="30" rx="7" fill="none" stroke="currentColor" stroke-width="5"/><path d="M21 27v-7c0-14 22-14 22 0v7" fill="none" stroke="currentColor" stroke-width="5"/></g>
+</g>
+<text x="690.0" y="1227" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Locked</text>
+<text x="690.0" y="1245" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">status-locked</text>
+<g transform="translate(816.00,1098.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <path d="m32 7 26 48H6Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M32 22v17m0 8h.1" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></g>
+</g>
+<text x="870.0" y="1227" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Overextended</text>
+<text x="870.0" y="1245" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">status-overextended</text>
+<g transform="translate(996.00,1098.00) scale(1.6875)">
+  
+  <g style="color:#203B49">  <circle cx="32" cy="32" r="23" fill="none" stroke="currentColor" stroke-width="5"/><path d="M32 17v17l12 7" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g>
+</g>
+<text x="1050.0" y="1227" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Working</text>
+<text x="1050.0" y="1245" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">status-working</text>
+<text x="60" y="1308" font-family="Arial" font-size="21" font-weight="700" fill="#182C38">Institutions</text>
+<g transform="translate(96.00,1342.00) scale(1.6875)">
+  
+  <g style="color:#254F78">  <path d="M10 14h44v12H10Zm5 12h34v30H15Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M25 37h14" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g>
+</g>
+<text x="150.0" y="1471" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Archive</text>
+<text x="150.0" y="1489" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">institution-archive</text>
+<g transform="translate(276.00,1342.00) scale(1.6875)">
+  
+  <g style="color:#254F78">  <path d="M13 8h24l12 12v36H13Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M37 8v13h12M22 33h18M22 43h18" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></g>
+</g>
+<text x="330.0" y="1471" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Bill Docket</text>
+<text x="330.0" y="1489" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">institution-bill-docket</text>
+<g transform="translate(456.00,1342.00) scale(1.6875)">
+  
+  <g style="color:#254F78">  <path d="M8 51h48M13 24h38M18 24v23M29 24v23M40 24v23M51 24v23M8 24 32 9l24 15" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
+</g>
+<text x="510.0" y="1471" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Committee</text>
+<text x="510.0" y="1489" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">institution-committee</text>
+<g transform="translate(636.00,1342.00) scale(1.6875)">
+  
+  <g style="color:#254F78">  <path d="M9 52h46M13 48h38V24H13ZM9 24 32 9l23 15" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><circle cx="24" cy="36" r="4" fill="currentColor"/><circle cx="40" cy="36" r="4" fill="currentColor"/></g>
+</g>
+<text x="690.0" y="1471" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">House Floor</text>
+<text x="690.0" y="1489" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">institution-house-floor</text>
+<g transform="translate(816.00,1342.00) scale(1.6875)">
+  
+  <g style="color:#254F78">  <path d="M8 52h48M14 48h36V22H14ZM10 22 32 9l22 13" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M24 30h16v10H24Z" fill="currentColor"/></g>
+</g>
+<text x="870.0" y="1471" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Senate</text>
+<text x="870.0" y="1489" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">institution-senate</text>
+<g transform="translate(996.00,1342.00) scale(1.6875)">
+  
+  <g style="color:#254F78">  <path d="M8 13h20c5 0 7 3 7 7v35c0-4-2-7-7-7H8Zm48 0H36v42c0-4 2-7 7-7h13Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></g>
+</g>
+<text x="1050.0" y="1471" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Sourcebook</text>
+<text x="1050.0" y="1489" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">institution-sourcebook</text>
+<text x="60" y="1552" font-family="Arial" font-size="21" font-weight="700" fill="#182C38">Issues</text>
+<g transform="translate(91.00,1586.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#E8E0F1"/>
+  <circle cx="120" cy="126" r="58" fill="#FBF4DF" stroke="#203B49" stroke-width="4"/>
+  <path d="M83 126h74M120 89v74" stroke="#844263" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="83" cy="126" r="10" fill="#EDB24A"/><circle cx="157" cy="126" r="10" fill="#EDB24A"/><circle cx="120" cy="89" r="10" fill="#EDB24A"/><circle cx="120" cy="163" r="10" fill="#EDB24A"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="m171 174 8 8 15-18" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+</g>
+<text x="150.0" y="1715" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Civil Rights</text>
+<text x="150.0" y="1733" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-civil-rights</text>
+<g transform="translate(271.00,1586.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#E8E0F1"/>
+  <path d="M60 110 120 100V175L60 185Z" fill="#6A5485" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M180 110 120 100V175L180 185Z" fill="#604D78" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M72 124 108 118M72 143 108 137M132 118 168 124M132 137 168 143" fill="none" stroke="#FBF4DF" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="m184 160 4 10 11 1-8 7 2 11-9-6-10 6 3-11-8-7 11-1Z" fill="#203B49"/>
+
+</g>
+<text x="330.0" y="1715" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Education</text>
+<text x="330.0" y="1733" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-education</text>
+<g transform="translate(451.00,1586.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D8EAF4"/>
+  <path d="M65 120H175L165 195H75Z" fill="#2878A8" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <rect x="58" y="105" width="124" height="18" rx="6" fill="#203B49"/>
+  <rect x="98" y="55" width="56" height="72" rx="6" fill="#FBF4DF" stroke="#203B49" stroke-width="3.5" transform="rotate(-8 126 91)"/>
+  <path d="M110 88 120 98 142 74" fill="none" stroke="#267783" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-8 126 91)"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="M172 174 180 181 194 163" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+</g>
+<text x="510.0" y="1715" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Elections</text>
+<text x="510.0" y="1733" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-elections</text>
+<g transform="translate(631.00,1586.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#F6E7DA"/>
+  <rect x="98" y="82" width="44" height="22" rx="6" fill="none" stroke="#203B49" stroke-width="4"/>
+  <rect x="62" y="104" width="116" height="82" rx="12" fill="#8F4E39" stroke="#203B49" stroke-width="4"/>
+  <rect x="62" y="132" width="116" height="14" fill="#B55A40"/><rect x="110" y="126" width="20" height="26" rx="4" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <rect x="171" y="174" width="5" height="10" fill="white"/><rect x="180" y="166" width="5" height="18" fill="white"/><rect x="189" y="160" width="5" height="24" fill="white"/>
+
+</g>
+<text x="690.0" y="1715" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Employment Labor</text>
+<text x="690.0" y="1733" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-employment-labor</text>
+<g transform="translate(811.00,1586.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#DFE8CF"/>
+  <path d="M120 60c45 15 58 65 20 105-30 30-70 10-72-27-2-38 22-68 52-78Z" fill="#7FA872" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M120 68c-8 37-12 72-24 104" fill="none" stroke="#203B49" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="M184 157c10 14 8 26 0 26s-10-12 0-26Z" fill="white"/>
+
+</g>
+<text x="870.0" y="1715" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Environment</text>
+<text x="870.0" y="1733" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-environment</text>
+<g transform="translate(991.00,1586.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D6EEEC"/>
+  <rect x="65" y="90" width="110" height="100" rx="14" fill="#FBF4DF" stroke="#203B49" stroke-width="4"/>
+  <rect x="108" y="112" width="24" height="56" rx="5" fill="#267783"/>
+  <rect x="92" y="128" width="56" height="24" rx="5" fill="#267783"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="M168 174h7l4-12 7 25 5-13h8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+</g>
+<text x="1050.0" y="1715" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Healthcare</text>
+<text x="1050.0" y="1733" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-healthcare</text>
+<g transform="translate(91.00,1756.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D6EEEC"/>
+  <rect x="70" y="120" width="100" height="75" rx="8" fill="#C97B51" stroke="#203B49" stroke-width="4"/>
+  <path d="M60 122 120 72 180 122Z" fill="#B55A40" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <rect x="108" y="155" width="24" height="40" rx="3" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <rect x="80" y="136" width="20" height="20" rx="3" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <rect x="140" y="136" width="20" height="20" rx="3" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <rect x="174" y="173" width="5" height="10" fill="#203B49"/>
+  <rect x="182" y="165" width="5" height="18" fill="#203B49"/>
+  <rect x="190" y="158" width="5" height="25" fill="#203B49"/>
+
+</g>
+<text x="150.0" y="1885" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Housing</text>
+<text x="150.0" y="1903" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-housing</text>
+<g transform="translate(271.00,1756.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D6EEEC"/>
+  <rect x="80" y="70" width="92" height="128" rx="10" fill="#267783" stroke="#203B49" stroke-width="4"/>
+  <circle cx="126" cy="118" r="18" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <path d="M96 158h60M96 172h44" stroke="#FBF4DF" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <ellipse cx="184" cy="174" rx="9" ry="15" fill="none" stroke="#203B49" stroke-width="2"/><path d="M169 174h30" stroke="#203B49" stroke-width="2"/>
+
+</g>
+<text x="330.0" y="1885" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Immigration</text>
+<text x="330.0" y="1903" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-immigration</text>
+<g transform="translate(451.00,1756.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#E8E0F1"/>
+  <path d="M120 65v105M72 90h96M72 90l-14 38h28Zm96 0-14 38h28Z" fill="#6A5485" stroke="#203B49" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="96" y="166" width="48" height="13" rx="5" fill="#203B49"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="m171 174 8 8 15-18" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+</g>
+<text x="510.0" y="1885" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Justice</text>
+<text x="510.0" y="1903" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-justice</text>
+<g transform="translate(631.00,1756.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D8EAF4"/>
+  <path d="M120 62 174 82v44c0 35-23 61-54 75-31-14-54-40-54-75V82Z" fill="#254F78" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <path d="m94 127 18 18 36-42" fill="none" stroke="#FBF4DF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <circle cx="184" cy="174" r="7" fill="white"/>
+
+</g>
+<text x="690.0" y="1885" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Public Safety</text>
+<text x="690.0" y="1903" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-public-safety</text>
+<g transform="translate(811.00,1756.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D8EAF4"/>
+  <ellipse cx="112" cy="178" rx="43" ry="16" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <ellipse cx="112" cy="161" rx="43" ry="16" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <ellipse cx="112" cy="144" rx="43" ry="16" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <ellipse cx="112" cy="127" rx="43" ry="16" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <rect x="171" y="174" width="5" height="10" fill="white"/><rect x="180" y="166" width="5" height="18" fill="white"/><rect x="189" y="158" width="5" height="26" fill="white"/>
+
+</g>
+<text x="870.0" y="1885" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Taxes Budget</text>
+<text x="870.0" y="1903" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-taxes-budget</text>
+<g transform="translate(991.00,1756.00) scale(0.4917)">
+  
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#F0DDC4"/>
+  <rect x="55" y="105" width="130" height="65" rx="14" fill="#C97B51" stroke="#203B49" stroke-width="4"/>
+  <path d="M68 118h30v24H68zm37 0h30v24h-30zm37 0h30v24h-30z" fill="#FBF4DF" stroke="#203B49" stroke-width="2.5"/>
+  <circle cx="85" cy="175" r="13" fill="#182C38"/><circle cx="155" cy="175" r="13" fill="#182C38"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="M171 174h24m-8-8 8 8-8 8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+</g>
+<text x="1050.0" y="1885" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#35444C">Transportation</text>
+<text x="1050.0" y="1903" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">issue-transportation</text>
+</svg>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img">
+  <title>Healthcare</title>
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D6EEEC"/>
+  <rect x="65" y="90" width="110" height="100" rx="14" fill="#FBF4DF" stroke="#203B49" stroke-width="4"/>
+  <rect x="108" y="112" width="24" height="56" rx="5" fill="#267783"/>
+  <rect x="92" y="128" width="56" height="24" rx="5" fill="#267783"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="M168 174h7l4-12 7 25 5-13h8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img">
+  <title>Justice</title>
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#E8E0F1"/>
+  <path d="M120 65v105M72 90h96M72 90l-14 38h28Zm96 0-14 38h28Z" fill="#6A5485" stroke="#203B49" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="96" y="166" width="48" height="13" rx="5" fill="#203B49"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="m171 174 8 8 15-18" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img">
+  <title>Transportation</title>
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#F0DDC4"/>
+  <rect x="55" y="105" width="130" height="65" rx="14" fill="#C97B51" stroke="#203B49" stroke-width="4"/>
+  <path d="M68 118h30v24H68zm37 0h30v24h-30zm37 0h30v24h-30z" fill="#FBF4DF" stroke="#203B49" stroke-width="2.5"/>
+  <circle cx="85" cy="175" r="13" fill="#182C38"/><circle cx="155" cy="175" r="13" fill="#182C38"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="M171 174h24m-8-8 8 8-8 8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

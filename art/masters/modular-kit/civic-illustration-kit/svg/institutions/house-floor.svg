@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img">
+  <title>House Floor</title>
+  <g style="color:#254F78">  <path d="M9 52h46M13 48h38V24H13ZM9 24 32 9l23 15" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><circle cx="24" cy="36" r="4" fill="currentColor"/><circle cx="40" cy="36" r="4" fill="currentColor"/></g>
+</svg>

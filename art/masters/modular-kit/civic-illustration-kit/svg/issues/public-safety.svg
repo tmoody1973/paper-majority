@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img">
+  <title>Public safety</title>
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D8EAF4"/>
+  <path d="M120 62 174 82v44c0 35-23 61-54 75-31-14-54-40-54-75V82Z" fill="#254F78" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <path d="m94 127 18 18 36-42" fill="none" stroke="#FBF4DF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <circle cx="184" cy="174" r="7" fill="white"/>
+
+</svg>

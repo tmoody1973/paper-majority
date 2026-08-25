@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img">
+  <title>Environment and climate</title>
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#DFE8CF"/>
+  <path d="M120 60c45 15 58 65 20 105-30 30-70 10-72-27-2-38 22-68 52-78Z" fill="#7FA872" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M120 68c-8 37-12 72-24 104" fill="none" stroke="#203B49" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <path d="M184 157c10 14 8 26 0 26s-10-12 0-26Z" fill="white"/>
+
+</svg>

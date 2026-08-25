@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
+  <rect width="1200" height="820" fill="#f2eee6"/>
+  <text x="55" y="58" font-family="Arial" font-size="30" font-weight="700" fill="#182c38">Recommended Card Anatomy</text>
+  <text x="55" y="89" font-family="Arial" font-size="16" fill="#5b666d">Sparse at rest; detailed on inspection. Designed for a 180 × 252 gameplay card.</text>
+
+  <!-- card shadow and card -->
+  <rect x="118" y="146" width="326" height="456" rx="22" fill="#1e2c35" opacity=".15" transform="translate(10 12)"/>
+  <rect x="118" y="146" width="326" height="456" rx="22" fill="#fbf4df" stroke="#203b49" stroke-width="4"/>
+  <rect x="118" y="146" width="326" height="18" rx="8" fill="#2b8391"/>
+  <rect x="138" y="178" width="100" height="27" rx="13" fill="#d6eeec"/>
+  <circle cx="154" cy="191.5" r="7" fill="#2b8391"/>
+  <path d="M150 192 L153 195 L159 188" fill="none" stroke="white" stroke-width="2"/>
+  <text x="168" y="196" font-family="Arial" font-size="12" font-weight="700" fill="#174f57" letter-spacing="1">EVIDENCE</text>
+  <rect x="299" y="178" width="125" height="27" rx="13" fill="#d8eaf4"/>
+  <rect x="311" y="185" width="13" height="13" rx="2" fill="#2878a8"/>
+  <path d="M314 191 L317 194 L322 188" fill="none" stroke="white" stroke-width="1.8"/>
+  <text x="331" y="196" font-family="Arial" font-size="11" font-weight="700" fill="#174b66">OFFICIAL RECORD</text>
+
+  <rect x="138" y="220" width="286" height="200" rx="13" fill="#b8d9d1"/>
+  <rect x="181" y="282" width="200" height="93" rx="9" fill="#c97b51" stroke="#203b49" stroke-width="4" transform="rotate(-3 281 329)"/>
+  <rect x="206" y="299" width="90" height="10" rx="5" fill="#f7e7c4" transform="rotate(-3 251 304)"/>
+  <rect x="206" y="318" width="140" height="9" rx="4" fill="#f7e7c4" transform="rotate(-3 276 323)"/>
+  <rect x="206" y="337" width="113" height="9" rx="4" fill="#f7e7c4" transform="rotate(-3 263 342)"/>
+  <circle cx="358" cy="300" r="24" fill="#edb24a" stroke="#203b49" stroke-width="3"/>
+  <text x="358" y="307" text-anchor="middle" font-family="Georgia" font-size="24" font-weight="700" fill="#203b49">%</text>
+
+  <text x="139" y="459" font-family="Arial" font-size="27" font-weight="700" fill="#182c38">Rent Burden Report</text>
+  <text x="139" y="486" font-family="Arial" font-size="14" fill="#59646b">Milwaukee-area housing evidence</text>
+  <line x1="139" y1="508" x2="422" y2="508" stroke="#d1c6ae" stroke-width="2"/>
+  <rect x="139" y="525" width="128" height="38" rx="19" fill="#e9dfc6"/>
+  <text x="158" y="549" font-family="Arial" font-size="13" font-weight="700" fill="#594f3e">◷  30 seconds</text>
+  <circle cx="396" cy="544" r="22" fill="#203b49"/>
+  <text x="396" y="550" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700" fill="white">1</text>
+  <text x="396" y="580" text-anchor="middle" font-family="Arial" font-size="10" fill="#59646b">ATTENTION</text>
+
+  <!-- callouts -->
+  <line x1="118" y1="156" x2="62" y2="156" stroke="#6c787e" stroke-width="2"/>
+  <circle cx="52" cy="156" r="8" fill="#2b8391"/>
+  <text x="54" y="133" font-family="Arial" font-size="13" font-weight="700" fill="#35444c">Family color band</text>
+  <text x="54" y="177" font-family="Arial" font-size="12" fill="#667278">Always paired with a label and icon</text>
+
+  <line x1="444" y1="192" x2="497" y2="192" stroke="#6c787e" stroke-width="2"/>
+  <circle cx="507" cy="192" r="8" fill="#2878a8"/>
+  <text x="527" y="188" font-family="Arial" font-size="13" font-weight="700" fill="#35444c">Information class</text>
+  <text x="527" y="207" font-family="Arial" font-size="12" fill="#667278">Official, derived, or simulated</text>
+
+  <line x1="444" y1="320" x2="497" y2="320" stroke="#6c787e" stroke-width="2"/>
+  <circle cx="507" cy="320" r="8" fill="#c97b51"/>
+  <text x="527" y="316" font-family="Arial" font-size="13" font-weight="700" fill="#35444c">Illustration does recognition work</text>
+  <text x="527" y="335" font-family="Arial" font-size="12" fill="#667278">One object or action; limited background detail</text>
+
+  <line x1="444" y1="462" x2="497" y2="462" stroke="#6c787e" stroke-width="2"/>
+  <circle cx="507" cy="462" r="8" fill="#203b49"/>
+  <text x="527" y="458" font-family="Arial" font-size="13" font-weight="700" fill="#35444c">Two-line title maximum</text>
+  <text x="527" y="477" font-family="Arial" font-size="12" fill="#667278">Remains visible when a stack is fanned</text>
+
+  <line x1="444" y1="543" x2="497" y2="543" stroke="#6c787e" stroke-width="2"/>
+  <circle cx="507" cy="543" r="8" fill="#edb24a"/>
+  <text x="527" y="539" font-family="Arial" font-size="13" font-weight="700" fill="#35444c">One frequent cost</text>
+  <text x="527" y="558" font-family="Arial" font-size="12" fill="#667278">Time and Staff Attention stay in fixed positions</text>
+
+  <!-- inspector -->
+  <rect x="742" y="132" width="404" height="592" rx="20" fill="#fffdf8" stroke="#c8c0b0" stroke-width="2"/>
+  <text x="774" y="174" font-family="Arial" font-size="12" font-weight="700" fill="#2b8391" letter-spacing="2">CARD INSPECTOR</text>
+  <text x="774" y="213" font-family="Arial" font-size="25" font-weight="700" fill="#182c38">Rent Burden Report</text>
+  <rect x="774" y="232" width="124" height="26" rx="13" fill="#d8eaf4"/>
+  <text x="836" y="249" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#174b66">OFFICIAL RECORD</text>
+  <text x="774" y="292" font-family="Arial" font-size="12" font-weight="700" fill="#667278" letter-spacing="1">GAME EFFECT</text>
+  <text x="774" y="320" font-family="Arial" font-size="14" fill="#263943">Stack with the Policy Aide to produce an</text>
+  <text x="774" y="341" font-family="Arial" font-size="14" fill="#263943">Evidence Summary after 30 seconds.</text>
+  <text x="774" y="380" font-family="Arial" font-size="12" font-weight="700" fill="#667278" letter-spacing="1">COMPATIBLE WITH</text>
+  <rect x="774" y="397" width="91" height="27" rx="13" fill="#e8e0f1"/><text x="820" y="415" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#604d78">POLICY AIDE</text>
+  <rect x="875" y="397" width="112" height="27" rx="13" fill="#f5dfd7"/><text x="931" y="415" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#7b4434">PROVISION</text>
+  <text x="774" y="466" font-family="Arial" font-size="12" font-weight="700" fill="#667278" letter-spacing="1">WHY IT MATTERS</text>
+  <text x="774" y="494" font-family="Arial" font-size="14" fill="#263943">Shows the share of renter households spending</text>
+  <text x="774" y="515" font-family="Arial" font-size="14" fill="#263943">a substantial portion of income on housing.</text>
+  <line x1="774" y1="547" x2="1114" y2="547" stroke="#ded7ca"/>
+  <text x="774" y="578" font-family="Arial" font-size="12" font-weight="700" fill="#667278" letter-spacing="1">SOURCE</text>
+  <text x="774" y="607" font-family="Arial" font-size="14" font-weight="700" fill="#2878a8">U.S. Census Bureau · ACS 5-year</text>
+  <text x="774" y="629" font-family="Arial" font-size="12" fill="#667278">Source year, retrieval date, method note and link</text>
+  <rect x="774" y="658" width="128" height="36" rx="18" fill="#203b49"/>
+  <text x="838" y="681" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="white">OPEN SOURCE</text>
+
+  <!-- stack preview -->
+  <text x="55" y="675" font-family="Arial" font-size="14" font-weight="700" fill="#35444c">STACK TEST</text>
+  <rect x="55" y="694" width="148" height="90" rx="11" fill="#f6e7da" stroke="#8f4e39" stroke-width="2"/>
+  <rect x="55" y="694" width="148" height="9" rx="4" fill="#b55a40"/>
+  <text x="68" y="727" font-family="Arial" font-size="12" font-weight="700" fill="#253842">Housing Voucher</text>
+  <rect x="78" y="716" width="148" height="90" rx="11" fill="#fbf4df" stroke="#203b49" stroke-width="2"/>
+  <rect x="78" y="716" width="148" height="9" rx="4" fill="#2b8391"/>
+  <text x="91" y="749" font-family="Arial" font-size="12" font-weight="700" fill="#253842">Rent Report</text>
+  <rect x="101" y="738" width="148" height="68" rx="11" fill="#e8e0f1" stroke="#604d78" stroke-width="2"/>
+  <rect x="101" y="738" width="148" height="9" rx="4" fill="#745b91"/>
+  <text x="114" y="771" font-family="Arial" font-size="12" font-weight="700" fill="#253842">Policy Aide</text>
+  <text x="281" y="734" font-family="Arial" font-size="12" fill="#667278">The top band and title remain visible</text>
+  <text x="281" y="754" font-family="Arial" font-size="12" fill="#667278">when three cards overlap.</text>
+</svg>

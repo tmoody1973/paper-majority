@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img">
+  <title>Housing and rent</title>
+  <rect x="10" y="10" width="220" height="220" rx="28" fill="#D6EEEC"/>
+  <rect x="70" y="120" width="100" height="75" rx="8" fill="#C97B51" stroke="#203B49" stroke-width="4"/>
+  <path d="M60 122 120 72 180 122Z" fill="#B55A40" stroke="#203B49" stroke-width="4" stroke-linejoin="round"/>
+  <rect x="108" y="155" width="24" height="40" rx="3" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <rect x="80" y="136" width="20" height="20" rx="3" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <rect x="140" y="136" width="20" height="20" rx="3" fill="#FBF4DF" stroke="#203B49" stroke-width="3"/>
+  <circle cx="184" cy="174" r="22" fill="#EDB24A" stroke="#203B49" stroke-width="3"/>
+  <rect x="174" y="173" width="5" height="10" fill="#203B49"/>
+  <rect x="182" y="165" width="5" height="18" fill="#203B49"/>
+  <rect x="190" y="158" width="5" height="25" fill="#203B49"/>
+
+</svg>

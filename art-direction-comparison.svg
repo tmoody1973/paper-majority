@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <rect width="1200" height="760" fill="#f3efe7"/>
+  <text x="60" y="62" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#172733">Paper Majority — Art Direction</text>
+  <text x="60" y="94" font-family="Arial, sans-serif" font-size="16" fill="#59636b">Compare readability, personality, and civic credibility at card scale.</text>
+
+  <!-- A -->
+  <rect x="54" y="130" width="334" height="566" rx="22" fill="#fffaf0" stroke="#b7aea0" stroke-width="2"/>
+  <rect x="115" y="174" width="212" height="314" rx="14" fill="#efe9dc" stroke="#1d2730" stroke-width="3"/>
+  <rect x="115" y="174" width="212" height="10" rx="4" fill="#2878a8"/>
+  <text x="131" y="210" font-family="Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="2" fill="#1d2730">POLICY</text>
+  <text x="275" y="210" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#1d2730">HOUSING</text>
+  <rect x="130" y="224" width="182" height="140" rx="9" fill="#cf4e3a"/>
+  <path d="M164 295 L221 247 L278 295 L267 295 L267 346 L176 346 L176 295 Z" fill="#f5e9ce" transform="rotate(-2 221 296)"/>
+  <rect x="208" y="310" width="28" height="36" fill="#2878a8"/>
+  <text x="131" y="393" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#18202a">Housing Choice</text>
+  <text x="131" y="414" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#18202a">Voucher</text>
+  <text x="131" y="441" font-family="Arial, sans-serif" font-size="10" fill="#46515a">Helps eligible households afford</text>
+  <text x="131" y="455" font-family="Arial, sans-serif" font-size="10" fill="#46515a">rental housing.</text>
+  <rect x="130" y="465" width="87" height="16" rx="8" fill="#d9edf5"/>
+  <text x="174" y="476" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="700" fill="#174b66">OFFICIAL RECORD</text>
+  <circle cx="296" cy="469" r="14" fill="#152f47"/><text x="296" y="474" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="white">2</text>
+  <text x="221" y="535" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#172733">A. Editorial Collage</text>
+  <text x="84" y="570" font-family="Arial, sans-serif" font-size="14" fill="#59636b">Cut paper, print texture,</text>
+  <text x="84" y="591" font-family="Arial, sans-serif" font-size="14" fill="#59636b">newspaper energy.</text>
+  <text x="84" y="625" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#82513d">Strong personality</text>
+  <text x="84" y="646" font-family="Arial, sans-serif" font-size="13" fill="#59636b">Risk: visual density.</text>
+
+  <!-- B -->
+  <rect x="433" y="118" width="334" height="590" rx="22" fill="#fffaf0" stroke="#2f725f" stroke-width="4"/>
+  <rect x="548" y="135" width="104" height="23" rx="12" fill="#2f725f"/>
+  <text x="600" y="151" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="white">RECOMMENDED</text>
+  <rect x="494" y="174" width="212" height="314" rx="14" fill="#fbf4df" stroke="#203b49" stroke-width="3"/>
+  <rect x="494" y="174" width="212" height="10" rx="4" fill="#2878a8"/>
+  <text x="510" y="210" font-family="Arial" font-size="11" font-weight="700" letter-spacing="2" fill="#203b49">EVIDENCE</text>
+  <text x="686" y="210" text-anchor="end" font-family="Arial" font-size="10" fill="#203b49">DISTRICT</text>
+  <rect x="509" y="224" width="182" height="140" rx="9" fill="#b8d9d1"/>
+  <rect x="548" y="271" width="104" height="58" rx="7" fill="#c97b51" stroke="#203b49" stroke-width="3" transform="rotate(-4 600 300)"/>
+  <text x="600" y="319" text-anchor="middle" font-family="Georgia" font-size="48" font-weight="700" fill="#203b49">§</text>
+  <text x="510" y="395" font-family="Arial" font-size="17" font-weight="700" fill="#18202a">Rent Burden Report</text>
+  <text x="510" y="426" font-family="Arial" font-size="10" fill="#46515a">Strengthens provisions responding</text>
+  <text x="510" y="440" font-family="Arial" font-size="10" fill="#46515a">to documented housing pressure.</text>
+  <rect x="509" y="465" width="89" height="16" rx="8" fill="#d5e9f3"/>
+  <text x="554" y="476" text-anchor="middle" font-family="Arial" font-size="8" font-weight="700" fill="#174b66">DERIVED CONTEXT</text>
+  <circle cx="675" cy="469" r="14" fill="#152f47"/><text x="675" y="474" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="white">1</text>
+  <text x="600" y="535" text-anchor="middle" font-family="Arial" font-size="21" font-weight="700" fill="#172733">B. Illustrated Civic Desk</text>
+  <text x="463" y="570" font-family="Arial" font-size="14" fill="#59636b">Warm ink lines, simple objects,</text>
+  <text x="463" y="591" font-family="Arial" font-size="14" fill="#59636b">restrained humor, diverse people.</text>
+  <text x="463" y="625" font-family="Arial" font-size="13" font-weight="700" fill="#2f725f">Best balance</text>
+  <text x="463" y="646" font-family="Arial" font-size="13" fill="#59636b">Readable, human, scalable.</text>
+
+  <!-- C -->
+  <rect x="812" y="130" width="334" height="566" rx="22" fill="#fffaf0" stroke="#b7aea0" stroke-width="2"/>
+  <rect x="873" y="174" width="212" height="314" rx="14" fill="#102f47" stroke="#75b5c7" stroke-width="2"/>
+  <rect x="873" y="174" width="212" height="10" rx="4" fill="#edb24a"/>
+  <text x="889" y="210" font-family="Arial" font-size="11" font-weight="700" letter-spacing="2" fill="#f1f5f5">INSTITUTION</text>
+  <text x="1065" y="210" text-anchor="end" font-family="Arial" font-size="10" fill="#f1f5f5">HOUSE</text>
+  <rect x="888" y="224" width="182" height="140" rx="9" fill="#153b58" stroke="#7cb5c4"/>
+  <rect x="923" y="250" width="112" height="85" fill="none" stroke="#88c3d0" stroke-width="2"/>
+  <rect x="936" y="263" width="86" height="59" fill="none" stroke="#88c3d0" stroke-dasharray="5 4"/>
+  <text x="979" y="299" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" letter-spacing="2" fill="#dceef3">HOUSE</text>
+  <text x="889" y="395" font-family="Georgia" font-size="17" font-weight="700" fill="#f1f5f5">Committee Hearing</text>
+  <text x="889" y="426" font-family="Arial" font-size="10" fill="#c9dbe0">Creates a procedural opening when</text>
+  <text x="889" y="440" font-family="Arial" font-size="10" fill="#c9dbe0">evidence and support are ready.</text>
+  <rect x="888" y="465" width="62" height="16" rx="8" fill="#dceef3"/>
+  <text x="919" y="476" text-anchor="middle" font-family="Arial" font-size="8" font-weight="700" fill="#102f47">SIMULATED</text>
+  <circle cx="1054" cy="469" r="14" fill="#edb24a"/><text x="1054" y="474" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#102f47">3</text>
+  <text x="979" y="535" text-anchor="middle" font-family="Arial" font-size="21" font-weight="700" fill="#172733">C. Institutional Blueprint</text>
+  <text x="842" y="570" font-family="Arial" font-size="14" fill="#59636b">Architectural lines, seals, grids,</text>
+  <text x="842" y="591" font-family="Arial" font-size="14" fill="#59636b">and procedural precision.</text>
+  <text x="842" y="625" font-family="Arial" font-size="13" font-weight="700" fill="#285b73">High credibility</text>
+  <text x="842" y="646" font-family="Arial" font-size="13" fill="#59636b">Risk: government-dashboard feel.</text>
+
+  <text x="600" y="736" text-anchor="middle" font-family="Arial" font-size="15" fill="#35434d">Choose A, B, or C — or describe a hybrid.</text>
+</svg>

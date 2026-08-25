@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="770" viewBox="0 0 1200 770">
+  <rect width="1200" height="770" fill="#f2eee6"/>
+  <text x="55" y="58" font-family="Arial" font-size="30" font-weight="700" fill="#182c38">Card Families: Color + Icon + Label</text>
+  <text x="55" y="89" font-family="Arial" font-size="16" fill="#5b666d">Color accelerates recognition, but it never carries meaning alone.</text>
+
+  <!-- Family tiles row 1 -->
+  <g transform="translate(55 135)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#6A5485"/>
+    <circle cx="52" cy="85" r="31" fill="#6A5485"/><circle cx="52" cy="77" r="10" fill="white"/><path d="M33 111 Q52 90 71 111" fill="white"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Staff</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Performs timed work</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#6A5485">VIOLET · PERSON</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Aide, counsel, director</text>
+  </g>
+  <g transform="translate(335 135)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#B6503A"/>
+    <circle cx="52" cy="85" r="31" fill="#B6503A"/><path d="M38 62 H60 L68 70 V109 H38 Z" fill="white"/><path d="M59 62 V72 H68" fill="none" stroke="#B6503A" stroke-width="3"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Policy</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Constructs the bill</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#B6503A">CORAL · DOCUMENT</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Provision, amendment, rule</text>
+  </g>
+  <g transform="translate(615 135)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#267783"/>
+    <circle cx="52" cy="85" r="31" fill="#267783"/><path d="M35 105 V82 M49 105 V69 M63 105 V91 M32 108 H70" fill="none" stroke="white" stroke-width="6"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Evidence</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Supports or challenges</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#267783">TEAL · CHART</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Data, testimony, estimate</text>
+  </g>
+  <g transform="translate(895 135)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#9A6816"/>
+    <circle cx="52" cy="85" r="31" fill="#9A6816"/><path d="M27 83 L42 70 L52 78 L62 70 L77 83 L64 103 L52 96 L40 103 Z" fill="white"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Coalition</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Builds support</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#9A6816">OCHRE · HANDSHAKE</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Member, caucus, ally</text>
+  </g>
+
+  <!-- Family tiles row 2 -->
+  <g transform="translate(55 360)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#3D754E"/>
+    <circle cx="52" cy="85" r="31" fill="#3D754E"/><circle cx="40" cy="75" r="7" fill="white"/><circle cx="58" cy="75" r="7" fill="white"/><path d="M27 105 Q40 86 53 105 M45 105 Q58 86 71 105" fill="white"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Constituency</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Expresses district needs</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#3D754E">GREEN · PEOPLE</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Multiple interests, not a monolith</text>
+  </g>
+  <g transform="translate(335 360)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#254F78"/>
+    <circle cx="52" cy="85" r="31" fill="#254F78"/><path d="M29 72 L52 59 L75 72 Z M34 78 H70 M37 78 V102 M47 78 V102 M57 78 V102 M67 78 V102 M31 106 H73" fill="none" stroke="white" stroke-width="5"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Institution</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Controls procedure</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#254F78">NAVY · BUILDING</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Committee, chamber, calendar</text>
+  </g>
+  <g transform="translate(615 360)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#844263"/>
+    <circle cx="52" cy="85" r="31" fill="#844263"/><path d="M29 76 L59 67 V99 L29 90 Z M59 74 L72 78 V88 L59 93 Z M34 91 L39 107 H49 L45 93" fill="white"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Political</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Changes risk and momentum</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#844263">PLUM · MEGAPHONE</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Media, controversy, capital</text>
+  </g>
+  <g transform="translate(895 360)">
+    <rect width="250" height="195" rx="18" fill="#fffaf2" stroke="#c8c0b0" stroke-width="2"/>
+    <rect width="250" height="20" rx="8" fill="#58636B"/>
+    <circle cx="52" cy="85" r="31" fill="#58636B"/><path d="M32 68 H47 V78 C40 77 40 89 47 88 V103 H61 V94 C69 100 78 89 69 82 H61 V68 H47" fill="white"/>
+    <text x="96" y="81" font-family="Arial" font-size="21" font-weight="700" fill="#253842">Tactic</text>
+    <text x="96" y="105" font-family="Arial" font-size="13" fill="#667278">Unlocks combinations</text>
+    <text x="25" y="154" font-family="Arial" font-size="12" font-weight="700" fill="#58636B">SLATE · PUZZLE</text>
+    <text x="25" y="176" font-family="Arial" font-size="12" fill="#667278">Reusable legislative method</text>
+  </g>
+
+  <!-- information classes -->
+  <text x="55" y="606" font-family="Arial" font-size="14" font-weight="700" letter-spacing="1" fill="#35444c">INFORMATION CLASS IS A SEPARATE SYSTEM</text>
+  <g transform="translate(55 628)">
+    <rect width="305" height="78" rx="15" fill="#e0edf5"/>
+    <rect x="21" y="24" width="27" height="27" rx="4" fill="#2878A8"/><path d="M27 37 L34 44 L44 31" fill="none" stroke="white" stroke-width="4"/>
+    <text x="65" y="35" font-family="Arial" font-size="15" font-weight="700" fill="#174b66">Official record</text>
+    <text x="65" y="57" font-family="Arial" font-size="12" fill="#4f6570">Square + check + blue</text>
+  </g>
+  <g transform="translate(380 628)">
+    <rect width="305" height="78" rx="15" fill="#dcefea"/>
+    <path d="M34 19 L51 38 L34 57 L17 38 Z" fill="#267783"/><text x="34" y="44" text-anchor="middle" font-family="Georgia" font-size="18" font-weight="700" fill="white">∑</text>
+    <text x="65" y="35" font-family="Arial" font-size="15" font-weight="700" fill="#17525a">Derived context</text>
+    <text x="65" y="57" font-family="Arial" font-size="12" fill="#4f6570">Diamond + formula + teal</text>
+  </g>
+  <g transform="translate(705 628)">
+    <rect width="305" height="78" rx="15" fill="#f5e8c9"/>
+    <path d="M34 18 L51 28 L51 48 L34 58 L17 48 L17 28 Z" fill="#9A6816"/><text x="34" y="44" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="white">✦</text>
+    <text x="65" y="35" font-family="Arial" font-size="15" font-weight="700" fill="#69470f">Simulated</text>
+    <text x="65" y="57" font-family="Arial" font-size="12" fill="#4f6570">Hexagon + spark + amber</text>
+  </g>
+
+  <rect x="1030" y="628" width="115" height="78" rx="15" fill="#fffaf2" stroke="#c8c0b0"/>
+  <circle cx="1061" cy="656" r="13" fill="#315b9a"/><text x="1061" y="661" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="white">D</text>
+  <circle cx="1104" cy="656" r="13" fill="#9b3d32"/><text x="1104" y="661" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="white">R</text>
+  <text x="1088" y="691" text-anchor="middle" font-family="Arial" font-size="10" fill="#667278">Party: small badge only</text>
+
+  <text x="600" y="746" text-anchor="middle" font-family="Arial" font-size="14" fill="#4f5e66">Party colors never define card families, facts, constituencies, or policy positions.</text>
+</svg>

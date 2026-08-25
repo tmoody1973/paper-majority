@@ -1,0 +1,46 @@
+You are building Paper Majority: A Congressional Strategy Game.
+
+Treat this repository as a checkpoint-controlled implementation project. Before writing or generating any application code, complete the following preflight:
+
+1. Read CLAUDE.md completely.
+2. Read both approved specifications completely:
+   - docs/superpowers/specs/2026-08-23-paper-majority-design.md
+   - docs/superpowers/specs/2026-08-23-paper-majority-art-design.md
+3. Read the complete implementation plan:
+   - docs/superpowers/plans/2026-08-23-paper-majority-vertical-slice.md
+4. Read docs/examples/pattern-gameplay-walkthrough.md as the plain-language example of the intended interaction. It explains the plan but cannot override it.
+5. Read art/masters/modular-kit/civic-illustration-kit/README.md, PROVENANCE.md and manifest.json. Treat the kit as source-master artwork governed by the art specification, not as permission to replace bespoke card illustrations.
+6. Run `python art/masters/modular-kit/civic-illustration-kit/validate_kit.py`. It must report 41 valid assets across 6 categories. Do not continue if it fails.
+7. Inspect the three root-level SVG mockups. Treat them as visual-direction references, not final production assets.
+8. Treat references/inspiration/ as optional background only. It cannot add requirements or override the Paper Majority documents.
+9. Report the current working directory and the installed versions of Python, Node.js, npm, Git and Claude Code.
+10. Confirm whether this directory is already a Git repository. If it is not, initialize it and create an initial commit containing only the supplied starter-package files before beginning Task 1.
+11. Confirm whether superpowers:executing-plans is available. Use it to execute the approved plan. If it is unavailable, stop after the preflight, tell me exactly what is missing and wait for direction.
+12. Confirm whether the Phaser Game Agent MCP is connected. Its absence is not a Phase 1 blocker. If connected, use it only for the bounded purposes allowed by CLAUDE.md and the plan.
+
+After presenting the preflight, begin Task 1 and continue sequentially through Tasks 2, 3 and 4. Follow every test-driven step, update the plan checkboxes as work is completed, run each named verification command and make the named commits. Do not weaken tests, skip verification, silently change file paths or expand scope.
+
+Stop after Verification Checkpoint 1 — Fun-First Interaction Gate. Do not begin the 30-definition Phase 2 catalog.
+
+At the checkpoint, present:
+
+- The exact automated verification commands run and their results
+- The manual interaction checks completed and any checks I must perform
+- The 10-minute interaction-spike URL and instructions for testing all three patterns and the Tactic expansion
+- The `report:patterns` output showing four base and five expanded valid stacks
+- Evidence that two different Evidence cards satisfy one family/tag pattern without exact input IDs
+- Evidence that the Staff Handbook records discovery and explains the widened coalition rule
+- Evidence that the Handbook visibly moves from Teased to Discovered to Expanded and that Study Tactic uses the existing expansion architecture
+- The blank ten-person playtest worksheet; do not invent playtest results
+- The measured pickup/hover and transformation-feedback timing
+- The files created or materially changed
+- The commit list for Tasks 1–4
+- Known limitations, unresolved questions and deviations from the plan
+- Clear instructions for starting the local game
+- A direct request for approval before beginning Phase 2
+
+Preserve the central boundaries throughout: deterministic pure-TypeScript rules, Phaser as the tactile presentation layer, React for text-heavy and accessible interfaces, no runtime LLM, no live government APIs during play, and strict separation of official records, derived context and simulated game state. Match patterns through controlled family/tag/source-class slots, use allowlisted derived resolver IDs, reject ambiguous catalogs and never store executable functions in scenario JSON. Keep per-run discovery and Tactic expansions in TermState and lifetime discovery in a separate player profile. Derive Teased, Discovered and Expanded Handbook states from those existing fields; do not add exact-ID recipes, `requiresUnlock` or a parallel combination engine. Keep card family, provenance and issue taxonomies independent; Evidence is a card family, not a provenance class. Do not bake visible semantic text into runtime SVGs or let issue colors override card-family colors.
+
+Implement the transparent election exactly as the governing plan specifies: opponent strength is selected once from the setup seed and revealed in Week 1; the outlook is labeled **Simulated outlook — not polling**; its range narrows by term phase; demographics never enter the calculation; and reelection performs no final random draw. The Term Record must show a one-decimal simulated vote share and a line-item ledger that sums to it without double-counting staff, coalition or unanswered-concern effects.
+
+The first gate proves fun, not content scale. The interaction spike must use eight distinct starting definitions represented by 12–16 instances, exactly three learnable patterns, four base valid stacks, five after studying Bipartisan Working Group with eligible Staff, visible district/staff/coalition pressure and no required Sourcebook reading. The Staff Handbook is the Teased → Discovered → Expanded discovery surface. Invalid stacks cost nothing. Use placeholder art and portrait-free member-office treatments. Do not create the six-week catalog, real-lawmaker photographs, future issue modules or production art before I approve Checkpoint 1.
