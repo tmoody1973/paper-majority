@@ -1,0 +1,282 @@
+{
+  "fixtureId": "interaction-spike",
+  "note": "Placeholder-art fixture for the ten-minute fun-first gate. Every office here is fictional; no real lawmaker appears, and no portrait art exists.",
+  "player": { "districtId": "XX-01", "party": "democratic", "values": ["Tenant Stability", "Fair Access"] },
+  "seed": 412,
+  "resources": {
+    "staffAttention": 3,
+    "politicalCapital": 3,
+    "districtTrust": 60,
+    "billMomentum": 10,
+    "policyIntegrity": 60,
+    "staffMorale": 70
+  },
+  "startingDefinitionIds": [
+    "staff-policy-aide",
+    "evidence-rent-burden-report",
+    "evidence-tenant-survey",
+    "policy-housing-choice-voucher",
+    "institution-working-bill",
+    "coalition-office-hillcrest",
+    "coalition-office-ridgeline",
+    "tactic-bipartisan-working-group"
+  ],
+  "desk": [
+    { "definitionId": "staff-policy-aide", "x": 180, "y": 200 },
+    { "definitionId": "staff-policy-aide", "x": 180, "y": 470 },
+    { "definitionId": "evidence-rent-burden-report", "x": 400, "y": 200 },
+    { "definitionId": "evidence-rent-burden-report", "x": 400, "y": 470 },
+    { "definitionId": "evidence-tenant-survey", "x": 620, "y": 200 },
+    { "definitionId": "evidence-tenant-survey", "x": 620, "y": 470 },
+    { "definitionId": "policy-housing-choice-voucher", "x": 840, "y": 200 },
+    { "definitionId": "policy-housing-choice-voucher", "x": 840, "y": 470 },
+    { "definitionId": "institution-working-bill", "x": 1060, "y": 200 },
+    { "definitionId": "coalition-office-hillcrest", "x": 1060, "y": 470 },
+    { "definitionId": "coalition-office-ridgeline", "x": 1280, "y": 470 },
+    { "definitionId": "tactic-bipartisan-working-group", "x": 1280, "y": 200 },
+    {
+      "definitionId": "constituency-urgent-renter-concern",
+      "x": 400,
+      "y": 730,
+      "remainingMs": 180000
+    }
+  ],
+  "relationships": [
+    {
+      "memberId": "coalition-office-hillcrest",
+      "support": "conditional",
+      "demandProvisionId": "policy-housing-choice-voucher"
+    }
+  ],
+  "scenario": {
+    "schemaVersion": 1,
+    "snapshotId": "interaction-spike-2026-08-24",
+    "frozenAt": "2026-08-24T00:00:00.000Z",
+    "issue": { "id": "housing-affordability", "title": "Housing Affordability" },
+    "districts": [
+      {
+        "id": "XX-01",
+        "title": "Practice District",
+        "role": "Fictional district used only for the interaction spike",
+        "sourceYear": 2026,
+        "uncertaintyNote": "Entirely fictional. No real district data is represented here.",
+        "citations": []
+      }
+    ],
+    "startingCardDefinitionIds": [
+      "staff-policy-aide",
+      "evidence-rent-burden-report",
+      "policy-housing-choice-voucher"
+    ],
+    "tagTaxonomy": [
+      "policy-focused",
+      "housing",
+      "renter-focused",
+      "working-bill",
+      "housing-interest",
+      "committee-relevant",
+      "rural-housing",
+      "coalition-expansion",
+      "evidence-summary",
+      "drafted",
+      "in-bill",
+      "outreach-result",
+      "district-concern"
+    ],
+    "cards": [
+      {
+        "id": "staff-policy-aide",
+        "title": "Policy Aide",
+        "kind": "staff",
+        "tags": ["policy-focused"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 1,
+        "contextualSubtitle": "Policy staff"
+      },
+      {
+        "id": "evidence-rent-burden-report",
+        "title": "Rent Burden Report",
+        "kind": "evidence",
+        "tags": ["housing", "renter-focused"],
+        "sourceClass": "official",
+        "citations": [],
+        "workload": 0,
+        "contextualSubtitle": "Housing evidence"
+      },
+      {
+        "id": "evidence-tenant-survey",
+        "title": "Tenant Survey",
+        "kind": "evidence",
+        "tags": ["housing", "renter-focused"],
+        "sourceClass": "derived",
+        "citations": [],
+        "workload": 0,
+        "contextualSubtitle": "Housing evidence"
+      },
+      {
+        "id": "policy-housing-choice-voucher",
+        "title": "Housing Choice Voucher",
+        "kind": "policy",
+        "tags": ["housing", "renter-focused"],
+        "sourceClass": "official",
+        "citations": [],
+        "workload": 1,
+        "contextualSubtitle": "Renter policy"
+      },
+      {
+        "id": "institution-working-bill",
+        "title": "Working Bill",
+        "kind": "institution",
+        "tags": ["working-bill"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 0,
+        "contextualSubtitle": "Your bill"
+      },
+      {
+        "id": "coalition-office-hillcrest",
+        "title": "Hillcrest Member Office",
+        "kind": "coalition",
+        "tags": ["housing-interest", "committee-relevant"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 1,
+        "officeParty": "democratic",
+        "contextualSubtitle": "Member office"
+      },
+      {
+        "id": "coalition-office-ridgeline",
+        "title": "Ridgeline Member Office",
+        "kind": "coalition",
+        "tags": ["housing-interest", "rural-housing"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 1,
+        "officeParty": "republican",
+        "contextualSubtitle": "Member office"
+      },
+      {
+        "id": "tactic-bipartisan-working-group",
+        "title": "Bipartisan Working Group",
+        "kind": "tactic",
+        "tags": ["coalition-expansion"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 1,
+        "contextualSubtitle": "Reusable method"
+      },
+      {
+        "id": "constituency-urgent-renter-concern",
+        "title": "Urgent Renter Concern",
+        "kind": "constituency",
+        "tags": ["district-concern", "renter-focused"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 1,
+        "contextualSubtitle": "District concern"
+      },
+      {
+        "id": "evidence-housing-summary",
+        "title": "Evidence Summary",
+        "kind": "evidence",
+        "tags": ["evidence-summary", "renter-focused"],
+        "sourceClass": "derived",
+        "citations": [],
+        "workload": 0,
+        "contextualSubtitle": "Summarised evidence"
+      },
+      {
+        "id": "policy-drafted-provision",
+        "title": "Drafted Provision",
+        "kind": "policy",
+        "tags": ["drafted", "in-bill"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 0,
+        "contextualSubtitle": "Bill provision"
+      },
+      {
+        "id": "coalition-outreach-result",
+        "title": "Outreach Result",
+        "kind": "coalition",
+        "tags": ["outreach-result"],
+        "sourceClass": "simulated",
+        "citations": [],
+        "workload": 0,
+        "contextualSubtitle": "Member response"
+      }
+    ],
+    "patterns": [
+      {
+        "id": "pattern-evidence-summary",
+        "slots": [
+          { "kind": "staff", "requiredTags": ["policy-focused"], "quantity": 1 },
+          { "kind": "evidence", "requiredTags": ["housing"], "quantity": 1 }
+        ],
+        "output": {
+          "mode": "derived",
+          "resolverId": "summarize-evidence-v1",
+          "parameters": { "outputDefinitionId": "evidence-housing-summary" }
+        },
+        "durationMs": 6000,
+        "resourceCost": { "staffAttention": 1 },
+        "priority": 10,
+        "discoveryHint": "Housing evidence works with a policy-focused staff card."
+      },
+      {
+        "id": "pattern-drafted-provision",
+        "slots": [
+          { "kind": "evidence", "requiredTags": ["evidence-summary"], "quantity": 1 },
+          { "kind": "policy", "requiredTags": ["housing", "renter-focused"], "quantity": 1 }
+        ],
+        "output": {
+          "mode": "derived",
+          "resolverId": "draft-provision-v1",
+          "parameters": { "outputDefinitionId": "policy-drafted-provision" }
+        },
+        "durationMs": 6000,
+        "resourceCost": { "staffAttention": 1 },
+        "priority": 10,
+        "discoveryHint": "A finished summary can become bill language with a renter-focused policy."
+      },
+      {
+        "id": "pattern-coalition-outreach",
+        "slots": [
+          { "kind": "institution", "requiredTags": ["working-bill"], "quantity": 1 },
+          { "kind": "coalition", "anyTags": ["same-party"], "quantity": 1 }
+        ],
+        "output": {
+          "mode": "derived",
+          "resolverId": "resolve-outreach-v1",
+          "parameters": { "outputDefinitionId": "coalition-outreach-result" }
+        },
+        "durationMs": 6000,
+        "resourceCost": { "politicalCapital": 1 },
+        "priority": 10,
+        "discoveryHint": "Your bill can go to a member office. A Tactic can widen which offices count."
+      }
+    ],
+    "tacticExpansions": [
+      {
+        "id": "expansion-bipartisan-outreach",
+        "tacticDefinitionId": "tactic-bipartisan-working-group",
+        "targetPatternId": "pattern-coalition-outreach",
+        "effect": { "kind": "widen-slot", "slotIndex": 1, "addAnyTags": ["opposing-party"] },
+        "expansionNote": "Opposing-party member offices now count for this outreach rule. The base rule is unchanged.",
+        "studyCost": 1,
+        "studyDurationMs": 8000,
+        "eligibleStaffTags": ["policy-focused"]
+      }
+    ],
+    "storyEvents": [],
+    "houseModel": {
+      "totalSeats": 435,
+      "curatedMemberSeats": 2,
+      "anonymousSeats": 433,
+      "sourceClass": "simulated",
+      "baseline": { "committed": 90, "conditional": 60, "undecided": 120, "opposed": 165 }
+    },
+    "weeklyPacks": []
+  }
+}

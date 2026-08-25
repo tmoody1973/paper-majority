@@ -101,6 +101,7 @@ export function createInitialState(input: InitialStateInput): TermState {
       election: { opponentStrength, revealedWeek: 1 },
     },
     cards,
+    cardSeq: cards.length,
     stacks,
     resources: { ...OPENING_RESOURCES },
     bill: {

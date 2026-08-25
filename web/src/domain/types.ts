@@ -172,6 +172,8 @@ export interface TermState {
     election: ElectionEnvironment;
   };
   cards: CardInstance[];
+  /** Monotonic counter behind produced card instance ids. Never decreases. */
+  cardSeq: number;
   stacks: StackState[];
   resources: Resources;
   bill: BillState;

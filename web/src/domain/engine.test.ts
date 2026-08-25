@@ -413,3 +413,180 @@ describe('TICK and SET_PAUSED', () => {
     expect(typesOf(events)).toContain('PAUSE_CHANGED');
   });
 });
+
+describe('TICK completes an action', () => {
+  function runToCompletion(state: TermState, ms: number) {
+    const commands: GameCommand[] = [{ type: 'SET_PAUSED', paused: false }];
+    for (let elapsed = 0; elapsed < ms; elapsed += 1_000) {
+      commands.push({ type: 'TICK', deltaMs: 1_000 });
+    }
+    return run(state, ...commands);
+  }
+
+  it('transforms the inputs into the resolved output exactly once', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    const transformed = done.events.filter((event) => event.type === 'CARD_TRANSFORMED');
+    expect(transformed).toHaveLength(1);
+    if (transformed[0].type !== 'CARD_TRANSFORMED') throw new Error('expected CARD_TRANSFORMED');
+    expect(transformed[0].outputDefinitionId).toBe('evidence-housing-summary');
+
+    expect(done.state.cards).toHaveLength(1);
+    expect(done.state.cards[0].definitionId).toBe('evidence-housing-summary');
+    expect(done.state.cards[0].status).toBe('idle');
+    expectOneStackPerCard(done.state);
+  });
+
+  it('removes only the consumed inputs and leaves bystanders alone', () => {
+    const start = makeState([
+      'staff-policy-aide',
+      'evidence-rent-burden-report',
+      'policy-housing-choice-voucher',
+    ]);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    expect(done.state.cards.map((card) => card.definitionId).sort()).toEqual([
+      'evidence-housing-summary',
+      'policy-housing-choice-voucher',
+    ]);
+  });
+
+  it('gives the official report and the local survey different resource results', () => {
+    const withReport = runToCompletion(
+      run(makeState(['staff-policy-aide', 'evidence-rent-burden-report']), {
+        type: 'STACK_CARD',
+        cardId: 'card-1',
+        targetStackId: 'stack-2',
+      }).state,
+      6_000,
+    );
+    const withSurvey = runToCompletion(
+      run(makeState(['staff-policy-aide', 'evidence-tenant-survey']), {
+        type: 'STACK_CARD',
+        cardId: 'card-1',
+        targetStackId: 'stack-2',
+      }).state,
+      6_000,
+    );
+
+    expect(withReport.state.resources.billMomentum).toBeGreaterThan(
+      withSurvey.state.resources.billMomentum,
+    );
+    expect(withSurvey.state.resources.districtTrust).toBeGreaterThan(
+      withReport.state.resources.districtTrust,
+    );
+  });
+
+  it('returns the held Staff Attention when the assignment finishes', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    expect(stacked.state.resources.staffAttention).toBe(2);
+
+    const done = runToCompletion(stacked.state, 6_000);
+    expect(done.state.resources.staffAttention).toBe(3);
+  });
+
+  it('records the discovery once even after the transformation completes', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    expect(done.state.discoveredPatternIds).toEqual(['pattern-evidence-summary']);
+    expect(done.events.filter((e) => e.type === 'PATTERN_DISCOVERED')).toHaveLength(0);
+  });
+
+  it('activates the same expansion as ACTIVATE_TACTIC when a study completes', () => {
+    const start = makeState([
+      'staff-policy-aide',
+      'tactic-bipartisan-working-group',
+      'institution-working-bill',
+      'coalition-office-fourth-district',
+    ]);
+    const studying = run(start, {
+      type: 'START_ASSIGNMENT',
+      assignmentKind: 'study-tactic',
+      staffCardId: 'card-1',
+      targetCardId: 'card-2',
+    });
+    const done = runToCompletion(studying.state, 8_000);
+
+    expect(typesOf(done.events)).toContain('TACTIC_EXPANSION_ACTIVATED');
+    expect(done.state.unlockedSlotExpansions).toEqual({
+      'pattern-coalition-outreach': ['expansion-bipartisan-outreach'],
+    });
+    // No fourth pattern and no parallel unlock system appeared.
+    expect(testScenario.patterns).toHaveLength(4);
+    expect(done.state.discoveredPatternIds).toEqual([]);
+
+    // The Staff card comes back, and the previously rejected stack now works.
+    const aide = done.state.cards.find((card) => card.definitionId === 'staff-policy-aide');
+    expect(aide?.status).toBe('idle');
+    expect(done.state.resources.staffAttention).toBe(3);
+
+    const outreach = run(done.state, {
+      type: 'STACK_CARD',
+      cardId: 'card-3',
+      targetStackId: 'stack-4',
+    });
+    expect(typesOf(outreach.events)).toContain('STACK_ACCEPTED');
+  });
+
+  it('completes nothing while the clock is paused', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const held = run(stacked.state, { type: 'TICK', deltaMs: 1_000 }, { type: 'TICK', deltaMs: 1_000 });
+
+    expect(typesOf(held.events)).not.toContain('CARD_TRANSFORMED');
+    expect(held.state.cards).toHaveLength(2);
+  });
+
+  it('is replay-identical for the same seed and command sequence', () => {
+    const commands: GameCommand[] = [
+      { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' },
+      { type: 'SET_PAUSED', paused: false },
+      ...Array.from({ length: 6 }, () => ({ type: 'TICK', deltaMs: 1_000 }) as GameCommand),
+    ];
+
+    const a = run(makeState(['staff-policy-aide', 'evidence-rent-burden-report']), ...commands);
+    const b = run(makeState(['staff-policy-aide', 'evidence-rent-burden-report']), ...commands);
+
+    expect(b.state).toEqual(a.state);
+    expect(typesOf(b.events)).toEqual(typesOf(a.events));
+  });
+});
+
+describe('time-sensitive cards', () => {
+  it('counts a deadline card down and expires it without touching the meters', () => {
+    const start = makeState(['constituency-urgent-renter-concern']);
+    const withDeadline: TermState = {
+      ...start,
+      cards: start.cards.map((card) => ({ ...card, remainingMs: 2_000 })),
+    };
+
+    const midway = run(withDeadline, { type: 'SET_PAUSED', paused: false }, { type: 'TICK', deltaMs: 1_000 });
+    expect(midway.state.cards[0].remainingMs).toBe(1_000);
+    expect(midway.state.cards[0].status).toBe('idle');
+
+    const done = run(midway.state, { type: 'TICK', deltaMs: 1_000 });
+    expect(done.state.cards[0].status).toBe('expired');
+    expect(done.state.resources).toEqual(start.resources);
+  });
+
+  it('refuses to stack an expired card', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const expired: TermState = {
+      ...start,
+      cards: start.cards.map((card) =>
+        card.id === 'card-2' ? { ...card, status: 'expired' as const } : card,
+      ),
+    };
+    const { events } = run(expired, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const rejection = events.find((event) => event.type === 'STACK_REJECTED');
+
+    if (rejection?.type !== 'STACK_REJECTED') throw new Error('expected STACK_REJECTED');
+    expect(rejection.reason).toBe('card-expired');
+  });
+});

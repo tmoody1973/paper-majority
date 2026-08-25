@@ -1,5 +1,6 @@
 import type { GameCommand, GameCommandType } from '@/domain/commands';
 import type { GameEvent, RejectionReason } from '@/domain/events';
+import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { buildMatchInputs, matchPattern } from '@/domain/recipes';
 import type {
   CardInstance,
@@ -137,22 +138,26 @@ export function applyTacticExpansion(
   tacticCardId: string,
 ): { state: TermState; event: GameEvent } {
   const existing = state.unlockedSlotExpansions[expansion.targetPatternId] ?? [];
-  const remainingCards = state.cards.filter((card) => card.id !== tacticCardId);
+  const tacticStackId = findCard(state, tacticCardId)?.stackId;
 
   return {
     state: {
       ...state,
-      cards: remainingCards.map((card) =>
-        card.status === 'working' && card.stackId === findCard(state, tacticCardId)?.stackId
-          ? { ...card, status: 'idle', remainingMs: 0 }
-          : card,
-      ),
+      cards: state.cards
+        .filter((card) => card.id !== tacticCardId)
+        .map((card) =>
+          card.stackId === tacticStackId ? { ...card, status: 'idle', remainingMs: 0 } : card,
+        ),
       stacks: state.stacks
-        .map((stack) => ({
-          ...stack,
-          cardIds: stack.cardIds.filter((id) => id !== tacticCardId),
-          activeActionId: undefined,
-        }))
+        .map((stack) =>
+          stack.id === tacticStackId
+            ? {
+                ...stack,
+                cardIds: stack.cardIds.filter((id) => id !== tacticCardId),
+                activeActionId: undefined,
+              }
+            : stack,
+        )
         .filter((stack) => stack.cardIds.length > 0),
       unlockedSlotExpansions: {
         ...state.unlockedSlotExpansions,
@@ -169,6 +174,145 @@ export function applyTacticExpansion(
 }
 
 /**
+ * Clamp resources to their approved ranges.
+ *
+ * Staff Attention and Political Capital are small counters; the four percentage
+ * meters live on a 0–100 scale.
+ */
+function clampResources(resources: Resources): Resources {
+  const bound = (value: number, low: number, high: number) =>
+    Math.min(high, Math.max(low, value));
+
+  return {
+    staffAttention: bound(resources.staffAttention, 0, 9),
+    politicalCapital: bound(resources.politicalCapital, 0, 9),
+    districtTrust: bound(resources.districtTrust, 0, 100),
+    billMomentum: bound(resources.billMomentum, 0, 100),
+    policyIntegrity: bound(resources.policyIntegrity, 0, 100),
+    staffMorale: bound(resources.staffMorale, 0, 100),
+  };
+}
+
+function addEffects(resources: Resources, effects: Partial<Resources>): Resources {
+  const next = { ...resources };
+  for (const [key, amount] of Object.entries(effects) as [keyof Resources, number][]) {
+    next[key] += amount;
+  }
+  return clampResources(next);
+}
+
+/**
+ * Finish one action whose cards have all reached zero.
+ *
+ * Staff Attention is a concurrency limit rather than a currency, so whatever the
+ * action held is released here. Political Capital and the percentage meters are
+ * real spends and are not returned.
+ */
+function completeAction(
+  state: TermState,
+  stackId: string,
+  services: EngineServices,
+): { state: TermState; events: GameEvent[] } {
+  const stack = state.stacks.find((candidate) => candidate.id === stackId);
+  if (!stack?.activeActionId) return { state, events: [] };
+
+  const memberCards = stack.cardIds
+    .map((id) => findCard(state, id))
+    .filter((card): card is CardInstance => card !== undefined);
+
+  const studyExpansionId = parseStudyActionId(stack.activeActionId);
+
+  if (studyExpansionId) {
+    const expansion = findExpansion(services.scenario, studyExpansionId);
+    const tacticCard = memberCards.find(
+      (card) => card.definitionId === expansion?.tacticDefinitionId,
+    );
+    if (!expansion || !tacticCard) return { state, events: [] };
+
+    const released: Partial<Resources> = { staffAttention: expansion.studyCost };
+    const applied = applyTacticExpansion(
+      { ...state, resources: addEffects(state.resources, released) },
+      expansion,
+      tacticCard.id,
+    );
+
+    return {
+      state: applied.state,
+      events: [
+        { type: 'RESOURCE_CHANGED', changes: released, reason: `study-complete:${expansion.id}` },
+        applied.event,
+      ],
+    };
+  }
+
+  const pattern = services.scenario.patterns.find(
+    (candidate) => candidate.id === stack.activeActionId,
+  );
+  if (!pattern) return { state, events: [] };
+
+  const inputs = buildMatchInputs(memberCards, services.scenario, state.player.party);
+  const found = matchPattern(
+    inputs,
+    [pattern],
+    activeExpansionIds(state),
+    services.scenario.tacticExpansions,
+  );
+  if (!found) return { state, events: [] };
+
+  const resolved = resolvePatternOutput(found, inputs);
+  const anchor = memberCards[0];
+  const seq = state.cardSeq + 1;
+  const producedId = `card-${seq}`;
+  const producedStackId = `stack-${producedId}`;
+
+  const released: Partial<Resources> = pattern.resourceCost.staffAttention
+    ? { staffAttention: pattern.resourceCost.staffAttention }
+    : {};
+  const changes = { ...resolved.effects };
+  for (const [key, amount] of Object.entries(released) as [keyof Resources, number][]) {
+    changes[key] = (changes[key] ?? 0) + amount;
+  }
+
+  const consumedIds = memberCards.map((card) => card.id);
+  const next: TermState = {
+    ...state,
+    cardSeq: seq,
+    resources: addEffects(state.resources, changes),
+    cards: [
+      ...state.cards.filter((card) => !consumedIds.includes(card.id)),
+      {
+        id: producedId,
+        definitionId: resolved.definitionId,
+        stackId: producedStackId,
+        x: anchor.x,
+        y: anchor.y,
+        remainingMs: 0,
+        status: 'idle',
+      },
+    ],
+    stacks: [
+      ...state.stacks.filter((candidate) => candidate.id !== stackId),
+      { id: producedStackId, cardIds: [producedId] },
+    ],
+  };
+
+  return {
+    state: next,
+    events: [
+      {
+        type: 'CARD_TRANSFORMED',
+        stackId,
+        consumedCardIds: consumedIds,
+        producedCardIds: [producedId],
+        outputDefinitionId: resolved.definitionId,
+        explanationKey: resolved.explanationKey,
+      },
+      { type: 'RESOURCE_CHANGED', changes, reason: `pattern-complete:${pattern.id}` },
+    ],
+  };
+}
+
+/**
  * Start an accepted pattern: pay the validated cost, put the inputs to work and
  * record the discovery exactly once. The transformation itself completes later,
  * on TICK.
@@ -181,7 +325,15 @@ function startPattern(
 ): EngineResult {
   const alreadyDiscovered = state.discoveredPatternIds.includes(pattern.id);
   const events: GameEvent[] = [
-    { type: 'STACK_ACCEPTED', stackId: targetStackId, cardIds: memberCardIds, patternId: pattern.id },
+    {
+      type: 'STACK_ACCEPTED',
+      stackId: targetStackId,
+      cardIds: memberCardIds,
+      definitionIds: memberCardIds
+        .map((id) => state.cards.find((card) => card.id === id)?.definitionId ?? id)
+        .sort(),
+      patternId: pattern.id,
+    },
   ];
 
   if (Object.keys(pattern.resourceCost).length > 0) {
@@ -353,7 +505,12 @@ function startStudyTactic(
   const targetStackId = tactic.stackId;
   const memberCardIds = [tacticCardId, staffCardId];
   const events: GameEvent[] = [
-    { type: 'STACK_ACCEPTED', stackId: targetStackId, cardIds: memberCardIds },
+    {
+      type: 'STACK_ACCEPTED',
+      stackId: targetStackId,
+      cardIds: memberCardIds,
+      definitionIds: [tactic.definitionId, staff.definitionId].sort(),
+    },
     { type: 'RESOURCE_CHANGED', changes: cost, reason: `study:${expansion.id}` },
     {
       type: 'ACTION_STARTED',
@@ -538,17 +695,45 @@ export function executeCommand(
       const delta = Math.min(MAX_TICK_MS, Math.max(0, Math.trunc(command.deltaMs)));
       if (delta === 0) return { state, events: [] };
 
-      const next: TermState = {
+      let next: TermState = {
         ...state,
         elapsedMs: state.elapsedMs + delta,
-        cards: state.cards.map((card) =>
-          card.status === 'working'
-            ? { ...card, remainingMs: Math.max(0, card.remainingMs - delta) }
-            : card,
-        ),
+        cards: state.cards.map((card) => {
+          if (card.remainingMs <= 0) return card;
+          const remainingMs = Math.max(0, card.remainingMs - delta);
+          // A working card is running an assignment and completes below. A card
+          // that is merely time-sensitive — a district concern with a deadline —
+          // expires instead.
+          if (card.status === 'working') return { ...card, remainingMs };
+          return remainingMs === 0
+            ? { ...card, remainingMs, status: 'expired' as const }
+            : { ...card, remainingMs };
+        }),
       };
 
-      return { state: next, events: [] };
+      // Finish ready actions in stable card-id order so a replay always resolves
+      // them the same way.
+      const ready = next.stacks
+        .filter(
+          (stack) =>
+            stack.activeActionId &&
+            stack.cardIds.every((id) => {
+              const card = findCard(next, id);
+              return card?.status === 'working' && card.remainingMs === 0;
+            }),
+        )
+        .map((stack) => ({ stack, key: [...stack.cardIds].sort()[0] ?? stack.id }))
+        .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+
+      const events: GameEvent[] = [];
+      for (const { stack } of ready) {
+        const completed = completeAction(next, stack.id, services);
+        next = completed.state;
+        events.push(...completed.events);
+      }
+
+      if (events.length === 0) return { state: next, events: [] };
+      return { state: { ...next, eventLog: [...next.eventLog, ...events] }, events };
     }
 
     case 'SET_PAUSED': {

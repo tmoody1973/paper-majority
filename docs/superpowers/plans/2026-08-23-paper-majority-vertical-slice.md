@@ -799,7 +799,7 @@ git commit -m "feat: add deterministic pattern recipe engine"
 - Consumes: `executeCommand`, `EngineResult`, `GameCommand`, `TermState`, and the Task 2 fixture scenario.
 - Produces: `GameSession`, `resolveDropTarget`, the React/Phaser mounting boundary, Boot/Preload/Desk scenes, a minimal Staff Handbook, a 10-minute pattern-density interaction fixture, deterministic short transformations, `report:patterns`, and the development-only `window.__congressGameTestApi` used by E2E tests.
 
-- [ ] **Step 1: Write failing drop and shell tests**
+- [x] **Step 1: Write failing drop and shell tests**
 
 Specify a pure drop resolver:
 
@@ -829,7 +829,7 @@ npm --prefix web run test:run -- src/game/input/dropResolver.test.ts src/compone
 
 Expected: FAIL because the components, resolver and timed transformation behavior do not exist.
 
-- [ ] **Step 2: Implement a single session controller**
+- [x] **Step 2: Implement a single session controller**
 
 Create `GameSession` in `session.ts` with:
 
@@ -843,11 +843,11 @@ export interface GameSession {
 
 The controller is the only object allowed to replace authoritative state. React and Phaser must share the same session instance.
 
-- [ ] **Step 3: Mount Phaser safely inside Next.js**
+- [x] **Step 3: Mount Phaser safely inside Next.js**
 
 Make `GameCanvas.tsx` a client component. Create the Phaser game inside `useEffect`, destroy it on unmount, and render it into a `<div data-testid="game-canvas" aria-label="Congressional desk">`. Use `dynamic(..., { ssr: false })` from `GameShell.tsx`. Configure Boot, Preload, and Desk scenes; load `fallback-card.svg` when a referenced asset is unavailable.
 
-- [ ] **Step 4: Implement drag, snap, reject, pan, zoom, and pause**
+- [x] **Step 4: Implement drag, snap, reject, pan, zoom, and pause**
 
 In `DeskScene`:
 
@@ -863,7 +863,7 @@ In `DeskScene`:
 
 Phaser Game Agent MCP may be used for this isolated input prototype. Copy only reviewed source/assets into the repository and verify that no MCP endpoint or token appears in the browser bundle.
 
-- [ ] **Step 5: Add a production-safe test adapter and E2E test**
+- [x] **Step 5: Add a production-safe test adapter and E2E test**
 
 Expose `window.__congressGameTestApi` only when `process.env.NODE_ENV !== 'production'`. It may read state, return card screen rectangles, and dispatch commands through `GameSession`; it must not provide a second mutation path. Keep `?fixture=desk-foundation` for low-level drag tests.
 
@@ -905,7 +905,7 @@ In `interaction-spike.spec.ts`, verify:
 
 Create `docs/playtests/interaction-spike-results.md` with fields for tester ID, first-time status, three predicted valid stacks, patterns discovered without the Handbook, whether the tester could explain the Tactic expansion, family/provenance recognition, whether the tester opened the inspector, whether the tester could name the cause of a setback, replay choice and qualitative notes. Do not invent results; Checkpoint 1 is where the user records them.
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 ```bash
 npm --prefix web run test:run -- src/game/input/dropResolver.test.ts src/components/GameShell.test.tsx src/components/StaffHandbook.test.tsx

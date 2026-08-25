@@ -124,6 +124,16 @@ const cards: CardDefinition[] = [
     workload: 1,
     contextualSubtitle: 'Reusable method',
   },
+  {
+    id: 'constituency-urgent-renter-concern',
+    title: 'Urgent Renter Concern',
+    kind: 'constituency',
+    tags: ['district-concern', 'renter-focused'],
+    sourceClass: 'simulated',
+    citations: [],
+    workload: 1,
+    contextualSubtitle: 'District concern',
+  },
   // Pattern outputs.
   {
     id: 'evidence-housing-summary',
@@ -292,6 +302,7 @@ export const testScenario: ScenarioDefinition = {
     'drafted',
     'outreach-result',
     'review-note',
+    'district-concern',
   ],
   patterns,
   tacticExpansions,

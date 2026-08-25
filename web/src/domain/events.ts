@@ -37,7 +37,14 @@ export interface VoteTally {
 }
 
 export type GameEvent =
-  | { type: 'STACK_ACCEPTED'; stackId: string; cardIds: string[]; patternId?: string }
+  | {
+      type: 'STACK_ACCEPTED';
+      stackId: string;
+      cardIds: string[];
+      /** Definition ids of the accepted inputs, so the Handbook can show real examples. */
+      definitionIds: string[];
+      patternId?: string;
+    }
   | {
       type: 'STACK_REJECTED';
       cardIds: string[];
