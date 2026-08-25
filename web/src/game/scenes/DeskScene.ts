@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
+import { resolveDropIntent } from '@/domain/dropIntent';
 import { buildMatchInputs, matchPattern } from '@/domain/recipes';
 import type { CardDefinition, CardInstance } from '@/domain/types';
 import { resolveDropTarget, type DropTarget } from '@/game/input/dropResolver';
@@ -59,6 +60,7 @@ export class DeskScene extends Phaser.Scene {
     this.drawDeskSurface();
 
     this.syncViews();
+    this.frameDesk();
     this.installInput();
 
     this.session.subscribe((result) => {
@@ -76,11 +78,23 @@ export class DeskScene extends Phaser.Scene {
           __congressGameCamera?: {
             getZoom: () => number;
             getViewY: (cardId: string) => number | undefined;
+            getScreenPoint: (cardId: string) => { x: number; y: number } | undefined;
           };
         }
       ).__congressGameCamera = {
         getZoom: () => this.cameras.main.zoom,
         getViewY: (cardId: string) => this.views.get(cardId)?.y,
+        getScreenPoint: (cardId: string) => {
+          const view = this.views.get(cardId);
+          if (!view) return undefined;
+          // `worldView` is the visible world rectangle, which already accounts for
+          // Phaser zooming about the camera midpoint. `scrollX` alone does not.
+          const camera = this.cameras.main;
+          return {
+            x: (view.x - camera.worldView.x) * camera.zoom,
+            y: (view.y - camera.worldView.y) * camera.zoom,
+          };
+        },
       };
     }
   }
@@ -96,6 +110,36 @@ export class DeskScene extends Phaser.Scene {
 
   private get reducedMotion(): boolean {
     return this.session.getState().settings.reducedMotion;
+  }
+
+  /**
+   * Open with every card on screen.
+   *
+   * A card the player cannot see is a card they cannot use, and the spike has no
+   * tutorial to tell them to pan. Zoom stays inside the approved 0.65–1.5 clamp.
+   */
+  private frameDesk(): void {
+    const state = this.session.getState();
+    if (state.cards.length === 0) return;
+
+    const left = Math.min(...state.cards.map((card) => card.x)) - CARD_WIDTH / 2;
+    const right = Math.max(...state.cards.map((card) => card.x)) + CARD_WIDTH / 2;
+    const top = Math.min(...state.cards.map((card) => card.y)) - CARD_HEIGHT / 2;
+    const bottom = Math.max(...state.cards.map((card) => card.y)) + CARD_HEIGHT / 2;
+
+    const camera = this.cameras.main;
+    const margin = 24;
+    const zoom = Phaser.Math.Clamp(
+      Math.min(
+        (camera.width - margin * 2) / (right - left),
+        (camera.height - margin * 2) / (bottom - top),
+      ),
+      ZOOM_MIN,
+      ZOOM_MAX,
+    );
+
+    camera.setZoom(zoom);
+    camera.centerOn((left + right) / 2, (top + bottom) / 2);
   }
 
   private drawDeskSurface(): void {
@@ -212,6 +256,10 @@ export class DeskScene extends Phaser.Scene {
       .filter((card): card is CardInstance => card !== undefined);
     if (members.some((card) => card.status !== 'idle')) return false;
 
+    // Studying a Tactic is a valid drop even though it matches no pattern.
+    const intent = resolveDropIntent(state, this.session.getScenario(), cardId, stackId);
+    if (intent?.type === 'START_ASSIGNMENT') return true;
+
     const inputs = buildMatchInputs(members, this.session.getScenario(), state.player.party);
     return Boolean(
       matchPattern(
@@ -271,11 +319,17 @@ export class DeskScene extends Phaser.Scene {
         return;
       }
 
-      const result = this.session.dispatch({
-        type: 'STACK_CARD',
-        cardId: view.cardId,
-        targetStackId: targetId,
-      });
+      const intent = resolveDropIntent(
+        this.session.getState(),
+        this.session.getScenario(),
+        view.cardId,
+        targetId,
+      );
+      if (!intent) {
+        this.bounceBack(view);
+        return;
+      }
+      const result = this.session.dispatch(intent);
 
       const rejected = result.events.find(
         (event) => event.type === 'STACK_REJECTED' || event.type === 'COMMAND_REJECTED',

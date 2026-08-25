@@ -17,6 +17,8 @@ export interface MatchInput {
 export interface PatternSlotAssignment {
   slotIndex: number;
   cardDefinitionIds: string[];
+  /** The exact cards that filled this slot, so the engine knows what survives. */
+  cardInstanceIds: string[];
 }
 
 export interface PatternMatch {
@@ -173,12 +175,16 @@ function assign(slots: RecipeSlot[], inputs: MatchInput[]): PatternSlotAssignmen
 
   if (!place(0)) return undefined;
 
-  return slots.map((_, slotIndex) => ({
-    slotIndex,
-    cardDefinitionIds: units
-      .map((owner, unitIndex) => (owner === slotIndex ? inputs[chosen[unitIndex]].definition.id : undefined))
-      .filter((id): id is string => id !== undefined),
-  }));
+  return slots.map((_, slotIndex) => {
+    const filled = units
+      .map((owner, unitIndex) => (owner === slotIndex ? inputs[chosen[unitIndex]] : undefined))
+      .filter((input): input is MatchInput => input !== undefined);
+    return {
+      slotIndex,
+      cardDefinitionIds: filled.map((input) => input.definition.id),
+      cardInstanceIds: filled.map((input) => input.instanceId),
+    };
+  });
 }
 
 /**

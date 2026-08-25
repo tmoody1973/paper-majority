@@ -273,13 +273,38 @@ function completeAction(
     changes[key] = (changes[key] ?? 0) + amount;
   }
 
-  const consumedIds = memberCards.map((card) => card.id);
+  // A catalyst slot takes part in the rule but is not used up. The Working Bill is
+  // the obvious one: approaching a member office must not destroy your bill.
+  const survivingIds = new Set(
+    found.assignments
+      .filter((assignment) => found.pattern.slots[assignment.slotIndex]?.consumed === false)
+      .flatMap((assignment) => assignment.cardInstanceIds),
+  );
+  const consumedIds = memberCards
+    .map((card) => card.id)
+    .filter((id) => !survivingIds.has(id));
+
+  const survivors = memberCards
+    .filter((card) => survivingIds.has(card.id))
+    .map((card, index) => ({
+      ...card,
+      status: 'idle' as const,
+      remainingMs: 0,
+      stackId: `stack-${card.id}`,
+      // Set the returned card down beside the result rather than under it.
+      x: anchor.x - 210 * (index + 1),
+      y: anchor.y,
+    }));
+
   const next: TermState = {
     ...state,
     cardSeq: seq,
     resources: addEffects(state.resources, changes),
     cards: [
-      ...state.cards.filter((card) => !consumedIds.includes(card.id)),
+      ...state.cards.filter(
+        (card) => !consumedIds.includes(card.id) && !survivingIds.has(card.id),
+      ),
+      ...survivors,
       {
         id: producedId,
         definitionId: resolved.definitionId,
@@ -292,6 +317,7 @@ function completeAction(
     ],
     stacks: [
       ...state.stacks.filter((candidate) => candidate.id !== stackId),
+      ...survivors.map((card) => ({ id: card.stackId, cardIds: [card.id] })),
       { id: producedStackId, cardIds: [producedId] },
     ],
   };

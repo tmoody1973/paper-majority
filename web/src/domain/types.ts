@@ -192,6 +192,14 @@ export interface RecipeSlot {
   anyTags?: string[];
   sourceClasses?: SourceClass[];
   quantity: 1 | 2 | 3;
+  /**
+   * Whether this slot's cards are used up. Defaults to true.
+   *
+   * A catalyst slot (`false`) takes part in the rule and comes back to the desk when
+   * the work finishes. The Working Bill is the obvious one: approaching a member
+   * office must not destroy your bill.
+   */
+  consumed?: boolean;
 }
 
 export type DerivedResolverId =

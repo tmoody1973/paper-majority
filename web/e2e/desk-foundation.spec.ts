@@ -13,16 +13,23 @@ async function getState(page: Page): Promise<TermState> {
   return page.evaluate(() => window.__congressGameTestApi!.getState());
 }
 
-/** Screen coordinates of a card, via the canvas rect plus the card's desk position. */
+/**
+ * Where a card actually sits on screen.
+ *
+ * Asks the camera, rather than assuming zoom 1 and no scroll — the desk now opens
+ * framed to fit, so the naive mapping would click empty space.
+ */
 async function cardScreenPoint(page: Page, cardId: string) {
   const canvas = await page.locator('canvas').boundingBox();
   if (!canvas) throw new Error('canvas has no bounding box');
-  const rect = await page.evaluate(
-    (id) => window.__congressGameTestApi!.getCardRect(id),
-    cardId,
-  );
-  if (!rect) throw new Error(`no card ${cardId}`);
-  return { x: canvas.x + rect.x, y: canvas.y + rect.y };
+  const point = await page.evaluate((id) => {
+    const probe = (window as unknown as {
+      __congressGameCamera?: { getScreenPoint: (c: string) => { x: number; y: number } | undefined };
+    }).__congressGameCamera;
+    return probe?.getScreenPoint(id);
+  }, cardId);
+  if (!point) throw new Error(`no card ${cardId}`);
+  return { x: canvas.x + point.x, y: canvas.y + point.y };
 }
 
 async function cardIdFor(page: Page, definitionId: string, skip = 0): Promise<string> {
@@ -45,6 +52,8 @@ test.describe('desk foundation', () => {
 
     await page.goto(FIXTURE_URL);
     await page.waitForFunction(() => Boolean(window.__congressGameTestApi));
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
     await expect(page.locator('canvas')).toBeVisible({ timeout: 15_000 });
   });
 
@@ -64,11 +73,11 @@ test.describe('desk foundation', () => {
     const before = await cardScreenPoint(page, cardId);
     const canvas = (await page.locator('canvas').boundingBox())!;
 
-    // Drop into genuinely empty desk space. Every card sits at y >= 74, so the strip
-    // above them is free — a drop onto a neighbour would stack instead of move.
+    // Drop into genuinely empty desk space — the strip above the top row. A drop onto
+    // a neighbour would stack instead of move.
     await page.mouse.move(before.x, before.y);
     await page.mouse.down();
-    await page.mouse.move(canvas.x + 300, canvas.y + 40, { steps: 16 });
+    await page.mouse.move(before.x, canvas.y + 8, { steps: 16 });
     await page.mouse.up();
 
     // The engine holds the authoritative position, so assert on that rather than on
@@ -145,6 +154,65 @@ test.describe('desk foundation', () => {
         return state.stacks.some((stack) => stack.cardIds.length === 2);
       })
       .toBe(true);
+  });
+
+  test('dragging Staff onto a Tactic starts Study Tactic', async ({ page }) => {
+    // Regression: the drag path only ever dispatched STACK_CARD. Staff + Tactic
+    // matches no pattern, so studying a Tactic was unreachable with a mouse — the
+    // one gesture the design says the player must perform.
+    const aideId = await cardIdFor(page, 'staff-policy-aide');
+    const tacticId = await cardIdFor(page, 'tactic-bipartisan-working-group');
+
+    const from = await cardScreenPoint(page, aideId);
+    const to = await cardScreenPoint(page, tacticId);
+
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(to.x, to.y, { steps: 16 });
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => {
+        const state = await getState(page);
+        const aide = state.cards.find((card) => card.id === aideId);
+        const tactic = state.cards.find((card) => card.id === tacticId);
+        return aide?.status === 'working' && tactic?.status === 'working';
+      })
+      .toBe(true);
+
+    const state = await getState(page);
+    const stack = state.stacks.find((candidate) => candidate.cardIds.includes(tacticId));
+    expect(stack?.activeActionId).toBe('study:expansion-bipartisan-outreach');
+    // Studying costs the declared Staff Attention and nothing else.
+    expect(state.resources.staffAttention).toBe(2);
+    expect(state.unlockedSlotExpansions).toEqual({});
+  });
+
+  test('one Working Bill can reach both member offices', async ({ page }) => {
+    // Regression: outreach consumed the bill, so there was nothing left to try on the
+    // second office. Your bill must survive a conversation.
+    const billId = await cardIdFor(page, 'institution-working-bill');
+    const allyId = await cardIdFor(page, 'coalition-office-hillcrest');
+
+    await page.evaluate(
+      ([bill, ally]) => {
+        const api = window.__congressGameTestApi!;
+        const target = api.getState().cards.find((card) => card.id === ally)!;
+        api.dispatch({ type: 'STACK_CARD', cardId: bill, targetStackId: target.stackId });
+        api.dispatch({ type: 'SET_PAUSED', paused: false });
+        for (let elapsed = 0; elapsed < 7000; elapsed += 1000) {
+          api.dispatch({ type: 'TICK', deltaMs: 1000 });
+        }
+        api.dispatch({ type: 'SET_PAUSED', paused: true });
+      },
+      [billId, allyId],
+    );
+
+    const state = await getState(page);
+    expect(state.cards.some((card) => card.definitionId === 'institution-working-bill')).toBe(true);
+    expect(state.cards.some((card) => card.definitionId === 'coalition-outreach-result')).toBe(true);
+    const bill = state.cards.find((card) => card.definitionId === 'institution-working-bill')!;
+    expect(bill.status).toBe('idle');
   });
 
   test('an invalid stack is rejected and changes nothing', async ({ page }) => {

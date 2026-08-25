@@ -227,7 +227,7 @@ const patterns: RecipePattern[] = [
   {
     id: 'pattern-coalition-outreach',
     slots: [
-      { kind: 'institution', requiredTags: ['working-bill'], quantity: 1 },
+      { kind: 'institution', requiredTags: ['working-bill'], quantity: 1, consumed: false },
       { kind: 'coalition', anyTags: ['same-party'], quantity: 1 },
     ],
     output: {

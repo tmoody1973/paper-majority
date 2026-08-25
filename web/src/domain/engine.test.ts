@@ -590,3 +590,82 @@ describe('time-sensitive cards', () => {
     expect(rejection.reason).toBe('card-expired');
   });
 });
+
+describe('catalyst inputs survive their pattern', () => {
+  function runToCompletion(state: TermState, ms: number) {
+    const commands: GameCommand[] = [{ type: 'SET_PAUSED', paused: false }];
+    for (let elapsed = 0; elapsed < ms; elapsed += 1_000) {
+      commands.push({ type: 'TICK', deltaMs: 1_000 });
+    }
+    return run(state, ...commands);
+  }
+
+  it('keeps the Working Bill on the desk after outreach completes', () => {
+    const start = makeState(['institution-working-bill', 'coalition-office-fifth-district']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    const definitions = done.state.cards.map((card) => card.definitionId).sort();
+    expect(definitions).toEqual(['coalition-outreach-result', 'institution-working-bill']);
+    expectOneStackPerCard(done.state);
+  });
+
+  it('returns the surviving bill to idle in a stack of its own', () => {
+    const start = makeState(['institution-working-bill', 'coalition-office-fifth-district']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    const bill = done.state.cards.find((c) => c.definitionId === 'institution-working-bill')!;
+    expect(bill.status).toBe('idle');
+    expect(bill.remainingMs).toBe(0);
+    expect(done.state.stacks.find((s) => s.id === bill.stackId)?.cardIds).toEqual([bill.id]);
+  });
+
+  it('lets one bill reach a second office, which is the whole point', () => {
+    const start = makeState([
+      'institution-working-bill',
+      'coalition-office-fifth-district',
+      'coalition-office-fourth-district',
+      'tactic-bipartisan-working-group',
+    ]);
+
+    const first = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const afterFirst = runToCompletion(first.state, 6_000);
+    const bill = afterFirst.state.cards.find((c) => c.definitionId === 'institution-working-bill')!;
+    const opposing = afterFirst.state.cards.find(
+      (c) => c.definitionId === 'coalition-office-fourth-district',
+    )!;
+
+    // Still refused before the Tactic, and still free.
+    const refused = run(afterFirst.state, {
+      type: 'STACK_CARD',
+      cardId: bill.id,
+      targetStackId: opposing.stackId,
+    });
+    expect(typesOf(refused.events)).toContain('STACK_REJECTED');
+
+    // After the expansion the same bill reaches the second office.
+    const tactic = afterFirst.state.cards.find(
+      (c) => c.definitionId === 'tactic-bipartisan-working-group',
+    )!;
+    const activated = run(afterFirst.state, {
+      type: 'ACTIVATE_TACTIC',
+      tacticCardId: tactic.id,
+      expansionId: 'expansion-bipartisan-outreach',
+    });
+    const retry = run(activated.state, {
+      type: 'STACK_CARD',
+      cardId: bill.id,
+      targetStackId: opposing.stackId,
+    });
+    expect(typesOf(retry.events)).toContain('STACK_ACCEPTED');
+  });
+
+  it('still consumes the inputs of an ordinary pattern', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    expect(done.state.cards.map((c) => c.definitionId)).toEqual(['evidence-housing-summary']);
+  });
+});
