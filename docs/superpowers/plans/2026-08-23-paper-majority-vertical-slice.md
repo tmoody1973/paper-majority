@@ -303,7 +303,7 @@ git commit -m "chore: bootstrap congressional game web app"
 - Consumes: the Task 1 TypeScript and Vitest harness.
 - Produces: canonical domain types, `createRng(seed: number): () => number`, `createInitialState(input: InitialStateInput): TermState`, `GameCommand`, and `GameEvent` for every later domain/UI task.
 
-- [ ] **Step 1: Write failing state and determinism tests**
+- [x] **Step 1: Write failing state and determinism tests**
 
 Test these contracts:
 
@@ -334,7 +334,7 @@ npm --prefix web run test:run -- src/domain/initialState.test.ts src/domain/rng.
 
 Expected: FAIL because the modules do not exist.
 
-- [ ] **Step 2: Add the canonical domain contracts**
+- [x] **Step 2: Add the canonical domain contracts**
 
 Define these unions and interfaces in `types.ts`; reuse them everywhere rather than duplicating shapes:
 
@@ -597,7 +597,7 @@ export interface ScenarioDefinition {
 }
 ```
 
-- [ ] **Step 3: Define the command and event boundaries**
+- [x] **Step 3: Define the command and event boundaries**
 
 In `commands.ts`, define a discriminated `GameCommand` union with exact payloads for:
 
@@ -621,7 +621,7 @@ REELECTION_RESOLVED, COMMAND_REJECTED
 
 Every rejected command must include a stable machine-readable `reason` and a concise player-facing `message`.
 
-- [ ] **Step 4: Implement seeded setup**
+- [x] **Step 4: Implement seeded setup**
 
 Implement `createRng(seed: number): () => number` with a small documented PRNG such as Mulberry32. Implement `drawOpponentStrength(roll: number): OpponentStrength` with `roll < 0.25` as Weak, `roll < 0.75` as Moderate and all remaining values as Strong. Implement:
 
@@ -640,7 +640,7 @@ export function createInitialState(input: InitialStateInput): TermState;
 
 Reject an unknown district and duplicate governing values. Start with the three definitions in `startingCardDefinitionIds`, one stack per card, the game paused, empty `discoveredPatternIds`, `unlockedSlotExpansions` and `electionEffects`, standard settings, and resources `{ staffAttention: 3, politicalCapital: 3, districtTrust: 60, billMomentum: 10, policyIntegrity: 60, staffMorale: 70 }`. Draw the opponent once from the seeded stream during setup, store it at `player.election`, advance `rngCursor` exactly once and reveal it in the Week 1 interface. `PlayerProfile` is stored outside `TermState`; lifetime discoveries never change matching, randomness or outcomes inside a term. No demographic field may be read during opponent selection.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 ```bash
 npm --prefix web run test:run -- src/domain/initialState.test.ts src/domain/rng.test.ts
