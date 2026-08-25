@@ -9,6 +9,31 @@ about Congress, or about how the game was built.
 
 ---
 
+## The one-page version
+
+If you read nothing else, read this.
+
+| | |
+|---|---|
+| **The question** | Can a stranger work out the rules by trying things — and does it feel good? |
+| **Open** | `http://127.0.0.1:3001/?fixture=interaction-spike` (hard-reload between testers) |
+| **Say** | *"You run a congressional office. Drag cards together."* Nothing more. |
+| **Show** | Drag **Policy Aide** onto **Rent Burden Report**. Once. Don't explain it. |
+| **Then** | Hand over the mouse. Say nothing for ten minutes. Don't rescue them. |
+| **Write** | What they do, and what they say out loud, word for word. |
+| **Ask** | The six questions in Part 6, in order, word for word. |
+
+**The six things you're measuring:** can they predict other pairs · do they find rules
+without the Handbook · can they explain what the Tactic changed · can they read a card
+at a glance · do they blame a card or a number · do they want another go.
+
+**The one thing with no score:** watch for the moment they stop guessing and reach for
+a specific card on purpose.
+
+Everything below is the detail behind those seven lines.
+
+---
+
 ## Part 1 — What is this thing?
 
 ### The game, in three sentences
@@ -100,8 +125,20 @@ You should see:
   Integrity, Staff Morale)
 - **Thirteen cards** on a beige desk, in three rows
 - A panel on the right headed **Your office**
+- Below that, a box headed **What the words mean**, already open
 
 If any of that is missing, stop and get it fixed. Do not run a session on a broken build.
+
+### Two things the game does that you should know about
+
+**Resting the mouse on a card explains it.** The right-hand panel changes to describe
+whatever card the pointer is over — what it is, where its content came from, and what
+the office has learned to do with it. Move the mouse off the desk and the office brief
+comes back. Clicking a card pins it open.
+
+**The words explain themselves.** That **What the words mean** box lists every card
+family, every badge and every number in plain English. It is always on screen. You do
+not have to explain any vocabulary — and you shouldn't.
 
 ### Reset between testers
 
@@ -157,6 +194,10 @@ in the same place, you have found the thing that needs fixing. If you rescue the
 have found nothing.
 
 The only thing you may say is: *"There's no wrong move — just try things."*
+
+**The right-hand panel will keep changing as they move the mouse.** That is the game
+explaining cards to them, not a glitch. Let it happen — learning the vocabulary is
+allowed. What is *not* allowed is you explaining it.
 
 ### Step 4 — Watch and write
 
@@ -281,23 +322,32 @@ the office that refused them?
 
 ---
 
-### 4. Can they read a card without clicking it?
+### 4. Can they read a card at a glance?
 
-**When:** near the end. Point at any card they have not clicked.
+**When:** near the end.
+
+> **Do this first, or the answer is handed to them.** Ask them to move the mouse off
+> the desk — down to the bottom of the screen, or onto the right-hand panel. The panel
+> must be showing **Your office**, not a card. Then point at a card *with your finger,
+> not the cursor*.
 
 **Ask:** *"What kind of card is this? And is that a real fact, or made up for the game?"*
 
 | | |
 |---|---|
-| ✅ **Good** | "It's Evidence, and it says Official Record" |
-| ❌ **Bad** | They have to click it to answer |
+| ✅ **Good** | "It's Evidence, and it says Official Record" — read off the card itself |
+| ❌ **Bad** | They move the mouse onto it, or click it, before they can answer |
 
 **Why it matters:** on a crowded desk, players must read cards at a glance. Also — this
 game mixes real public information with invented story, and it must always be obvious
 which is which.
 
-**Also write down:** did they click any card to open the detail panel? That is allowed;
-it just must not be *necessary*.
+**The in-game key is not cheating here.** It explains what "Evidence" *means*. It does
+not tell them which family *this* card is. Reading the card and then checking the key
+is exactly what it is for.
+
+**Also write down:** whether they had been using the hover panel a lot during play.
+That is allowed and expected — it just must not be the only way they can answer.
 
 **Bar:** 9 of 10 get both.
 
@@ -376,7 +426,9 @@ paragraph says what you think it means.
 
 ## Part 9 — Words testers might ask about
 
-Use these answers **after** the session, not during it.
+The game already shows all of this in the **What the words mean** box, on screen the
+whole time. This table is here so *you* are not caught out, and for questions asked
+**after** the session — not during it.
 
 | Word | Plain answer |
 |---|---|

@@ -72,13 +72,16 @@ Copy this block once per tester. Ten blocks total.
 - Did they find Study Tactic without help? yes / no
 - Did they retry the office that was refused earlier? yes / no
 
-**4. Card reading, inspector closed.** Point at one card. Ask: *"What kind of card is this, and is that a real fact or part of the simulation?"*
+**4. Card reading, at a glance.** First have them move the mouse OFF the desk — the
+right panel must read **Your office**, not a card. Then point with your finger, not the
+cursor. Ask: *"What kind of card is this, and is that a real fact or part of the simulation?"*
 
 - Card shown: ____________________
 - Family named: ____________________ → correct? yes / no
 - Information class named: ____________________ → correct? yes / no
 - **Both correct?** yes / no  *(threshold 4)*
-- Opened the card inspector at any point? yes / no
+- Did they reach for the mouse before answering? yes / no
+- Roughly how much did they lean on the hover panel during play? not at all / sometimes / constantly
 
 **5. Cause of a setback.** Ask: *"Something went against you. What caused it?"*
 
