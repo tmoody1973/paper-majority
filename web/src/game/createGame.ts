@@ -20,6 +20,13 @@ export function createGame(parent: HTMLElement, data: DeskSceneData): Phaser.Gam
     },
     scene: [BootScene, PreloadScene, DeskScene],
     render: { antialias: true },
+    // Phase 1 ships no sound. Without this Phaser opens a WebAudio context, and
+    // every teardown — a hot reload, a StrictMode double-mount, an unmount — races
+    // to suspend a context that is already closed:
+    //   InvalidStateError: Cannot suspend a closed AudioContext.
+    // Sound is specified for a later phase; it will need its own lifecycle handling
+    // when it arrives.
+    audio: { noAudio: true },
     // No network, no analytics, no third-party service reaches the game runtime.
     banner: false,
   });
