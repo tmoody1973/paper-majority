@@ -16,16 +16,25 @@ If you read nothing else, read this.
 | | |
 |---|---|
 | **The question** | Can a stranger work out the rules by trying things — and does it feel good? |
-| **Open** | `http://127.0.0.1:3001/?fixture=interaction-spike` (hard-reload between testers) |
+| **Open** | `http://127.0.0.1:3001/?fixture=interaction-spike` — press **Cmd+Shift+R** (or **Ctrl+Shift+R** on Windows) before each new tester, so the cards reset |
 | **Say** | *"You run a congressional office. Drag cards together."* Nothing more. |
 | **Show** | Drag **Policy Aide** onto **Rent Burden Report**. Once. Don't explain it. |
 | **Then** | Hand over the mouse. Say nothing for ten minutes. Don't rescue them. |
 | **Write** | What they do, and what they say out loud, word for word. |
 | **Ask** | The six questions in Part 6, in order, word for word. |
 
-**The six things you're measuring:** can they predict other pairs · do they find rules
-without the Handbook · can they explain what the Tactic changed · can they read a card
-at a glance · do they blame a card or a number · do they want another go.
+**The six things you're measuring:**
+
+1. Can they guess which other pairs of cards will work?
+2. Do they find rules on their own, without opening the **Staff Handbook** — the button
+   at the top right that lists rules they have already found?
+3. After they study **Bipartisan Working Group** — a card that teaches their office a
+   new way of working — can they say what it changed?
+4. Can they tell what kind of card something is at a glance, and whether it is real
+   information or invented for the game?
+5. When something goes wrong, do they blame something they saw on the desk, or just a
+   number going down?
+6. Do they want to play again?
 
 **The one thing with no score:** watch for the moment they stop guessing and reach for
 a specific card on purpose.
