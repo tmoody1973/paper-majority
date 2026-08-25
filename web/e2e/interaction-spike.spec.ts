@@ -339,6 +339,47 @@ test.describe('interaction spike', () => {
     expect(twoThirds).toBeGreaterThan(third!);
   });
 
+  test('the inspector explains a card without leaking undiscovered rules', async ({ page }) => {
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
+
+    const clickCard = async (definitionId: string) => {
+      const canvas = (await page.locator('canvas').boundingBox())!;
+      const point = await page.evaluate((id) => {
+        const api = window.__congressGameTestApi!;
+        const card = api.getState().cards.find((c) => c.definitionId === id)!;
+        const probe = (window as unknown as {
+          __congressGameCamera: { getScreenPoint: (c: string) => { x: number; y: number } };
+        }).__congressGameCamera;
+        return probe.getScreenPoint(card.id);
+      }, definitionId);
+      await page.mouse.click(canvas.x + point.x, canvas.y + point.y);
+    };
+
+    await clickCard('institution-working-bill');
+    await expect(page.getByTestId('inspector-plain')).toContainText(/bill you are building/i);
+    await expect(page.getByTestId('inspector-simulated')).toContainText(/in this simulation/i);
+
+    // Nothing is discovered yet, so no rule may be advertised anywhere in the panel.
+    await expect(page.getByTestId('inspector-uses')).toContainText(/not found a use/i);
+    await expect(page.getByTestId('inspector-uses')).not.toContainText(/Outreach Result/);
+
+    // Discover one rule; only that one appears.
+    const aide = await cardIdFor(page, 'staff-policy-aide');
+    const report = await cardIdFor(page, 'evidence-rent-burden-report');
+    await combine(page, aide, report);
+
+    await clickCard('evidence-tenant-survey');
+    await expect(page.getByTestId('inspector-uses')).toContainText(/Evidence Summary/);
+    await expect(page.getByTestId('inspector-method')).toContainText(/worked out/i);
+
+    await clickCard('coalition-office-ridgeline');
+    await expect(page.getByTestId('inspector-uses')).toContainText(/not found a use/i);
+
+    await page.getByTestId('inspector-close').click();
+    await expect(page.getByLabel('Your office')).toBeVisible();
+  });
+
   test('a rejected stack separates without changing state', async ({ page }) => {
     const before = await getState(page);
     const voucher = await cardIdFor(page, 'policy-housing-choice-voucher');

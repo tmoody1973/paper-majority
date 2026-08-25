@@ -4,10 +4,12 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AccessibleCardControls } from '@/components/AccessibleCardControls';
+import { CardInspector } from '@/components/CardInspector';
 import { Hud } from '@/components/Hud';
 import { OfficeBrief } from '@/components/OfficeBrief';
 import { StaffHandbook } from '@/components/StaffHandbook';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
+import { describeCard } from '@/domain/cardDetail';
 import { buildHandbook } from '@/domain/selectors';
 import type { TermState } from '@/domain/types';
 import { createGameSession, type GameSession } from '@/game/session';
@@ -44,6 +46,7 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
   const [state, setState] = useState<TermState>(() => session.getState());
   const [lastResult, setLastResult] = useState<string>('');
   const [handbookOpen, setHandbookOpen] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | undefined>();
 
   useEffect(() => session.subscribe((result) => setState(result.state)), [session]);
 
@@ -76,6 +79,10 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
   }, [session]);
 
   const onResult = useCallback((phrase: string) => setLastResult(phrase), []);
+  const onSelect = useCallback((cardId: string) => setSelectedCardId(cardId), []);
+
+  // A selected card that has been consumed by a transformation is no longer there.
+  const detail = selectedCardId ? describeCard(state, scenario, selectedCardId) : undefined;
 
   const handbook = useMemo(() => buildHandbook(state, scenario), [state, scenario]);
 
@@ -96,11 +103,15 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
           data-testid="game-canvas-region"
           aria-label="Congressional desk"
         >
-          <GameCanvas session={session} onResult={onResult} />
+          <GameCanvas session={session} onResult={onResult} onSelect={onSelect} />
         </section>
 
         <aside className="shell__side">
-          <OfficeBrief state={state} scenario={scenario} />
+          {detail ? (
+            <CardInspector detail={detail} onClose={() => setSelectedCardId(undefined)} />
+          ) : (
+            <OfficeBrief state={state} scenario={scenario} />
+          )}
           {handbookOpen ? (
             <StaffHandbook view={handbook} />
           ) : (

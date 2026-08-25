@@ -23,6 +23,7 @@ const STACK_OFFSET_Y = 34;
 export interface DeskSceneData {
   session: GameSession;
   onResult: (phrase: string) => void;
+  onSelect: (cardId: string) => void;
 }
 
 export class DeskScene extends Phaser.Scene {
@@ -30,6 +31,7 @@ export class DeskScene extends Phaser.Scene {
 
   private session!: GameSession;
   private onResult!: (phrase: string) => void;
+  private onSelect!: (cardId: string) => void;
   private views = new Map<string, CardView>();
   private dragOrigin = { x: 0, y: 0 };
   /**
@@ -53,6 +55,7 @@ export class DeskScene extends Phaser.Scene {
     if (!context?.session) throw new Error('DeskScene started without a GameSession');
     this.session = context.session;
     this.onResult = context.onResult;
+    this.onSelect = context.onSelect ?? (() => undefined);
   }
 
   create(): void {
@@ -341,6 +344,14 @@ export class DeskScene extends Phaser.Scene {
         return;
       }
       this.snap(view);
+    });
+
+    // A press that never turned into a drag is a tap: open the inspector.
+    this.input.on('gameobjectup', (pointer: Phaser.Input.Pointer, gameObject: unknown) => {
+      const view = gameObject as CardView;
+      if (!view?.cardId) return;
+      if (pointer.getDistance() > 8) return;
+      this.onSelect(view.cardId);
     });
 
     this.input.on(

@@ -110,6 +110,13 @@ export interface CardDefinition {
   /** Short player-language subtitle that surfaces a match-relevant tag on the card face. */
   contextualSubtitle?: string;
   /**
+   * One plain sentence saying what this card is, for the inspector.
+   *
+   * It describes the thing, never the rules — what a card combines with is discovery
+   * state and belongs to the Staff Handbook.
+   */
+  plainLanguage?: string;
+  /**
    * Official public-record party of a real member office. Only Coalition cards carry it,
    * and the engine reads it solely to compute the `same-party` / `opposing-party` tags.
    */

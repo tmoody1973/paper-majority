@@ -152,7 +152,8 @@
         "sourceClass": "simulated",
         "citations": [],
         "workload": 1,
-        "contextualSubtitle": "Policy staff"
+        "contextualSubtitle": "Policy staff",
+        "plainLanguage": "A staffer who reads reports and turns them into something your office can use. Assigning them takes up their attention until the work is done."
       },
       {
         "id": "evidence-rent-burden-report",
@@ -165,7 +166,8 @@
         "sourceClass": "official",
         "citations": [],
         "workload": 0,
-        "contextualSubtitle": "Housing evidence"
+        "contextualSubtitle": "Housing evidence",
+        "plainLanguage": "A published record of how much of their income renters here spend on housing. Official records carry weight with a committee."
       },
       {
         "id": "evidence-tenant-survey",
@@ -178,7 +180,8 @@
         "sourceClass": "derived",
         "citations": [],
         "workload": 0,
-        "contextualSubtitle": "Housing evidence"
+        "contextualSubtitle": "Housing evidence",
+        "plainLanguage": "Answers collected from renters in the district and summarised. It speaks to local experience rather than to a committee."
       },
       {
         "id": "policy-housing-choice-voucher",
@@ -191,7 +194,8 @@
         "sourceClass": "official",
         "citations": [],
         "workload": 1,
-        "contextualSubtitle": "Renter policy"
+        "contextualSubtitle": "Renter policy",
+        "plainLanguage": "A policy idea that helps renters afford housing. On its own it is only an idea \u2014 it has to be written into your bill."
       },
       {
         "id": "institution-working-bill",
@@ -203,7 +207,8 @@
         "sourceClass": "simulated",
         "citations": [],
         "workload": 0,
-        "contextualSubtitle": "Your bill"
+        "contextualSubtitle": "Your housing bill",
+        "plainLanguage": "The bill you are building this term. It starts nearly empty. You add provisions to it and carry it to other offices for support."
       },
       {
         "id": "coalition-office-hillcrest",
@@ -217,7 +222,8 @@
         "citations": [],
         "workload": 1,
         "officeParty": "democratic",
-        "contextualSubtitle": "Member office"
+        "contextualSubtitle": "Member office",
+        "plainLanguage": "Another representative\u2019s office. Their support is what moves a bill. Whether they will talk to you depends on your relationship, not on their district."
       },
       {
         "id": "coalition-office-ridgeline",
@@ -231,7 +237,8 @@
         "citations": [],
         "workload": 1,
         "officeParty": "republican",
-        "contextualSubtitle": "Member office"
+        "contextualSubtitle": "Member office",
+        "plainLanguage": "Another representative\u2019s office. Their support is what moves a bill. Whether they will talk to you depends on your relationship, not on their district."
       },
       {
         "id": "tactic-bipartisan-working-group",
@@ -243,7 +250,8 @@
         "sourceClass": "simulated",
         "citations": [],
         "workload": 1,
-        "contextualSubtitle": "Reusable method"
+        "contextualSubtitle": "Reusable method",
+        "plainLanguage": "A way of working that your office can learn. Once a staffer has studied it, it changes a rule for the rest of the term."
       },
       {
         "id": "constituency-urgent-renter-concern",
@@ -256,7 +264,8 @@
         "sourceClass": "simulated",
         "citations": [],
         "workload": 1,
-        "contextualSubtitle": "District concern"
+        "contextualSubtitle": "District concern",
+        "plainLanguage": "Someone back home needs an answer, and they are waiting. Ignore it long enough and your district notices."
       },
       {
         "id": "evidence-housing-summary",
@@ -269,7 +278,8 @@
         "sourceClass": "derived",
         "citations": [],
         "workload": 0,
-        "contextualSubtitle": "Summarised evidence"
+        "contextualSubtitle": "Summarised for drafting",
+        "plainLanguage": "Your office\u2019s own write-up of the evidence, short enough to act on. This is the form evidence needs to be in before it can become bill language."
       },
       {
         "id": "policy-drafted-provision",
@@ -282,7 +292,8 @@
         "sourceClass": "simulated",
         "citations": [],
         "workload": 0,
-        "contextualSubtitle": "Bill provision"
+        "contextualSubtitle": "Bill language",
+        "plainLanguage": "A policy idea written up properly, backed by evidence. This is what actually goes into a bill."
       },
       {
         "id": "coalition-outreach-result",
@@ -294,7 +305,8 @@
         "sourceClass": "simulated",
         "citations": [],
         "workload": 0,
-        "contextualSubtitle": "Member response"
+        "contextualSubtitle": "Member answer",
+        "plainLanguage": "What an office said when you brought them your bill. Their answer exists only in this simulation."
       }
     ],
     "patterns": [

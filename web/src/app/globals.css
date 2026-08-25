@@ -237,6 +237,108 @@ select:focus-visible {
   padding-top: 8px;
 }
 
+/* --------------------------------------------------------------- inspector */
+
+.inspector {
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.inspector__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inspector__title {
+  margin: 0;
+  font-size: 17px;
+}
+
+.inspector__meta {
+  margin: 3px 0 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inspector__family,
+.inspector__source {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  padding: 1px 5px;
+  border: 1px solid var(--ink-soft);
+  color: var(--ink-soft);
+}
+
+/* Information class keeps its own colour, independent of the card family. */
+.inspector__source--official {
+  border-color: var(--official);
+  color: var(--official);
+}
+.inspector__source--derived {
+  border-color: var(--derived);
+  color: var(--derived);
+}
+.inspector__source--simulated {
+  border-color: var(--simulated);
+  color: var(--simulated);
+}
+
+.inspector__header button {
+  padding: 2px 9px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.inspector__plain {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.inspector__note {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.inspector__note--simulated {
+  border-left: 3px solid var(--simulated);
+  padding-left: 7px;
+}
+
+.inspector__uses h3 {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.inspector__uses ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.inspector__cost {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--rule);
+  padding-top: 7px;
+}
+
 /* ------------------------------------------------------------- handbook */
 
 .handbook__header h2,
