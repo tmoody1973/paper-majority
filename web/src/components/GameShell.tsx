@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AccessibleCardControls } from '@/components/AccessibleCardControls';
 import { Hud } from '@/components/Hud';
+import { OfficeBrief } from '@/components/OfficeBrief';
 import { StaffHandbook } from '@/components/StaffHandbook';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
 import { buildHandbook } from '@/domain/selectors';
@@ -99,6 +100,7 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
         </section>
 
         <aside className="shell__side">
+          <OfficeBrief state={state} scenario={scenario} />
           {handbookOpen ? (
             <StaffHandbook view={handbook} />
           ) : (
