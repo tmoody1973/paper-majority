@@ -7,6 +7,7 @@ import { AccessibleCardControls } from '@/components/AccessibleCardControls';
 import { CardInspector } from '@/components/CardInspector';
 import { Hud } from '@/components/Hud';
 import { OfficeBrief } from '@/components/OfficeBrief';
+import { PlainEnglishKey } from '@/components/PlainEnglishKey';
 import { StaffHandbook } from '@/components/StaffHandbook';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
 import { describeCard } from '@/domain/cardDetail';
@@ -47,6 +48,7 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
   const [lastResult, setLastResult] = useState<string>('');
   const [handbookOpen, setHandbookOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>();
+  const [hoveredCardId, setHoveredCardId] = useState<string | undefined>();
 
   useEffect(() => session.subscribe((result) => setState(result.state)), [session]);
 
@@ -80,9 +82,12 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
 
   const onResult = useCallback((phrase: string) => setLastResult(phrase), []);
   const onSelect = useCallback((cardId: string) => setSelectedCardId(cardId), []);
+  const onHover = useCallback((cardId: string | undefined) => setHoveredCardId(cardId), []);
 
-  // A selected card that has been consumed by a transformation is no longer there.
-  const detail = selectedCardId ? describeCard(state, scenario, selectedCardId) : undefined;
+  // A tap pins a card open; hovering only previews. A card consumed by a
+  // transformation simply stops resolving, and the panel falls back.
+  const shownCardId = selectedCardId ?? hoveredCardId;
+  const detail = shownCardId ? describeCard(state, scenario, shownCardId) : undefined;
 
   const handbook = useMemo(() => buildHandbook(state, scenario), [state, scenario]);
 
@@ -103,7 +108,12 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
           data-testid="game-canvas-region"
           aria-label="Congressional desk"
         >
-          <GameCanvas session={session} onResult={onResult} onSelect={onSelect} />
+          <GameCanvas
+            session={session}
+            onResult={onResult}
+            onSelect={onSelect}
+            onHover={onHover}
+          />
         </section>
 
         <aside className="shell__side">
@@ -115,8 +125,9 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
           {handbookOpen ? (
             <StaffHandbook view={handbook} />
           ) : (
-            <AccessibleCardControls session={session} state={state} />
+            <AccessibleCardControls session={session} state={state} onInspect={onSelect} />
           )}
+          <PlainEnglishKey />
         </aside>
       </div>
     </main>

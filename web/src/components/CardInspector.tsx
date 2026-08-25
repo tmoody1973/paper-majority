@@ -35,15 +35,13 @@ export function CardInspector({
         </button>
       </header>
 
+      <p className="inspector__explainer" data-testid="inspector-source-explainer">
+        {detail.sourceExplainer}
+      </p>
+
       {detail.plainLanguage && (
         <p className="inspector__plain" data-testid="inspector-plain">
           {detail.plainLanguage}
-        </p>
-      )}
-
-      {detail.methodNote && (
-        <p className="inspector__note" data-testid="inspector-method">
-          {detail.methodNote}
         </p>
       )}
 

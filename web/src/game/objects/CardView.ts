@@ -170,11 +170,18 @@ export class CardView extends Phaser.GameObjects.Container {
     if (options.definition.workload > 0) {
       this.add(
         scene.add
-          .text(-CARD_WIDTH / 2 + 12, CARD_HEIGHT / 2 - 26, `${options.definition.workload} attention`, {
+          .text(
+            -CARD_WIDTH / 2 + 12,
+            CARD_HEIGHT / 2 - 26,
+            // "1 attention" is a fragment — one attention of what? Name the thing
+            // it actually ties up.
+            `Uses ${options.definition.workload} staffer${options.definition.workload === 1 ? '' : 's'}`,
+            {
             fontFamily: 'system-ui, sans-serif',
-            fontSize: '11px',
-            color: '#4a5c68',
-          })
+              fontSize: '11px',
+              color: '#4a5c68',
+            },
+          )
           .setOrigin(0, 0),
       );
     }

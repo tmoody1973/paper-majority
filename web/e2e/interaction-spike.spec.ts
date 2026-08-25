@@ -371,13 +371,59 @@ test.describe('interaction spike', () => {
 
     await clickCard('evidence-tenant-survey');
     await expect(page.getByTestId('inspector-uses')).toContainText(/Evidence Summary/);
-    await expect(page.getByTestId('inspector-method')).toContainText(/worked out/i);
+    await expect(page.getByTestId('inspector-source-explainer')).toContainText(/worked out/i);
 
     await clickCard('coalition-office-ridgeline');
     await expect(page.getByTestId('inspector-uses')).toContainText(/not found a use/i);
 
     await page.getByTestId('inspector-close').click();
     await expect(page.getByLabel('Your office')).toBeVisible();
+  });
+
+  test('hovering a card explains it, with no click needed', async ({ page }) => {
+    // The approved design opens the inspector on hover. Click-only meant a player had
+    // to click thirteen cards to learn the vocabulary — which is exactly what the
+    // "read a card without the inspector" threshold says should not be necessary.
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
+
+    const pointAt = async (definitionId: string) => {
+      const canvas = (await page.locator('canvas').boundingBox())!;
+      const point = await page.evaluate((id) => {
+        const api = window.__congressGameTestApi!;
+        const card = api.getState().cards.find((c) => c.definitionId === id)!;
+        const probe = (window as unknown as {
+          __congressGameCamera: { getScreenPoint: (c: string) => { x: number; y: number } };
+        }).__congressGameCamera;
+        return probe.getScreenPoint(card.id);
+      }, definitionId);
+      await page.mouse.move(canvas.x + point.x, canvas.y + point.y);
+    };
+
+    await expect(page.getByLabel('Your office')).toBeVisible();
+
+    await pointAt('evidence-tenant-survey');
+    await expect(page.getByTestId('inspector-plain')).toContainText(/renters in the district/i);
+    await expect(page.getByTestId('inspector-source-explainer')).toContainText(/worked out/i);
+
+    // Moving to another card explains that one instead.
+    await pointAt('tactic-bipartisan-working-group');
+    await expect(page.getByTestId('inspector-plain')).toContainText(/way of working/i);
+
+    // Moving off the desk puts the office brief back.
+    await page.mouse.move(5, 400);
+    await expect(page.getByLabel('Your office')).toBeVisible();
+  });
+
+  test('the plain-English key is on screen without anyone opening it', async ({ page }) => {
+    const key = page.getByTestId('key-panel');
+    await expect(key).toBeVisible();
+
+    // The three words most likely to lose a newcomer.
+    await expect(page.getByTestId('key-families')).toContainText('Constituency');
+    await expect(page.getByTestId('key-families')).toContainText(/people back home/i);
+    await expect(page.getByTestId('key-classes')).toContainText(/worked out|summaris/i);
+    await expect(page.getByTestId('key-meters')).toContainText('Political Capital');
   });
 
   test('a rejected stack separates without changing state', async ({ page }) => {

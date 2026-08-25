@@ -37,7 +37,15 @@ describe('CardInspector', () => {
   it('says a derived card was worked out, not quoted', () => {
     render(<CardInspector detail={detailFor(fresh, 'evidence-tenant-survey')} onClose={vi.fn()} />);
 
-    expect(screen.getByTestId('inspector-method')).toHaveTextContent(/worked out/i);
+    expect(screen.getByTestId('inspector-source-explainer')).toHaveTextContent(/worked out/i);
+  });
+
+  it('explains the information class on every card, not only the odd ones', () => {
+    render(<CardInspector detail={detailFor(fresh, 'evidence-rent-burden-report')} onClose={vi.fn()} />);
+
+    expect(screen.getByTestId('inspector-source-explainer')).toHaveTextContent(
+      /real public information/i,
+    );
   });
 
   it('offers no uses before discovery, and invites experimenting instead', () => {

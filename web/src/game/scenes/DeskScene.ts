@@ -24,6 +24,7 @@ export interface DeskSceneData {
   session: GameSession;
   onResult: (phrase: string) => void;
   onSelect: (cardId: string) => void;
+  onHover: (cardId: string | undefined) => void;
 }
 
 export class DeskScene extends Phaser.Scene {
@@ -32,6 +33,7 @@ export class DeskScene extends Phaser.Scene {
   private session!: GameSession;
   private onResult!: (phrase: string) => void;
   private onSelect!: (cardId: string) => void;
+  private onHover!: (cardId: string | undefined) => void;
   private views = new Map<string, CardView>();
   private dragOrigin = { x: 0, y: 0 };
   /**
@@ -56,6 +58,7 @@ export class DeskScene extends Phaser.Scene {
     this.session = context.session;
     this.onResult = context.onResult;
     this.onSelect = context.onSelect ?? (() => undefined);
+    this.onHover = context.onHover ?? (() => undefined);
   }
 
   create(): void {
@@ -344,6 +347,21 @@ export class DeskScene extends Phaser.Scene {
         return;
       }
       this.snap(view);
+    });
+
+    // The approved design opens the inspector on "hover, focus, long press or an
+    // explicit Inspect command". Hover matters most: it lets a player learn every
+    // card by sweeping the mouse, instead of clicking thirteen times.
+    this.input.on('gameobjectover', (_pointer: Phaser.Input.Pointer, gameObject: unknown) => {
+      const view = gameObject as CardView;
+      if (!view?.cardId || this.draggingCardId) return;
+      this.onHover(view.cardId);
+    });
+
+    this.input.on('gameobjectout', (_pointer: Phaser.Input.Pointer, gameObject: unknown) => {
+      const view = gameObject as CardView;
+      if (!view?.cardId) return;
+      this.onHover(undefined);
     });
 
     // A press that never turned into a drag is a tap: open the inspector.

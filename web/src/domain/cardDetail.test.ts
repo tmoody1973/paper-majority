@@ -33,11 +33,16 @@ describe('describeCard', () => {
     expect(detail?.simulatedNote).toBeUndefined();
   });
 
+  it('explains every information class, including the plain-sounding one', () => {
+    const official = describeCard(fresh, scenario, instanceOf(fresh, 'evidence-rent-burden-report'));
+    expect(official?.sourceExplainer).toMatch(/real public information/i);
+  });
+
   it('explains a derived card as a calculation, not a fact', () => {
     const detail = describeCard(fresh, scenario, instanceOf(fresh, 'evidence-tenant-survey'));
 
     expect(detail?.sourceLabel).toBe('Derived context');
-    expect(detail?.methodNote).toMatch(/worked out|summar|calculat/i);
+    expect(detail?.sourceExplainer).toMatch(/worked out|summar/i);
   });
 
   it('says plainly what the card is', () => {

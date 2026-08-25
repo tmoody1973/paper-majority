@@ -9,6 +9,7 @@ export interface GameCanvasProps {
   session: GameSession;
   onResult: (phrase: string) => void;
   onSelect: (cardId: string) => void;
+  onHover: (cardId: string | undefined) => void;
 }
 
 /**
@@ -18,7 +19,7 @@ export interface GameCanvasProps {
  * server rendering or in a jsdom unit test, and the game is destroyed on unmount so
  * a fast-refresh cycle cannot leave two canvases fighting for the same parent.
  */
-export default function GameCanvas({ session, onResult, onSelect }: GameCanvasProps) {
+export default function GameCanvas({ session, onResult, onSelect, onHover }: GameCanvasProps) {
   const parentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function GameCanvas({ session, onResult, onSelect }: GameCanvasPr
     void (async () => {
       const { createGame } = await import('@/game/createGame');
       if (cancelled || !parentRef.current) return;
-      game = createGame(parentRef.current, { session, onResult, onSelect });
+      game = createGame(parentRef.current, { session, onResult, onSelect, onHover });
     })();
 
     return () => {
@@ -39,7 +40,7 @@ export default function GameCanvas({ session, onResult, onSelect }: GameCanvasPr
       game?.destroy(true);
       game = undefined;
     };
-  }, [session, onResult, onSelect]);
+  }, [session, onResult, onSelect, onHover]);
 
   return (
     <div

@@ -18,8 +18,8 @@ export interface CardDetail {
   plainLanguage?: string;
   /** Present only for simulated content. */
   simulatedNote?: string;
-  /** Present only for derived content. */
-  methodNote?: string;
+  /** One plain line explaining the information class, whatever it is. */
+  sourceExplainer: string;
   workload: number;
   /** Uses the player has already discovered. Never anything they have not. */
   knownUses: string[];
@@ -41,6 +41,16 @@ const SOURCE_LABELS: Record<SourceClass, CardDetail['sourceLabel']> = {
   official: 'Official record',
   derived: 'Derived context',
   simulated: 'Simulated',
+};
+
+/**
+ * The label alone teaches nobody anything — "Derived context" in particular is our
+ * own coinage rather than real congressional vocabulary. Never show one without this.
+ */
+const SOURCE_EXPLAINERS: Record<SourceClass, string> = {
+  official: 'Real public information, from a real source.',
+  derived: 'Worked out or summarised from real information. A summary, not a direct quote.',
+  simulated: 'Invented for your run. Not a claim about anyone real.',
 };
 
 export function describeCard(
@@ -107,10 +117,7 @@ export function describeCard(
       definition.sourceClass === 'simulated'
         ? 'In this simulation. This exists only inside your run — it is not a claim about anyone real.'
         : undefined,
-    methodNote:
-      definition.sourceClass === 'derived'
-        ? 'Worked out from sourced information rather than quoted directly. Treat it as a summary, not a raw fact.'
-        : undefined,
+    sourceExplainer: SOURCE_EXPLAINERS[definition.sourceClass],
     workload: definition.workload,
     knownUses,
     noUsesYetNote:

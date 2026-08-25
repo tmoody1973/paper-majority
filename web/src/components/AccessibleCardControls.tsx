@@ -15,9 +15,12 @@ import type { GameSession } from '@/game/session';
 export function AccessibleCardControls({
   session,
   state,
+  onInspect,
 }: {
   session: GameSession;
   state: TermState;
+  /** Keyboard equivalent of hovering a card: choosing one explains it. */
+  onInspect?: (cardId: string) => void;
 }) {
   const scenario = session.getScenario();
   const [sourceId, setSourceId] = useState('');
@@ -62,7 +65,10 @@ export function AccessibleCardControls({
         <select
           data-testid="controls-source"
           value={sourceId}
-          onChange={(event) => setSourceId(event.target.value)}
+          onChange={(event) => {
+            setSourceId(event.target.value);
+            if (event.target.value) onInspect?.(event.target.value);
+          }}
         >
           <option value="">Choose a card</option>
           {state.cards.map((card) => (
