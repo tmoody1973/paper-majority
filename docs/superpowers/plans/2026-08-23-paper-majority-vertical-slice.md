@@ -665,7 +665,7 @@ git commit -m "feat: define deterministic term state"
 - Consumes: `TermState`, `CardDefinition`, `GameCommand`, `GameEvent`, `ScenarioDefinition`, `RecipePattern`, `TacticExpansionDefinition`, and resource types from Task 2.
 - Produces: `matchPattern(inputs, patterns, activeExpansionIds): PatternMatch | undefined`, `resolvePatternOutput(match, inputs): ResolvedPatternOutput`, and `executeCommand(state, command, services): EngineResult`.
 
-- [ ] **Step 1: Write failing pattern, resolver, and engine tests**
+- [x] **Step 1: Write failing pattern, resolver, and engine tests**
 
 Use two different housing Evidence definitions with the same `housing` tag and prove that one Staff + Evidence pattern accepts both without naming either evidence ID. Cover all of these cases:
 
@@ -691,7 +691,7 @@ npm --prefix web run test:run -- src/domain/recipes.test.ts src/domain/patternRe
 
 Expected: FAIL because pattern matching, resolvers and the engine do not exist.
 
-- [ ] **Step 2: Define the pure matching and resolver boundaries**
+- [x] **Step 2: Define the pure matching and resolver boundaries**
 
 ```ts
 export interface PatternSlotAssignment {
@@ -733,13 +733,13 @@ export function resolvePatternOutput(
 
 Implement derived resolvers in an exhaustive `Record<DerivedResolverId, PatternResolver>` map. Scenario JSON stores only `resolverId` and JSON parameters; never evaluate code or import a function path from content.
 
-- [ ] **Step 3: Implement bounded deterministic slot assignment and ranking**
+- [x] **Step 3: Implement bounded deterministic slot assignment and ranking**
 
 Build `MatchInput` values through a pure selector. Copy authored card tags and deterministically add relational tags such as `same-party` or `opposing-party` from `TermState.player.party` and the Coalition card's official party field. Sort inputs by stable instance ID before mapping them to two-to-four pattern slots. Use a bounded backtracking assignment because the interaction stack contains at most four recipe inputs. A card may satisfy one slot only; `quantity` consumes that many distinct inputs. `requiredTags` are all required; at least one `anyTags` value is required when the list is present.
 
 Compute specificity from authored constraints, not input order: family constraint count, number of required tags plus one point for the presence of an `anyTags` constraint, source-class constraint presence, then `priority`. Adding another accepted alternative to an existing `anyTags` or `sourceClasses` list widens the rule and must not increase specificity. Sort successful candidates by that tuple descending and stable pattern ID ascending. Return the first result. Do not use randomness.
 
-- [ ] **Step 4: Implement immutable stack and Tactic commands**
+- [x] **Step 4: Implement immutable stack and Tactic commands**
 
 For `STACK_CARD`, validate that every card exists, no input is expired, the target stack exists, and the combined definitions match an active pattern or an allowed organizational stack. Emit `STACK_REJECTED` for a physical but invalid attempt and `COMMAND_REJECTED` for malformed commands. Neither rejection may deduct resources, add elapsed time or change discoveries.
 
@@ -749,11 +749,11 @@ For the player-facing path, accept `START_ASSIGNMENT` with `assignmentKind: 'stu
 
 For `SEPARATE_STACK` and `MOVE_CARD`, preserve card IDs and update only stack membership or coordinates. Assert after every accepted command that each card belongs to exactly one stack.
 
-- [ ] **Step 5: Implement timed pattern starts and discovery**
+- [x] **Step 5: Implement timed pattern starts and discovery**
 
 On an accepted pattern, deduct only validated costs, store the pattern ID as `activeActionId`, set participating cards to `working`, and add the pattern ID to `discoveredPatternIds` exactly once. Emit `PATTERN_DISCOVERED` only on first use. Do not complete transformations in this task; Task 4 adds the minimal deterministic `TICK` completion and Task 7 adds the complete weekly clock.
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 ```bash
 npm --prefix web run test:run -- src/domain/recipes.test.ts src/domain/patternResolvers.test.ts src/domain/engine.test.ts

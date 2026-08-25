@@ -1,0 +1,234 @@
+import type {
+  CardDefinition,
+  CardInstance,
+  Party,
+  RecipePattern,
+  RecipeSlot,
+  ScenarioDefinition,
+  TacticExpansionDefinition,
+} from '@/domain/types';
+
+export interface MatchInput {
+  instanceId: string;
+  definition: CardDefinition;
+  effectiveTags: string[];
+}
+
+export interface PatternSlotAssignment {
+  slotIndex: number;
+  cardDefinitionIds: string[];
+}
+
+export interface PatternMatch {
+  pattern: RecipePattern;
+  assignments: PatternSlotAssignment[];
+  specificity: number;
+  activeExpansionIds: string[];
+  /** The slots actually used for matching, after any active widen-slot expansion. */
+  effectiveSlots: RecipeSlot[];
+}
+
+/**
+ * Relational tags are computed, never authored.
+ *
+ * `same-party` / `opposing-party` describe the relationship between the player's
+ * simulated affiliation and a member office's official public-record party. They
+ * are derived on every match so the same card behaves correctly for either player
+ * party, and so no published card ever stores a claim about a relationship.
+ */
+export function computeEffectiveTags(definition: CardDefinition, playerParty: Party): string[] {
+  if (!definition.officeParty) return [...definition.tags];
+  const relation = definition.officeParty === playerParty ? 'same-party' : 'opposing-party';
+  return [...definition.tags, relation];
+}
+
+export function buildMatchInputs(
+  instances: CardInstance[],
+  scenario: ScenarioDefinition,
+  playerParty: Party,
+): MatchInput[] {
+  const byId = new Map(scenario.cards.map((card) => [card.id, card]));
+
+  return instances
+    .map((instance) => {
+      const definition = byId.get(instance.definitionId);
+      if (!definition) {
+        throw new Error(`Scenario has no card definition "${instance.definitionId}"`);
+      }
+      return {
+        instanceId: instance.id,
+        definition,
+        effectiveTags: computeEffectiveTags(definition, playerParty),
+      };
+    })
+    // Stable instance-id ordering keeps assignment (and therefore replay) deterministic.
+    .sort((a, b) => (a.instanceId < b.instanceId ? -1 : a.instanceId > b.instanceId ? 1 : 0));
+}
+
+function slotAccepts(slot: RecipeSlot, input: MatchInput): boolean {
+  if (slot.kind && input.definition.kind !== slot.kind) return false;
+  if (slot.requiredTags?.some((tag) => !input.effectiveTags.includes(tag))) return false;
+  if (slot.anyTags && !slot.anyTags.some((tag) => input.effectiveTags.includes(tag))) return false;
+  if (slot.sourceClasses && !slot.sourceClasses.includes(input.definition.sourceClass)) return false;
+  return true;
+}
+
+/**
+ * Apply every active `widen-slot` expansion that targets this pattern.
+ *
+ * Widening may only ever append accepted alternatives. There is no code path that
+ * deletes a `kind`, a `requiredTags` entry or an existing alternative.
+ */
+export function applyExpansions(
+  pattern: RecipePattern,
+  activeExpansionIds: string[],
+  expansions: TacticExpansionDefinition[],
+): { slots: RecipeSlot[]; appliedExpansionIds: string[] } {
+  const applicable = expansions.filter(
+    (expansion) =>
+      expansion.targetPatternId === pattern.id &&
+      activeExpansionIds.includes(expansion.id) &&
+      expansion.effect.kind === 'widen-slot',
+  );
+
+  if (applicable.length === 0) return { slots: pattern.slots, appliedExpansionIds: [] };
+
+  const slots = pattern.slots.map((slot) => ({ ...slot }));
+  const applied: string[] = [];
+
+  for (const expansion of applicable) {
+    const effect = expansion.effect;
+    if (effect.kind !== 'widen-slot') continue;
+    const slot = slots[effect.slotIndex];
+    if (!slot) continue;
+
+    if (effect.addAnyTags?.length) {
+      slot.anyTags = Array.from(new Set([...(slot.anyTags ?? []), ...effect.addAnyTags]));
+    }
+    if (effect.addSourceClasses?.length) {
+      slot.sourceClasses = Array.from(
+        new Set([...(slot.sourceClasses ?? []), ...effect.addSourceClasses]),
+      );
+    }
+    applied.push(expansion.id);
+  }
+
+  return { slots, appliedExpansionIds: applied };
+}
+
+/**
+ * Specificity is read off the AUTHORED slots, never the widened ones, and never the
+ * inputs. Adding another accepted alternative to an `anyTags` or `sourceClasses`
+ * list widens a rule, so it must not make that rule win more often.
+ */
+function specificityTuple(pattern: RecipePattern): [number, number, number] {
+  let families = 0;
+  let tags = 0;
+  let sourceClasses = 0;
+
+  for (const slot of pattern.slots) {
+    if (slot.kind) families += 1;
+    tags += slot.requiredTags?.length ?? 0;
+    if (slot.anyTags?.length) tags += 1;
+    if (slot.sourceClasses?.length) sourceClasses += 1;
+  }
+
+  return [families, tags, sourceClasses];
+}
+
+/**
+ * Assign inputs to slot units.
+ *
+ * A pattern declares two to four total inputs, so an exhaustive bounded search is
+ * both correct and cheap. Each card fills at most one unit, `quantity` consumes
+ * that many distinct cards, and every input must be consumed — a stack matches a
+ * pattern exactly or not at all.
+ */
+function assign(slots: RecipeSlot[], inputs: MatchInput[]): PatternSlotAssignment[] | undefined {
+  const units: number[] = [];
+  slots.forEach((slot, slotIndex) => {
+    for (let n = 0; n < slot.quantity; n += 1) units.push(slotIndex);
+  });
+
+  if (units.length !== inputs.length) return undefined;
+
+  const used = new Array<boolean>(inputs.length).fill(false);
+  const chosen = new Array<number>(units.length).fill(-1);
+
+  function place(unitIndex: number): boolean {
+    if (unitIndex === units.length) return true;
+    const slot = slots[units[unitIndex]];
+
+    for (let i = 0; i < inputs.length; i += 1) {
+      if (used[i]) continue;
+      if (!slotAccepts(slot, inputs[i])) continue;
+      used[i] = true;
+      chosen[unitIndex] = i;
+      if (place(unitIndex + 1)) return true;
+      used[i] = false;
+      chosen[unitIndex] = -1;
+    }
+    return false;
+  }
+
+  if (!place(0)) return undefined;
+
+  return slots.map((_, slotIndex) => ({
+    slotIndex,
+    cardDefinitionIds: units
+      .map((owner, unitIndex) => (owner === slotIndex ? inputs[chosen[unitIndex]].definition.id : undefined))
+      .filter((id): id is string => id !== undefined),
+  }));
+}
+
+/**
+ * The pure matcher. No randomness, no clock, no I/O.
+ *
+ * Candidates are ranked by authored specificity, then authored priority, then
+ * stable pattern ID. The ID tie-break exists so a run never becomes nondeterministic;
+ * it is not permission to publish an ambiguous catalog, which content validation
+ * rejects.
+ */
+export function matchPattern(
+  inputs: MatchInput[],
+  patterns: RecipePattern[],
+  activeExpansionIds: string[],
+  expansions: TacticExpansionDefinition[],
+): PatternMatch | undefined {
+  if (inputs.length < 2 || inputs.length > 4) return undefined;
+
+  const ordered = [...inputs].sort((a, b) =>
+    a.instanceId < b.instanceId ? -1 : a.instanceId > b.instanceId ? 1 : 0,
+  );
+
+  const candidates: PatternMatch[] = [];
+
+  for (const pattern of patterns) {
+    const { slots, appliedExpansionIds } = applyExpansions(pattern, activeExpansionIds, expansions);
+    const assignments = assign(slots, ordered);
+    if (!assignments) continue;
+
+    const [families, tags, sourceClasses] = specificityTuple(pattern);
+    candidates.push({
+      pattern,
+      assignments,
+      specificity: families + tags + sourceClasses,
+      activeExpansionIds: appliedExpansionIds,
+      effectiveSlots: slots,
+    });
+  }
+
+  if (candidates.length === 0) return undefined;
+
+  candidates.sort((a, b) => {
+    const left = specificityTuple(a.pattern);
+    const right = specificityTuple(b.pattern);
+    for (let i = 0; i < left.length; i += 1) {
+      if (left[i] !== right[i]) return right[i] - left[i];
+    }
+    if (a.pattern.priority !== b.pattern.priority) return b.pattern.priority - a.pattern.priority;
+    return a.pattern.id < b.pattern.id ? -1 : a.pattern.id > b.pattern.id ? 1 : 0;
+  });
+
+  return candidates[0];
+}

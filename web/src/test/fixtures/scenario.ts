@@ -126,7 +126,7 @@ const cards: CardDefinition[] = [
   },
   // Pattern outputs.
   {
-    id: 'evidence-summary',
+    id: 'evidence-housing-summary',
     title: 'Evidence Summary',
     kind: 'evidence',
     tags: ['housing', 'evidence-summary'],
@@ -188,7 +188,11 @@ const patterns: RecipePattern[] = [
       { kind: 'staff', requiredTags: ['policy-focused'], quantity: 1 },
       { kind: 'evidence', requiredTags: ['housing'], quantity: 1 },
     ],
-    output: { mode: 'derived', resolverId: 'summarize-evidence-v1' },
+    output: {
+      mode: 'derived',
+      resolverId: 'summarize-evidence-v1',
+      parameters: { outputDefinitionId: 'evidence-housing-summary' },
+    },
     durationMs: 6_000,
     resourceCost: { staffAttention: 1 },
     priority: 10,
@@ -200,7 +204,11 @@ const patterns: RecipePattern[] = [
       { kind: 'evidence', requiredTags: ['evidence-summary'], quantity: 1 },
       { kind: 'policy', requiredTags: ['housing', 'renter-focused'], quantity: 1 },
     ],
-    output: { mode: 'derived', resolverId: 'draft-provision-v1' },
+    output: {
+      mode: 'derived',
+      resolverId: 'draft-provision-v1',
+      parameters: { outputDefinitionId: 'policy-drafted-provision' },
+    },
     durationMs: 6_000,
     resourceCost: { staffAttention: 1 },
     priority: 10,
@@ -212,7 +220,11 @@ const patterns: RecipePattern[] = [
       { kind: 'institution', requiredTags: ['working-bill'], quantity: 1 },
       { kind: 'coalition', anyTags: ['same-party'], quantity: 1 },
     ],
-    output: { mode: 'derived', resolverId: 'resolve-outreach-v1' },
+    output: {
+      mode: 'derived',
+      resolverId: 'resolve-outreach-v1',
+      parameters: { outputDefinitionId: 'coalition-outreach-result' },
+    },
     durationMs: 6_000,
     resourceCost: { politicalCapital: 1 },
     priority: 10,

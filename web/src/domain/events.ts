@@ -25,7 +25,9 @@ export type RejectionReason =
   | 'ineligible-staff'
   | 'malformed-command'
   | 'invalid-stage'
-  | 'clock-not-expired';
+  | 'clock-not-expired'
+  /** A real command that this build does not serve yet. Never a content or player error. */
+  | 'unsupported-command';
 
 export interface VoteTally {
   committed: number;
