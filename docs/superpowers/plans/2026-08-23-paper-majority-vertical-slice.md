@@ -174,7 +174,7 @@ Test files live beside the module they cover as `*.test.ts` or `*.test.tsx`. Cre
 - Consumes: Node.js 20+ and an empty repository root containing the approved documentation.
 - Produces: a Next.js/TypeScript application, pinned npm dependency tree and the `lint`, `typecheck`, `test:run`, `test:coverage`, `test:e2e`, `validate:content`, and `balance` script entry points used by later tasks.
 
-- [ ] **Step 1: Record toolchain prerequisites**
+- [x] **Step 1: Record toolchain prerequisites**
 
 Run:
 
@@ -185,7 +185,7 @@ npm --version
 
 Expected: Node reports `v20` or later. Stop and install a supported Node version if it does not.
 
-- [ ] **Step 2: Initialize the repository and scaffold the Next.js app**
+- [x] **Step 2: Initialize the repository and scaffold the Next.js app**
 
 Run from the repository root:
 
@@ -200,7 +200,7 @@ npx playwright install chromium
 
 Expected: `web/package-lock.json` is created and pins the resolved dependency tree.
 
-- [ ] **Step 3: Add a failing browser-environment test**
+- [x] **Step 3: Add a failing browser-environment test**
 
 Create `web/src/test/environment.test.ts`:
 
@@ -222,7 +222,7 @@ npm --prefix web exec vitest run src/test/environment.test.ts
 
 Expected: FAIL with `window is not defined` before the jsdom configuration exists.
 
-- [ ] **Step 4: Configure Vitest and common scripts**
+- [x] **Step 4: Configure Vitest and common scripts**
 
 Create `web/vitest.config.ts`:
 
@@ -264,7 +264,7 @@ Add these scripts to `web/package.json` without removing the generated scripts:
 
 Create `web/playwright.config.ts` with Chromium, `baseURL: 'http://127.0.0.1:3000'`, and a web server command of `npm run dev -- --hostname 127.0.0.1`.
 
-- [ ] **Step 5: Verify the harness**
+- [x] **Step 5: Verify the harness**
 
 Run:
 
@@ -276,7 +276,7 @@ npm --prefix web run typecheck
 
 Expected: all three commands pass.
 
-- [ ] **Step 6: Document local development and commit**
+- [x] **Step 6: Document local development and commit**
 
 In `README.md`, document Node 20+, `npm --prefix web install`, `npm --prefix web run dev`, and the six verification scripts.
 
