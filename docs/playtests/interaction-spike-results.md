@@ -1,5 +1,9 @@
 # Interaction Spike — Ten-Person Playtest Worksheet
 
+> **Read [interaction-spike-guide.md](./interaction-spike-guide.md) first.** It explains
+> what the game is, why this test exists, how to run a session and what each measure
+> means. This file is only where you write the answers down.
+
 **Status: BLANK. No results have been recorded.** Claude does not fill this in.
 Tarik runs the sessions and writes the answers in his own words.
 
