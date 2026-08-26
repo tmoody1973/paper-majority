@@ -72,8 +72,9 @@ Copy this block once per tester. Ten blocks total.
 
 - Answer, verbatim: ______________________________________________
 - **Explained the widened rule correctly?** yes / no  *(threshold 3)*
-- Did they find Study Tactic without help? yes / no
+- How did they reach Study Tactic? before any refusal / after the refusal message named it / never
 - Did they retry the office that was refused earlier? yes / no
+- Approached the same office twice? yes / no — if yes, did the duplicate result read as a bug to them? yes / no
 
 **4. Card reading, at a glance.** First have them move the mouse OFF the desk — the
 right panel must read **Your office**, not a card. Then point with your finger, not the

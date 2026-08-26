@@ -184,9 +184,11 @@ Drag the **Policy Aide** card onto the **Rent Burden Report** card.
 
 They snap together. A green bar appears at the bottom of the card. After the tester
 presses **Resume**, the bar fills over about six seconds, and an **Evidence Summary**
-card appears.
+card appears — stamped *"From: Rent Burden Report"* — while the **Policy Aide returns
+to the desk**, and the message line says the aide is free again.
 
-Do that once. Do not explain what happened.
+Do that once. Do not explain what happened. (The report being used up while the aide
+comes back is the point; let them notice it.)
 
 ### Step 3 — Hands off
 
@@ -236,9 +238,19 @@ There are three rules to find, and one method to learn.
 
 | # | What works | What you get |
 |---|---|---|
-| 1 | A **Policy Aide** with **any housing evidence** — either the Rent Burden Report or the Tenant Survey | An **Evidence Summary** |
-| 2 | An **Evidence Summary** with the **Housing Choice Voucher** | A **Drafted Provision** — actual bill language |
-| 3 | The **Working Bill** with the **Hillcrest** member office | An **Outreach Result** — their answer |
+| 1 | A **Policy Aide** with **any housing evidence** — either the Rent Burden Report or the Tenant Survey | An **Evidence Summary**, stamped with which evidence it came from. The aide returns to the desk. |
+| 2 | An **Evidence Summary** with the **Housing Choice Voucher** | A **Drafted Provision** — actual bill language. Both inputs are used up. |
+| 3 | The **Working Bill** with the **Hillcrest** member office | An **Outreach Result** — their answer, stamped "From: Hillcrest". **The bill and the office both stay on the desk.** |
+
+**People and institutions come back; documents get used up.** Staffers return after
+every job, and a conversation does not destroy a member office. Only paperwork —
+evidence, summaries, policy ideas — is consumed by the work that uses it.
+
+**A quirk to write down if it comes up:** because the office survives, a tester can
+approach Hillcrest a second time and get a second, identical Outreach Result. That is
+known and bounded (each approach costs Political Capital, which does not come back).
+If a tester does it, note whether the duplicate reads to them as a bug — that exact
+observation decides whether it gets a guard before the wider build.
 
 Then the thing the whole test is really about:
 
@@ -251,6 +263,11 @@ Then the thing the whole test is really about:
 The player is a **Democrat** (it says so in the top bar). Hillcrest is a Democrat —
 same party, so rule 3 accepts it. Ridgeline is a Republican — the other party, so it
 bounces off.
+
+**The refusal is not silent.** The message line says: *"Not yet. Studying Bipartisan
+Working Group would let this rule accept a card from the other party. Nothing was
+spent."* That is deliberate — a refusal that only said "those two do not go together"
+left brute force as the only strategy. The card still bounces and still costs nothing.
 
 Studying **Bipartisan Working Group** widens rule 3 to accept the other party too.
 
@@ -340,8 +357,10 @@ cards are not readable on their own.
 changes what is possible everywhere. If people hear "unlock," the design has failed at
 the thing it is trying to be.
 
-**Also write down:** did they find Study Tactic on their own? Did they go back and retry
-the office that refused them?
+**Also write down:** how they got to Study Tactic. If Ridgeline refused them first,
+the refusal message *names* the Tactic — so "found it after reading the refusal" and
+"found it before ever trying Ridgeline" are different observations; note which one
+happened. Did they go back and retry the office that refused them?
 
 **Bar:** 8 of 10 explain it as a rule change.
 
@@ -370,6 +389,17 @@ which is which.
 **The in-game key is not cheating here.** It explains what "Evidence" *means*. It does
 not tell them which family *this* card is. Reading the card and then checking the key
 is exactly what it is for.
+
+**Two labels changed recently — score them as reading, not confusion:**
+
+- Some cards say ***"Practice card — no source"*** in italics. That is honest, not a
+  glitch: those cards are labelled Official record but this practice run has no real
+  citations behind them. *"It says official but it's a practice card"* is a **good**
+  answer — they read both labels. Only mark it bad if they cannot say which family the
+  card is.
+- Cards the tester *made* during play say ***"From: …"*** instead — an Evidence Summary
+  traces to the report or survey that went into it. *"I made this one from the survey"*
+  is a **good** answer to "is it real or made up."
 
 **Also write down:** whether they had been using the hover panel a lot during play.
 That is allowed and expected — it just must not be the only way they can answer.
@@ -469,6 +499,9 @@ whole time. This table is here so *you* are not caught out, and for questions as
 | **Simulated** | Invented for your run. Not a claim about anyone real. |
 | **Member office** | Another representative's office, whose support you need. |
 | **Tactic** | A way of working your office can learn, which changes a rule for the rest of the term. |
+| **Practice card — no source** | This practice run has no real citations yet. The card stands in for a real document; nothing on it is a citation. |
+| **From: …** | This card was made during play, from the card named. Its facts trace to that card, not to a citation. |
+| **Ties up 1 staffer / Spends 1 political capital** | What using the card costs, shown once your office has discovered the rule that charges it. "Ties up" comes back when the job ends; "spends" does not. |
 
 ### Two honesty notes, if anyone asks
 
@@ -490,6 +523,8 @@ whole time. This table is here so *you* are not caught out, and for questions as
 | Cards won't drag | Hard-reload. If still stuck, stop and report it. |
 | Nothing happens after stacking | The clock is paused. Press **Resume**. This is expected. |
 | A card bounced off | Usually correct — those two do not go together. Free, no penalty. |
+| A second, identical Outreach Result appears | Known quirk, not broken — the office survives a conversation and can be asked again. Write down whether the tester reads it as a bug. |
+| No cost line on any card at the start | Correct — costs appear once the rule that charges them is discovered. |
 
 Report anything you stop for. A broken session is still worth writing down; just mark
 it as broken so it does not get counted as a real result.

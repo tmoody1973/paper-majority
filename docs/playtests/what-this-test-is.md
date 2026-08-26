@@ -16,8 +16,10 @@ housing bill.
 Someone drags one card onto another. A **Policy Aide** onto a **Rent Burden Report**.
 
 The two cards snap together. A green bar appears along the bottom. They press **Resume**,
-the bar fills over six seconds, and the two cards vanish — replaced by a new one:
-**Evidence Summary**. A line of text says what just happened.
+the bar fills over six seconds, and the report is used up — replaced by a new card,
+**Evidence Summary**, stamped *"From: Rent Burden Report"*. The Policy Aide comes back
+to the desk, free for the next job, and a line of text says exactly that: the summary
+exists and the aide is free again. People do the work; documents get used up.
 
 Then they hand you the mouse and stop talking.
 
@@ -39,11 +41,14 @@ the end of that thread; the finished game adds a step for putting it into your b
 the card says so if you hover it.
 
 **Rule three.** Take your **Working Bill** to another member's office and ask for support.
-There are two offices on the desk. **Hillcrest** works. **Ridgeline** bounces off and
-nothing happens.
+There are two offices on the desk. **Hillcrest** works — you get their answer as a new
+card, and both your bill and their office stay on the desk. A conversation does not
+use anyone up. **Ridgeline** bounces off, but not silently: the game says studying
+**Bipartisan Working Group** would let this rule accept a card from the other party.
 
-Why? Look at the cards. Hillcrest has a **D**. Ridgeline has an **R**. You are a Democrat.
-The rule only accepts offices from your own party.
+Why the refusal? Look at the cards. Hillcrest has a **D**. Ridgeline has an **R**. You
+are a Democrat. The rule only accepts offices from your own party — until you change
+the rule.
 
 ### The bit the whole test is really about
 
