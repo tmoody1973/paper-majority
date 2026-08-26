@@ -35,6 +35,10 @@ export function resultPhrase(explanationKey: string): string {
   return RESULT_PHRASES[explanationKey] ?? 'Something new is on the desk.';
 }
 
-export function rejectionPhrase(reason: string): string {
+export function rejectionPhrase(reason: string, message?: string): string {
+  // Naming the Tactic that would unblock a stack can only be worked out where the
+  // rules live, so for that one reason the engine's sentence is the copy. Every
+  // other refusal reads from the table above.
+  if (reason === 'needs-tactic' && message) return message;
   return REJECTION_PHRASES[reason] ?? 'That did not work. Nothing was spent.';
 }

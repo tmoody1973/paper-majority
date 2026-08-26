@@ -18,6 +18,8 @@ export type RejectionReason =
   | 'card-expired'
   | 'card-busy'
   | 'no-matching-pattern'
+  /** No rule matches yet, but an unstudied Tactic would make this exact stack work. */
+  | 'needs-tactic'
   | 'insufficient-resources'
   | 'tactic-already-active'
   | 'unknown-tactic-expansion'

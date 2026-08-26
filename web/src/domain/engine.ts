@@ -1,7 +1,8 @@
 import type { GameCommand, GameCommandType } from '@/domain/commands';
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
-import { buildMatchInputs, matchPattern } from '@/domain/recipes';
+import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
+import { describeTag } from '@/domain/selectors';
 import type {
   CardInstance,
   RecipePattern,
@@ -199,6 +200,53 @@ function addEffects(resources: Resources, effects: Partial<Resources>): Resource
     next[key] += amount;
   }
   return clampResources(next);
+}
+
+/**
+ * Would an unstudied Tactic have made this exact stack work?
+ *
+ * Re-runs the same match with every expansion switched on. If the stack becomes
+ * valid, the difference is a Tactic the office has not studied, and that is worth
+ * telling the player. Returns the sentence to show, or undefined when nothing the
+ * office could learn would help.
+ *
+ * `describeTag` is shared with the Staff Handbook on purpose: the refusal, the
+ * binder and the engine constraint must always use the same words for the same
+ * rule.
+ */
+function blockingTactic(
+  inputs: MatchInput[],
+  state: TermState,
+  services: EngineServices,
+): string | undefined {
+  const everyExpansion = services.scenario.tacticExpansions.map((expansion) => expansion.id);
+  const active = activeExpansionIds(state);
+  if (everyExpansion.length === active.length) return undefined;
+
+  const wouldMatch = matchPattern(
+    inputs,
+    services.scenario.patterns,
+    everyExpansion,
+    services.scenario.tacticExpansions,
+  );
+  if (!wouldMatch) return undefined;
+
+  const expansion = services.scenario.tacticExpansions.find(
+    (candidate) =>
+      !active.includes(candidate.id) && candidate.targetPatternId === wouldMatch.pattern.id,
+  );
+  if (!expansion || expansion.effect.kind !== 'widen-slot') return undefined;
+
+  const allows = [
+    ...(expansion.effect.addAnyTags ?? []).map(describeTag),
+    ...(expansion.effect.addSourceClasses ?? []),
+  ];
+  const tacticTitle =
+    services.scenario.cards.find((card) => card.id === expansion.tacticDefinitionId)?.title ??
+    'a Tactic';
+
+  const allowance = allows.length > 0 ? ` accept a card ${allows.join(' or ')}` : ' allow this';
+  return `Not yet. Studying ${tacticTitle} would let this rule${allowance}. Nothing was spent.`;
 }
 
 /**
@@ -474,6 +522,15 @@ function combine(
   );
 
   if (!found) {
+    // A refusal that only says "these do not go together" gives the player nothing
+    // to reason about. If an unstudied Tactic would have made this exact stack
+    // work, say which one and what it would allow — the way forward, not the
+    // recipe. Still free, still nothing remembered.
+    const blocked = blockingTactic(inputs, state, services);
+    if (blocked) {
+      return rejectStack(state, memberCardIds, targetStackId, 'needs-tactic', blocked);
+    }
+
     // Free experimentation: nothing is spent and nothing is remembered.
     return rejectStack(
       state,

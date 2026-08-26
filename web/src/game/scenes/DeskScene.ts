@@ -460,7 +460,12 @@ export class DeskScene extends Phaser.Scene {
         return;
       }
       if (event.type === 'STACK_REJECTED' || event.type === 'COMMAND_REJECTED') {
-        this.onResult(rejectionPhrase(String(event.reason)));
+        this.onResult(
+          rejectionPhrase(
+            String(event.reason),
+            typeof event.message === 'string' ? event.message : undefined,
+          ),
+        );
         return;
       }
     }

@@ -281,6 +281,33 @@ test.describe('interaction spike', () => {
     }
   });
 
+  test('a refusal that a Tactic would fix says which Tactic', async ({ page }) => {
+    // A refusal reading only "those two do not go together" leaves the player with
+    // nothing to reason about. When an unstudied Tactic would have made this exact
+    // stack work, the desk names it — the way forward, not the recipe.
+    // A visible canvas does not mean the scene has subscribed to the session yet.
+    // Dispatching before it does means nothing is ever announced and the HUD stays
+    // empty. The camera probe is registered immediately after that subscription.
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
+
+    const before = await getState(page);
+
+    const bill = await cardIdFor(page, 'policy-working-bill');
+    const opposing = await cardIdFor(page, 'coalition-office-ridgeline');
+    await combine(page, bill, opposing);
+
+    await expect(page.getByTestId('hud-result')).toContainText('Bipartisan Working Group');
+    await expect(page.getByTestId('hud-result')).toContainText('from the other party');
+    await expect(page.getByTestId('hud-result')).toContainText('Nothing was spent');
+
+    // Free experimentation is untouched: no resource, no discovery, no expansion.
+    const after = await getState(page);
+    expect(after.resources).toEqual(before.resources);
+    expect(after.discoveredPatternIds).toEqual(before.discoveredPatternIds);
+    expect(after.unlockedSlotExpansions).toEqual(before.unlockedSlotExpansions);
+  });
+
   test('the one real setback is traceable to a visible choice', async ({ page }) => {
     // Measure 5 asks whether a player blames something they saw, or just a number.
     // Taking the other party's counteroffer costs Policy Integrity — a visible

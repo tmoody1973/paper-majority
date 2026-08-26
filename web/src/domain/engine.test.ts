@@ -331,6 +331,42 @@ describe('ACTIVATE_TACTIC', () => {
     );
   });
 
+  it('tells the player which Tactic would have made the stack work', () => {
+    const outreach: GameCommand = {
+      type: 'STACK_CARD',
+      cardId: 'card-1',
+      targetStackId: 'stack-2',
+    };
+
+    const { state, events } = run(start, outreach);
+    const rejection = events.find((event) => event.type === 'STACK_REJECTED');
+    if (rejection?.type !== 'STACK_REJECTED') throw new Error('expected STACK_REJECTED');
+
+    // A refusal that only says "these do not go together" leaves the player with
+    // nothing to reason about. This one names the way forward without naming the
+    // recipe.
+    expect(rejection.reason).toBe('needs-tactic');
+    expect(rejection.message).toMatch(/Bipartisan Working Group/);
+    expect(rejection.message).toMatch(/from the other party/);
+
+    // Still free, still nothing remembered.
+    expect(state.resources).toEqual(start.resources);
+    expect(state.discoveredPatternIds).toEqual(start.discoveredPatternIds);
+  });
+
+  it('still gives the plain refusal when no Tactic would help', () => {
+    const nonsense = makeState(['policy-housing-choice-voucher', 'coalition-office-fifth-district']);
+    const { events } = run(nonsense, {
+      type: 'STACK_CARD',
+      cardId: 'card-1',
+      targetStackId: 'stack-2',
+    });
+
+    const rejection = events.find((event) => event.type === 'STACK_REJECTED');
+    if (rejection?.type !== 'STACK_REJECTED') throw new Error('expected STACK_REJECTED');
+    expect(rejection.reason).toBe('no-matching-pattern');
+  });
+
   it('consumes the Tactic card, so it cannot be activated again', () => {
     const once = run(start, activate);
     const twice = executeCommand(once.state, activate, services);
