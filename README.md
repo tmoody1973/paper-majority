@@ -9,6 +9,11 @@ housing-affordability bill through one compressed 24-week congressional term. Ca
 dragged and stacked on an open desk; every factual claim stays sourceable and visibly
 separate from simulation.
 
+## Picking this up cold?
+
+Start with **[docs/HANDOFF.md](docs/HANDOFF.md)** — current state, how to run it, the
+traps that cost real time, and what is waiting on a decision.
+
 ## Status
 
 Phase 1 — the fun-first interaction spike. The build stops at **Verification Checkpoint 1**
