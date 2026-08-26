@@ -428,11 +428,51 @@ export class DeskScene extends Phaser.Scene {
     });
   }
 
+  private titleOf(cardId: string): string {
+    const instance = this.session.getState().cards.find((card) => card.id === cardId);
+    if (!instance) return cardId;
+    return this.definitionFor(instance).title;
+  }
+
+  /**
+   * Mark the cards that came back from an assignment.
+   *
+   * The result phrase says a staffer is free again; this is where a player sees
+   * which one. Reduced motion still gets the cue — it simply holds rather than
+   * fading, because the state change has to be readable either way.
+   */
+  private flagReturned(cardIds: string[]): void {
+    for (const cardId of cardIds) {
+      const view = this.views.get(cardId);
+      if (!view) continue;
+      view.setHighlight('valid');
+
+      if (this.reducedMotion) {
+        this.time.delayedCall(TRANSFORM_MS * 4, () => view.setHighlight('none'));
+        continue;
+      }
+      this.tweens.add({
+        targets: view,
+        y: view.y - 6,
+        duration: VALID_HOVER_MS,
+        yoyo: true,
+        ease: 'Quad.easeOut',
+        onComplete: () => view.setHighlight('none'),
+      });
+    }
+  }
+
   /** Turn engine events into the single one-line result phrase. */
   private announce(events: { type: string; [key: string]: unknown }[]): void {
     for (const event of events) {
       if (event.type === 'CARD_TRANSFORMED') {
-        this.onResult(resultPhrase(String(event.explanationKey)));
+        const returned = Array.isArray(event.returnedCardIds)
+          ? (event.returnedCardIds as string[])
+          : [];
+        this.onResult(
+          resultPhrase(String(event.explanationKey), returned.map((id) => this.titleOf(id))),
+        );
+        this.flagReturned(returned);
         return;
       }
       if (event.type === 'TACTIC_EXPANSION_ACTIVATED') {

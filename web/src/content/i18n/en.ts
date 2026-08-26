@@ -31,8 +31,16 @@ export const STUDY_PHRASES = {
   completed: 'Rule changed. Check the Staff Handbook.',
 };
 
-export function resultPhrase(explanationKey: string): string {
-  return RESULT_PHRASES[explanationKey] ?? 'Something new is on the desk.';
+export function resultPhrase(explanationKey: string, returnedTitles: string[] = []): string {
+  const base = RESULT_PHRASES[explanationKey] ?? 'Something new is on the desk.';
+  if (returnedTitles.length === 0) return base;
+
+  // People do the work; documents are what gets used up. Saying so at the moment
+  // it happens is what teaches the difference — a card quietly reappearing on a
+  // twelve-card desk is easy to miss.
+  const names = Array.from(new Set(returnedTitles));
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+  return `${base} ${list} ${names.length === 1 ? 'is' : 'are'} free again.`;
 }
 
 export function rejectionPhrase(reason: string, message?: string): string {

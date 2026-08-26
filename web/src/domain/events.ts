@@ -67,6 +67,12 @@ export type GameEvent =
       stackId: string;
       consumedCardIds: string[];
       producedCardIds: string[];
+      /**
+       * Catalyst inputs that took part and came back — a staffer, your working
+       * bill. Named separately so the desk can show the return rather than leaving
+       * the player to notice a card reappearing.
+       */
+      returnedCardIds: string[];
       outputDefinitionId: string;
       explanationKey: string;
     }

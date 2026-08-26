@@ -779,6 +779,19 @@ describe('catalyst inputs survive their pattern', () => {
     return run(state, ...commands);
   }
 
+  it('names the cards that came back, so the return can be shown, not guessed', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    const transformed = done.events.find((event) => event.type === 'CARD_TRANSFORMED');
+    if (transformed?.type !== 'CARD_TRANSFORMED') throw new Error('expected CARD_TRANSFORMED');
+
+    // "Consumed" and "produced" alone cannot say that the aide is free again.
+    expect(transformed.returnedCardIds).toEqual(['card-1']);
+    expect(transformed.consumedCardIds).toEqual(['card-2']);
+  });
+
   it('returns the staffer to the desk after the assignment finishes', () => {
     const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });

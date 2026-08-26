@@ -404,6 +404,7 @@ function completeAction(
         stackId,
         consumedCardIds: consumedIds,
         producedCardIds: [producedId],
+        returnedCardIds: survivors.map((card) => card.id),
         outputDefinitionId: resolved.definitionId,
         explanationKey: resolved.explanationKey,
       },

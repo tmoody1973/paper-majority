@@ -281,6 +281,25 @@ test.describe('interaction spike', () => {
     }
   });
 
+  test('a finished assignment says the staffer is free again', async ({ page }) => {
+    // People do the work; documents get used up. A card quietly reappearing on a
+    // twelve-card desk is easy to miss, so the result line names it.
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
+
+    const aide = await cardIdFor(page, 'staff-policy-aide');
+    const report = await cardIdFor(page, 'evidence-rent-burden-report');
+    await combine(page, aide, report);
+    await runClock(page, 6000);
+
+    await expect(page.getByTestId('hud-result')).toContainText('summary');
+    await expect(page.getByTestId('hud-result')).toContainText('Policy Aide is free again');
+
+    // And it is true, not just said.
+    const state = await getState(page);
+    expect(state.cards.find((card) => card.id === aide)?.status).toBe('idle');
+  });
+
   test('a refusal that a Tactic would fix says which Tactic', async ({ page }) => {
     // A refusal reading only "those two do not go together" leaves the player with
     // nothing to reason about. When an unstudied Tactic would have made this exact
