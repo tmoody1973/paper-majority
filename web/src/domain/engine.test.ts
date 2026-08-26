@@ -512,9 +512,16 @@ describe('TICK completes an action', () => {
     if (transformed[0].type !== 'CARD_TRANSFORMED') throw new Error('expected CARD_TRANSFORMED');
     expect(transformed[0].outputDefinitionId).toBe('evidence-housing-summary');
 
-    expect(done.state.cards).toHaveLength(1);
-    expect(done.state.cards[0].definitionId).toBe('evidence-housing-summary');
-    expect(done.state.cards[0].status).toBe('idle');
+    // The evidence is used up; the aide is not. Both are still on the desk as
+    // exactly two cards: the result, and the staffer who produced it.
+    expect(done.state.cards.map((card) => card.definitionId).sort()).toEqual([
+      'evidence-housing-summary',
+      'staff-policy-aide',
+    ]);
+    const summary = done.state.cards.find(
+      (card) => card.definitionId === 'evidence-housing-summary',
+    );
+    expect(summary?.status).toBe('idle');
     expectOneStackPerCard(done.state);
   });
 
@@ -527,9 +534,11 @@ describe('TICK completes an action', () => {
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
     const done = runToCompletion(stacked.state, 6_000);
 
+    // Consumed: the report. Returned: the aide. Untouched: the voucher.
     expect(done.state.cards.map((card) => card.definitionId).sort()).toEqual([
       'evidence-housing-summary',
       'policy-housing-choice-voucher',
+      'staff-policy-aide',
     ]);
   });
 
@@ -679,6 +688,99 @@ describe('catalyst inputs survive their pattern', () => {
     return run(state, ...commands);
   }
 
+  it('returns the staffer to the desk after the assignment finishes', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    // The Policy Aide's own card text promises this: "Assigning them takes up
+    // their attention until the work is done."
+    const aide = done.state.cards.find((card) => card.definitionId === 'staff-policy-aide');
+    expect(aide).toBeDefined();
+    expect(aide?.status).toBe('idle');
+    expect(aide?.remainingMs).toBe(0);
+    expect(done.state.stacks.find((s) => s.id === aide?.stackId)?.cardIds).toEqual([aide?.id]);
+  });
+
+  it('lets one aide work the same rule twice, which is how the rule is learned', () => {
+    const start = makeState([
+      'staff-policy-aide',
+      'evidence-rent-burden-report',
+      'evidence-tenant-survey',
+    ]);
+
+    const first = runToCompletion(
+      run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' }).state,
+      6_000,
+    );
+    const aide = first.state.cards.find((card) => card.definitionId === 'staff-policy-aide');
+    const survey = first.state.cards.find(
+      (card) => card.definitionId === 'evidence-tenant-survey',
+    );
+    expect(aide).toBeDefined();
+    expect(survey).toBeDefined();
+
+    const second = run(first.state, {
+      type: 'STACK_CARD',
+      cardId: aide!.id,
+      targetStackId: survey!.stackId,
+    });
+    expect(typesOf(second.events)).toContain('STACK_ACCEPTED');
+
+    const done = runToCompletion(second.state, 6_000);
+    expect(
+      done.state.cards.filter((card) => card.definitionId === 'evidence-housing-summary'),
+    ).toHaveLength(2);
+  });
+
+  it('keeps the Tactic reachable after the rule has been demonstrated twice', () => {
+    const start = makeState([
+      'staff-policy-aide',
+      'evidence-rent-burden-report',
+      'evidence-tenant-survey',
+      'tactic-bipartisan-working-group',
+    ]);
+
+    let state = runToCompletion(
+      run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' }).state,
+      6_000,
+    ).state;
+
+    const aideAfterFirst = state.cards.find((c) => c.definitionId === 'staff-policy-aide')!;
+    const survey = state.cards.find((c) => c.definitionId === 'evidence-tenant-survey')!;
+    state = runToCompletion(
+      run(state, {
+        type: 'STACK_CARD',
+        cardId: aideAfterFirst.id,
+        targetStackId: survey.stackId,
+      }).state,
+      6_000,
+    ).state;
+
+    // The soft-lock this guards: with the aide consumed each time, no staffer was
+    // left to study the Tactic and half the checkpoint became unreachable.
+    const aide = state.cards.find((card) => card.definitionId === 'staff-policy-aide');
+    const tactic = state.cards.find(
+      (card) => card.definitionId === 'tactic-bipartisan-working-group',
+    );
+    expect(aide).toBeDefined();
+    expect(tactic).toBeDefined();
+
+    const study = runToCompletion(
+      run(state, {
+        type: 'START_ASSIGNMENT',
+        assignmentKind: 'study-tactic',
+        staffCardId: aide!.id,
+        targetCardId: tactic!.id,
+      }).state,
+      8_000,
+    );
+
+    expect(study.state.unlockedSlotExpansions).toEqual({
+      'pattern-coalition-outreach': ['expansion-bipartisan-outreach'],
+    });
+  });
+
   it('keeps the Working Bill on the desk after outreach completes', () => {
     const start = makeState(['policy-working-bill', 'coalition-office-fifth-district']);
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
@@ -740,11 +842,13 @@ describe('catalyst inputs survive their pattern', () => {
     expect(typesOf(retry.events)).toContain('STACK_ACCEPTED');
   });
 
-  it('still consumes the inputs of an ordinary pattern', () => {
-    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+  it('still consumes the inputs of a pattern that declares no catalyst', () => {
+    // Drafting spends both sides: the summary becomes the provision, and the
+    // policy idea is written into it. Nothing here is merely being borrowed.
+    const start = makeState(['evidence-housing-summary', 'policy-housing-choice-voucher']);
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
     const done = runToCompletion(stacked.state, 6_000);
 
-    expect(done.state.cards.map((c) => c.definitionId)).toEqual(['evidence-housing-summary']);
+    expect(done.state.cards.map((c) => c.definitionId)).toEqual(['policy-drafted-provision']);
   });
 });

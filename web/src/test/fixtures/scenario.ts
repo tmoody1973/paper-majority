@@ -183,7 +183,7 @@ const patterns: RecipePattern[] = [
     // declaration order, has to decide the winner.
     id: 'pattern-staff-review-note',
     slots: [
-      { kind: 'staff', quantity: 1 },
+      { kind: 'staff', quantity: 1, consumed: false },
       { kind: 'evidence', quantity: 1 },
     ],
     output: { mode: 'fixed', definitionId: 'evidence-staff-review-note' },
@@ -195,7 +195,8 @@ const patterns: RecipePattern[] = [
   {
     id: 'pattern-evidence-summary',
     slots: [
-      { kind: 'staff', requiredTags: ['policy-focused'], quantity: 1 },
+      // Staff are assigned, never used up: the card comes back when the work ends.
+      { kind: 'staff', requiredTags: ['policy-focused'], quantity: 1, consumed: false },
       { kind: 'evidence', requiredTags: ['housing'], quantity: 1 },
     ],
     output: {

@@ -297,7 +297,8 @@
             "requiredTags": [
               "policy-focused"
             ],
-            "quantity": 1
+            "quantity": 1,
+            "consumed": false
           },
           {
             "kind": "evidence",
