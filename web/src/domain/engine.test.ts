@@ -196,6 +196,85 @@ describe('SEPARATE_STACK and MOVE_CARD', () => {
     expectOneStackPerCard(separated.state);
   });
 
+  it('returns the held Staff Attention when a running pattern is cancelled', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    expect(stacked.state.resources.staffAttention).toBe(start.resources.staffAttention - 1);
+
+    const cancelled = run(stacked.state, {
+      type: 'SEPARATE_STACK',
+      stackId: 'stack-2',
+      cardId: 'card-1',
+      x: 40,
+      y: 50,
+    });
+
+    // Decision 002: the work stops and nothing is refunded EXCEPT the attention
+    // that was only ever being held.
+    expect(cancelled.state.resources.staffAttention).toBe(start.resources.staffAttention);
+    expect(typesOf(cancelled.events)).toContain('RESOURCE_CHANGED');
+    expect(cancelled.state.cards.every((card) => card.status === 'idle')).toBe(true);
+  });
+
+  it('returns the held Staff Attention when a Tactic study is cancelled', () => {
+    const start = makeState(['staff-policy-aide', 'tactic-bipartisan-working-group']);
+    const studying = run(start, {
+      type: 'START_ASSIGNMENT',
+      assignmentKind: 'study-tactic',
+      staffCardId: 'card-1',
+      targetCardId: 'card-2',
+    });
+    expect(studying.state.resources.staffAttention).toBe(start.resources.staffAttention - 1);
+
+    const cancelled = run(studying.state, {
+      type: 'SEPARATE_STACK',
+      stackId: studying.state.cards[0].stackId,
+      cardId: 'card-1',
+      x: 40,
+      y: 50,
+    });
+
+    expect(cancelled.state.resources.staffAttention).toBe(start.resources.staffAttention);
+    expect(cancelled.state.unlockedSlotExpansions).toEqual({});
+  });
+
+  it('cancelling repeatedly never drains the office below its starting attention', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    let state = start;
+
+    // The soft-lock this guards: three careless drags used to leave zero attention
+    // and no way to start any pattern again.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      state = run(state, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' }).state;
+      state = run(state, {
+        type: 'SEPARATE_STACK',
+        stackId: 'stack-2',
+        cardId: 'card-1',
+        x: 40,
+        y: 50,
+      }).state;
+    }
+
+    expect(state.resources.staffAttention).toBe(start.resources.staffAttention);
+
+    const again = run(state, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    expect(typesOf(again.events)).toContain('STACK_ACCEPTED');
+  });
+
+  it('separating an idle stack changes no resources at all', () => {
+    const start = makeState(['staff-policy-aide', 'policy-housing-choice-voucher']);
+    // These two do not combine, so the stack never becomes an assignment.
+    const separated = run(start, {
+      type: 'SEPARATE_STACK',
+      stackId: 'stack-2',
+      cardId: 'card-2',
+      x: 40,
+      y: 50,
+    });
+
+    expect(separated.state.resources).toEqual(start.resources);
+  });
+
   it('moves a card while paused and changes only its coordinates', () => {
     const start = makeState(['staff-policy-aide']);
     expect(start.paused).toBe(true);

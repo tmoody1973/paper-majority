@@ -202,6 +202,32 @@ function addEffects(resources: Resources, effects: Partial<Resources>): Resource
 }
 
 /**
+ * What an in-flight assignment is currently holding.
+ *
+ * Staff Attention is a concurrency limit, not a wallet, so it is held for the life
+ * of an assignment and must come back whether that assignment finishes or is
+ * cancelled (decision 002). Political Capital and the percentage meters are real
+ * spends and are never returned by this function.
+ */
+function heldAttention(
+  activeActionId: string | undefined,
+  services: EngineServices,
+): Partial<Resources> {
+  if (!activeActionId) return {};
+
+  const studyExpansionId = parseStudyActionId(activeActionId);
+  if (studyExpansionId) {
+    const expansion = findExpansion(services.scenario, studyExpansionId);
+    return expansion ? { staffAttention: expansion.studyCost } : {};
+  }
+
+  const pattern = services.scenario.patterns.find((candidate) => candidate.id === activeActionId);
+  return pattern?.resourceCost.staffAttention
+    ? { staffAttention: pattern.resourceCost.staffAttention }
+    : {};
+}
+
+/**
  * Finish one action whose cards have all reached zero.
  *
  * Staff Attention is a concurrency limit rather than a currency, so whatever the
@@ -592,9 +618,16 @@ export function executeCommand(
       const cancelling = Boolean(stack.activeActionId);
       const participants = new Set(stack.cardIds);
 
+      // The office stops the work but gets its staffer back. Without this, three
+      // careless drags left the desk with zero attention and no way to start
+      // anything again.
+      const released = cancelling ? heldAttention(stack.activeActionId, services) : {};
+      const refunding = Object.keys(released).length > 0;
+
       const newStackId = `stack-${command.cardId}`;
       const next: TermState = {
         ...state,
+        resources: refunding ? addEffects(state.resources, released) : state.resources,
         cards: state.cards.map((candidate) => {
           if (candidate.id === command.cardId) {
             return {
@@ -627,9 +660,22 @@ export function executeCommand(
         ],
       };
 
-      return accept(state, next, [
-        { type: 'CARD_MOVED', cardId: command.cardId, x: command.x, y: command.y },
-      ]);
+      const separationEvents: GameEvent[] = [];
+      if (refunding) {
+        separationEvents.push({
+          type: 'RESOURCE_CHANGED',
+          changes: released,
+          reason: `cancel:${stack.activeActionId}`,
+        });
+      }
+      separationEvents.push({
+        type: 'CARD_MOVED',
+        cardId: command.cardId,
+        x: command.x,
+        y: command.y,
+      });
+
+      return accept(state, next, separationEvents);
     }
 
     case 'MOVE_CARD': {
