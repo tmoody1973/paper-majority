@@ -58,7 +58,7 @@ It is not finished. What you are testing is a ten-minute slice of it.
 
 The finished game will have about 77 different cards and last 45–60 minutes.
 
-What exists today has **nine** kinds of card and takes about ten minutes. There is no
+What exists today has **eight** kinds of card and takes about ten minutes. There is no
 sound, the artwork is placeholder rectangles, and most of the game is missing on
 purpose.
 
@@ -132,7 +132,7 @@ You should see:
 - A bar across the top: **LEGISLATIVE WEEK 1**, **YOUR OFFICE — Democratic**, and six
   numbers (Staff Attention, Political Capital, District Trust, Bill Momentum, Policy
   Integrity, Staff Morale)
-- **Thirteen cards** on a beige desk, in three rows
+- **Twelve cards** on a beige desk, in three rows
 - A panel on the right headed **Your office**
 - Below that, a box headed **What the words mean**, already open
 
@@ -253,12 +253,24 @@ Studying **Bipartisan Working Group** widens rule 3 to accept the other party to
 **This is the single most important thing the test measures.** The player is supposed
 to end up understanding that a *rule got wider* — not that they "unlocked" something.
 
-### Two things that are meant to happen, and are not bugs
+### The chain stops at Drafted Provision
+
+Rule 2 makes a **Drafted Provision** — the card says *"Bill language — end of the chain."*
+There is nothing more to do with it in this practice run.
+
+That is deliberate. The finished game has a step for adding a provision to your bill;
+the ten-minute slice does not. Hovering the card says so.
+
+Testers *will* try to drag it onto the Working Bill. It bounces. That is correct — but
+note it if they seem annoyed, because it is the most natural thing to try.
+
+### Three things that are meant to happen, and are not bugs
 
 - **Cards that don't go together bounce apart.** That is correct. It costs the player
   nothing — no time, no resources. Experimenting is meant to be free.
 - **Nothing progresses until they press Resume.** The game starts paused. If a card
   is stuck at zero progress, the top bar says so in bold.
+- **The Drafted Provision has nowhere to go.** See above — end of the chain, on purpose.
 
 ### If something looks genuinely broken
 
@@ -364,15 +376,17 @@ That is allowed and expected — it just must not be the only way they can answe
 
 ### 5. Do they blame a card, or a number?
 
-**When:** after something goes against them — a deadline runs out, or they run out of
-staff.
+**When:** after something goes against them. The clearest one: if they take the
+**Ridgeline** office's counteroffer, their **Policy Integrity** number drops — they
+traded away part of what they promised to get the other party on board. Running out of
+staff is the other one.
 
 **Ask:** *"What caused that?"*
 
 | | |
 |---|---|
-| ✅ **Good** | "I ignored the renter thing" / "both my aides were busy" — something they *saw* |
-| ❌ **Bad** | "District Trust went down" — that is the symptom, not the cause |
+| ✅ **Good** | "I took their amendment to get their vote" / "both my aides were busy" — something they *saw* |
+| ❌ **Bad** | "Policy Integrity went down" — that is the symptom, not the cause |
 
 **Why it matters:** if setbacks only ever show up as numbers dropping, the game feels
 arbitrary and unfair. Every bad thing is supposed to be traceable to something visible
@@ -466,9 +480,9 @@ whole time. This table is here so *you* are not caught out, and for questions as
 
 | Problem | What to do |
 |---|---|
+| Fewer than 12 cards | Hard-reload. If still wrong, stop and report it. |
 | Page won't load | Check the terminal window is still running. Restart the command in Part 3. |
 | Wrong app appears | You are on port 3000. Use **3001**. |
-| Fewer than 13 cards | Hard-reload (Cmd+Shift+R). If still wrong, stop and report it. |
 | Cards won't drag | Hard-reload. If still stuck, stop and report it. |
 | Nothing happens after stacking | The clock is paused. Press **Resume**. This is expected. |
 | A card bounced off | Usually correct — those two do not go together. Free, no penalty. |

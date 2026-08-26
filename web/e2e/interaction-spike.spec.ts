@@ -231,17 +231,8 @@ test.describe('interaction spike', () => {
     }
   });
 
-  test('the desk shows deadline, overload and amendment pressure before any meter moves', async ({
-    page,
-  }) => {
+  test('shows overload and amendment pressure before any meter moves', async ({ page }) => {
     const start = await getState(page);
-
-    // A district concern carries a visible countdown from the first frame.
-    const concern = start.cards.find(
-      (card) => card.definitionId === 'constituency-urgent-renter-concern',
-    );
-    expect(concern?.remainingMs).toBeGreaterThan(0);
-    expect(concern?.status).toBe('idle');
 
     // A coalition request is pinned to the bill before any outreach happens.
     expect(start.relationships).toContainEqual(
@@ -265,6 +256,61 @@ test.describe('interaction spike', () => {
     expect(working.resources.staffMorale).toBe(start.resources.staffMorale);
     expect(working.resources.policyIntegrity).toBe(start.resources.policyIntegrity);
     expect(working.resources.billMomentum).toBe(start.resources.billMomentum);
+  });
+
+  test('every card on the desk takes part in a rule', async ({ page }) => {
+    // The desk used to carry a district concern with a ticking deadline that no rule
+    // accepted and no penalty enforced — a countdown the player could not answer and
+    // was not punished for. Nothing on the desk may be theatre.
+    const state = await getState(page);
+    const scenario = await page.evaluate(() => {
+      const api = window.__congressGameTestApi!;
+      return api.getState().snapshotId;
+    });
+    expect(scenario).toBe('interaction-spike-2026-08-24');
+
+    const onDesk = new Set(state.cards.map((card) => card.definitionId));
+    expect(onDesk.size).toBe(8);
+    expect(state.cards.length).toBeGreaterThanOrEqual(12);
+    expect(state.cards.length).toBeLessThanOrEqual(16);
+
+    // Nothing opens with a deadline the player has no way to meet.
+    for (const card of state.cards) {
+      expect(card.remainingMs).toBe(0);
+      expect(card.status).toBe('idle');
+    }
+  });
+
+  test('the one real setback is traceable to a visible choice', async ({ page }) => {
+    // Measure 5 asks whether a player blames something they saw, or just a number.
+    // Taking the other party's counteroffer costs Policy Integrity — a visible
+    // decision with a visible price.
+    const before = await getState(page);
+
+    const bill = await cardIdFor(page, 'policy-working-bill');
+    const aide = await cardIdFor(page, 'staff-policy-aide');
+    const tactic = await cardIdFor(page, 'tactic-bipartisan-working-group');
+
+    await page.evaluate(
+      ([staffCardId, targetCardId]) =>
+        window.__congressGameTestApi!.dispatch({
+          type: 'START_ASSIGNMENT',
+          assignmentKind: 'study-tactic',
+          staffCardId,
+          targetCardId,
+        }),
+      [aide, tactic],
+    );
+    await runClock(page, 8000);
+
+    const opposing = await cardIdFor(page, 'coalition-office-ridgeline');
+    await combine(page, bill, opposing);
+    await runClock(page, 6000);
+
+    const after = await getState(page);
+    expect(after.resources.policyIntegrity).toBeLessThan(before.resources.policyIntegrity);
+    // And the phrase names the cause, rather than only reporting a number.
+    await expect(page.getByTestId('hud-result')).toContainText(/amendment/i);
   });
 
   test('tells the player to resume when a paused desk freezes their first job', async ({

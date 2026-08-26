@@ -1,5 +1,9 @@
 # 005 — The spike desk carries nine card types, not eight
 
+> **SUPERSEDED on 2026-08-26 by [009](./009-cutting-the-card-that-could-not-be-answered.md).**
+> The card was cut. The reasoning below was made without checking whether the concern
+> could actually be acted on. It could not.
+
 - **Decision** — The interaction spike ships nine card types on the desk: the eight the rules need, plus an Urgent Renter Concern that belongs to no rule and exists only to carry a visible deadline.
 
 - **Why this came up** — The plan asks for exactly eight card types, then separately asks the fixture to "also contain one expiring district concern". Those cannot both be true. The three rules plus the plan's named requirements consume all eight slots exactly: one policy staffer, two housing reports, one renter policy, the bill, two member offices, one Tactic. Nothing is left over.

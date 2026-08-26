@@ -1,6 +1,6 @@
 {
   "fixtureId": "interaction-spike",
-  "note": "Placeholder-art fixture for the ten-minute fun-first gate. Every office here is fictional; no real lawmaker appears, and no portrait art exists.",
+  "note": "Placeholder-art fixture for the ten-minute fun-first gate. Every office here is fictional; no real lawmaker appears, and no portrait art exists. Eight starting definitions, all of which take part in a rule.",
   "player": {
     "districtId": "XX-01",
     "party": "democratic",
@@ -75,24 +75,18 @@
       "y": 435
     },
     {
-      "definitionId": "constituency-urgent-renter-concern",
+      "definitionId": "coalition-office-hillcrest",
       "x": 940,
-      "y": 435,
-      "remainingMs": 180000
+      "y": 435
     },
     {
-      "definitionId": "coalition-office-hillcrest",
+      "definitionId": "coalition-office-ridgeline",
       "x": 140,
       "y": 710
     },
     {
-      "definitionId": "coalition-office-ridgeline",
-      "x": 340,
-      "y": 710
-    },
-    {
       "definitionId": "tactic-bipartisan-working-group",
-      "x": 540,
+      "x": 340,
       "y": 710
     }
   ],
@@ -138,8 +132,7 @@
       "evidence-summary",
       "drafted",
       "in-bill",
-      "outreach-result",
-      "district-concern"
+      "outreach-result"
     ],
     "cards": [
       {
@@ -254,20 +247,6 @@
         "plainLanguage": "A way of working that your office can learn. Once a staffer has studied it, it changes a rule for the rest of the term."
       },
       {
-        "id": "constituency-urgent-renter-concern",
-        "title": "Urgent Renter Concern",
-        "kind": "constituency",
-        "tags": [
-          "district-concern",
-          "renter-focused"
-        ],
-        "sourceClass": "simulated",
-        "citations": [],
-        "workload": 1,
-        "contextualSubtitle": "District concern",
-        "plainLanguage": "Someone back home needs an answer, and they are waiting. Ignore it long enough and your district notices."
-      },
-      {
         "id": "evidence-housing-summary",
         "title": "Evidence Summary",
         "kind": "evidence",
@@ -292,8 +271,8 @@
         "sourceClass": "simulated",
         "citations": [],
         "workload": 0,
-        "contextualSubtitle": "Bill language",
-        "plainLanguage": "A policy idea written up properly, backed by evidence. This is what actually goes into a bill."
+        "contextualSubtitle": "Bill language \u2014 end of the chain",
+        "plainLanguage": "A policy idea written up properly, backed by evidence. This is what actually goes into a bill. In this ten-minute practice run it is as far as bill language goes \u2014 the full game adds a step for putting it into your bill."
       },
       {
         "id": "coalition-outreach-result",
