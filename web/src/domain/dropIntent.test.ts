@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createFixtureState, getFixtureScenario } from '@/content/fixtures/loadFixture';
-import { resolveDropIntent } from '@/domain/dropIntent';
+import { resolveDropIntent, wouldDropBeAccepted } from '@/domain/dropIntent';
 import type { TermState } from '@/domain/types';
 
 const scenario = getFixtureScenario();
@@ -95,5 +95,54 @@ describe('resolveDropIntent', () => {
   it('returns nothing for an unknown card or stack', () => {
     expect(resolveDropIntent(state, scenario, 'nope', stackOf('staff-policy-aide'))).toBeUndefined();
     expect(resolveDropIntent(state, scenario, cardId('staff-policy-aide'), 'nope')).toBeUndefined();
+  });
+});
+
+describe('wouldDropBeAccepted', () => {
+  it('is true for a stack the office can match and afford', () => {
+    expect(
+      wouldDropBeAccepted(
+        state,
+        scenario,
+        cardId('staff-policy-aide'),
+        stackOf('evidence-rent-burden-report'),
+      ),
+    ).toBe(true);
+  });
+
+  it('is false when the rule matches but the office cannot afford it', () => {
+    // A target that glows green and then refuses the drop teaches the wrong rule.
+    const broke: TermState = { ...state, resources: { ...state.resources, staffAttention: 0 } };
+
+    expect(
+      wouldDropBeAccepted(
+        broke,
+        scenario,
+        cardId('staff-policy-aide'),
+        stackOf('evidence-rent-burden-report'),
+      ),
+    ).toBe(false);
+  });
+
+  it('is false for a Tactic the chosen card is not eligible to study', () => {
+    expect(
+      wouldDropBeAccepted(
+        state,
+        scenario,
+        cardId('policy-working-bill'),
+        stackOf('tactic-bipartisan-working-group'),
+      ),
+    ).toBe(false);
+  });
+
+  it('is true for an eligible staffer dropped on a Tactic', () => {
+    expect(
+      wouldDropBeAccepted(
+        state,
+        scenario,
+        cardId('staff-policy-aide'),
+        stackOf('tactic-bipartisan-working-group'),
+      ),
+    ).toBe(true);
   });
 });

@@ -40,6 +40,100 @@ export interface HandbookEntry {
 }
 
 /**
+ * Whether a chosen pair of cards is a Tactic study the office can actually begin,
+ * and if not, what to tell the player.
+ *
+ * The desk can only bounce a card. The keyboard panel can explain, so it does —
+ * but both must agree with the engine, which is why the eligibility rules here
+ * read the same `eligibleStaffTags` and `unlockedSlotExpansions` the engine
+ * checks.
+ */
+export interface StudyOption {
+  /** Is the chosen target a Tactic at all? */
+  isTactic: boolean;
+  canStudy: boolean;
+  /** Plain-English reason the study cannot begin. Absent when it can. */
+  blockedReason?: string;
+}
+
+export function describeStudyOption(
+  state: TermState,
+  scenario: ScenarioDefinition,
+  staffCardId: string,
+  tacticCardId: string,
+): StudyOption {
+  const staff = state.cards.find((card) => card.id === staffCardId);
+  const tactic = state.cards.find((card) => card.id === tacticCardId);
+  if (!staff || !tactic) return { isTactic: false, canStudy: false };
+
+  const expansion = scenario.tacticExpansions.find(
+    (candidate) => candidate.tacticDefinitionId === tactic.definitionId,
+  );
+  if (!expansion) return { isTactic: false, canStudy: false };
+
+  if ((state.unlockedSlotExpansions[expansion.targetPatternId] ?? []).includes(expansion.id)) {
+    return { isTactic: true, canStudy: false, blockedReason: 'Your office has already learned this.' };
+  }
+
+  if (tactic.status !== 'idle') {
+    return { isTactic: true, canStudy: false, blockedReason: 'That Tactic is already being studied.' };
+  }
+
+  const wanted = expansion.eligibleStaffTags.map(describeTag).join(' or ');
+  const onTheDesk = state.cards
+    .filter((card) => {
+      if (card.status !== 'idle') return false;
+      const definition = scenario.cards.find((entry) => entry.id === card.definitionId);
+      return (
+        definition?.kind === 'staff' &&
+        expansion.eligibleStaffTags.some((tag) => definition.tags.includes(tag))
+      );
+    })
+    .map(
+      (card) => scenario.cards.find((entry) => entry.id === card.definitionId)?.title ?? card.id,
+    );
+  const availability =
+    onTheDesk.length > 0
+      ? ` Free right now: ${Array.from(new Set(onTheDesk)).join(', ')}.`
+      : ' Nobody in the office is free to take it on right now.';
+
+  const staffDefinition = scenario.cards.find((entry) => entry.id === staff.definitionId);
+  if (staffDefinition?.kind !== 'staff') {
+    return {
+      isTactic: true,
+      canStudy: false,
+      blockedReason: `A Tactic is studied by a staff card. This one needs a ${wanted} staffer.${availability}`,
+    };
+  }
+
+  if (staff.status !== 'idle') {
+    return {
+      isTactic: true,
+      canStudy: false,
+      blockedReason: `That staffer is already working.${availability}`,
+    };
+  }
+
+  if (!expansion.eligibleStaffTags.some((tag) => staffDefinition.tags.includes(tag))) {
+    return {
+      isTactic: true,
+      canStudy: false,
+      blockedReason: `This Tactic needs a ${wanted} staffer.${availability}`,
+    };
+  }
+
+  if (state.resources.staffAttention < expansion.studyCost) {
+    return {
+      isTactic: true,
+      canStudy: false,
+      blockedReason: 'No staff attention is free for that right now.',
+    };
+  }
+
+  return { isTactic: true, canStudy: true };
+}
+
+/**
  * A Tactic is not a recipe. Counting the two together made a binder with every
  * recipe found read as finished while a Tactic was still unlearned.
  */

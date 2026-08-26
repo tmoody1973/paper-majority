@@ -1,5 +1,7 @@
 import type { GameCommand } from '@/domain/commands';
-import type { CardInstance, ScenarioDefinition, TermState } from '@/domain/types';
+import { buildMatchInputs, matchPattern } from '@/domain/recipes';
+import { describeStudyOption } from '@/domain/selectors';
+import type { CardInstance, Resources, ScenarioDefinition, TermState } from '@/domain/types';
 
 /**
  * What does dropping this card on that stack mean?
@@ -55,4 +57,49 @@ export function resolveDropIntent(
     staffCardId: staff.id,
     targetCardId: tactic.id,
   };
+}
+
+/**
+ * Will this drop actually be accepted?
+ *
+ * Drives the valid-hover cue. A target that glows and then refuses the drop
+ * teaches the player a rule the game does not have, so this asks every question
+ * the engine will ask: are the cards free, does a pattern match, can the office
+ * afford it, and — for a Tactic — is this staffer allowed to study it.
+ *
+ * Pure and in the domain layer so the desk cue, the keyboard panel and the tests
+ * cannot drift apart.
+ */
+export function wouldDropBeAccepted(
+  state: TermState,
+  scenario: ScenarioDefinition,
+  cardId: string,
+  targetStackId: string,
+): boolean {
+  const stack = state.stacks.find((candidate) => candidate.id === targetStackId);
+  if (!stack) return false;
+
+  const members = [...stack.cardIds, cardId]
+    .map((id) => state.cards.find((card) => card.id === id))
+    .filter((card): card is CardInstance => card !== undefined);
+  if (members.length !== stack.cardIds.length + 1) return false;
+  if (members.some((card) => card.status !== 'idle')) return false;
+
+  const intent = resolveDropIntent(state, scenario, cardId, targetStackId);
+  if (intent?.type === 'START_ASSIGNMENT' && intent.assignmentKind === 'study-tactic') {
+    return describeStudyOption(state, scenario, intent.staffCardId, intent.targetCardId).canStudy;
+  }
+
+  const inputs = buildMatchInputs(members, scenario, state.player.party);
+  const found = matchPattern(
+    inputs,
+    scenario.patterns,
+    Object.values(state.unlockedSlotExpansions).flat(),
+    scenario.tacticExpansions,
+  );
+  if (!found) return false;
+
+  return (Object.entries(found.pattern.resourceCost) as [keyof Resources, number][]).every(
+    ([key, amount]) => state.resources[key] >= amount,
+  );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { describeStudyOption } from '@/domain/selectors';
 import type { TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
 
@@ -55,6 +56,13 @@ export function AccessibleCardControls({
 
   const stackIdOf = (cardId: string) =>
     state.cards.find((card) => card.id === cardId)?.stackId ?? '';
+
+  // "Wrong staffer" tells a player they were wrong without telling them what right
+  // looks like. This says who can study the Tactic and who is free to do it.
+  const study =
+    sourceId && targetId
+      ? describeStudyOption(state, scenario, sourceId, targetId)
+      : { isTactic: false, canStudy: false };
 
   return (
     <section className="controls" aria-label="Keyboard card controls">
@@ -117,7 +125,7 @@ export function AccessibleCardControls({
         <button
           type="button"
           data-testid="controls-study"
-          disabled={!sourceId || !targetId}
+          disabled={!study.canStudy}
           onClick={() =>
             session.dispatch({
               type: 'START_ASSIGNMENT',
@@ -147,6 +155,12 @@ export function AccessibleCardControls({
           Take it back out
         </button>
       </div>
+
+      {study.isTactic && study.blockedReason && (
+        <p className="controls__note controls__note--study" data-testid="controls-study-note">
+          {study.blockedReason}
+        </p>
+      )}
 
       <p className="controls__note">
         A combination that does not work costs you nothing. Try things.

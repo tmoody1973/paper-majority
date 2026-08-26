@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
 
 import { rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
-import { resolveDropIntent } from '@/domain/dropIntent';
-import { buildMatchInputs, matchPattern } from '@/domain/recipes';
+import { resolveDropIntent, wouldDropBeAccepted } from '@/domain/dropIntent';
 import type { CardDefinition, CardInstance } from '@/domain/types';
 import { resolveDropTarget, type DropTarget } from '@/game/input/dropResolver';
 import { CardView, CARD_HEIGHT, CARD_WIDTH } from '@/game/objects/CardView';
@@ -253,30 +252,15 @@ export class DeskScene extends Phaser.Scene {
       .filter((target): target is DropTarget => target !== undefined);
   }
 
-  /** Would this drop be accepted? Used only for the valid-hover cue. */
+  /**
+   * Would this drop be accepted? Used only for the valid-hover cue.
+   *
+   * The rule lives in the domain layer, because a cue that disagrees with the
+   * engine is worse than no cue: it used to glow for a stack the office could not
+   * afford, and for a staffer not allowed to study the Tactic.
+   */
   private wouldAccept(cardId: string, stackId: string): boolean {
-    const state = this.session.getState();
-    const stack = state.stacks.find((candidate) => candidate.id === stackId);
-    if (!stack) return false;
-
-    const members = [...stack.cardIds, cardId]
-      .map((id) => state.cards.find((card) => card.id === id))
-      .filter((card): card is CardInstance => card !== undefined);
-    if (members.some((card) => card.status !== 'idle')) return false;
-
-    // Studying a Tactic is a valid drop even though it matches no pattern.
-    const intent = resolveDropIntent(state, this.session.getScenario(), cardId, stackId);
-    if (intent?.type === 'START_ASSIGNMENT') return true;
-
-    const inputs = buildMatchInputs(members, this.session.getScenario(), state.player.party);
-    return Boolean(
-      matchPattern(
-        inputs,
-        this.session.getScenario().patterns,
-        Object.values(state.unlockedSlotExpansions).flat(),
-        this.session.getScenario().tacticExpansions,
-      ),
-    );
+    return wouldDropBeAccepted(this.session.getState(), this.session.getScenario(), cardId, stackId);
   }
 
   private installInput(): void {
