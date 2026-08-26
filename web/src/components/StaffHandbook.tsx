@@ -117,7 +117,49 @@ export function StaffHandbook({ view }: { view: HandbookView }) {
           {view.discoveredCount} of {view.totalCount} rules found
           {view.undiscoveredCount > 0 ? ` — ${view.undiscoveredCount} still to find` : ''}
         </p>
+
+        {/* A Tactic is a way of working, not a recipe. Counted together, a binder
+            with every recipe found read as finished while a Tactic was unlearned. */}
+        {view.tacticsTotal > 0 && (
+          <p className="handbook__progress" data-testid="handbook-tactics">
+            {view.tacticsLearned} of {view.tacticsTotal} Tactics learned
+          </p>
+        )}
       </header>
+
+      {view.tactics.length > 0 && (
+        <ul className="handbook__tactics">
+          {view.tactics.map((tactic) => (
+            <li
+              key={tactic.id}
+              className={`handbook-tactic handbook-tactic--${tactic.learned ? 'learned' : 'unlearned'}`}
+              data-testid={`handbook-tactic-${tactic.id}`}
+            >
+              <p className="handbook-tactic__title">
+                <span className={`handbook-badge handbook-badge--${tactic.learned ? 'expanded' : 'teased'}`}>
+                  {tactic.learned ? 'Learned' : 'Not yet studied'}
+                </span>
+                <strong>{tactic.title}</strong>
+              </p>
+
+              <p
+                className="handbook-tactic__accepts"
+                data-testid={`handbook-tactic-accepts-${tactic.id}`}
+              >
+                The {tactic.ruleLabel} rule currently works with:{' '}
+                <strong>{tactic.currentlyAccepts.join(', ') || 'anything that fits'}</strong>
+              </p>
+
+              {tactic.wouldAdd.length > 0 && (
+                <p className="handbook-tactic__would">
+                  Studying it would also allow: <strong>{tactic.wouldAdd.join(', ')}</strong>. Stack
+                  it with a {tactic.eligibleStaff.join(' or ')} staff card to study it.
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <ul className="handbook__entries">
         {view.entries.map((entry) => (

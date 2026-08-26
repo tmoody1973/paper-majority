@@ -39,11 +39,33 @@ export interface HandbookEntry {
   expansions: { id: string; note: string }[];
 }
 
+/**
+ * A Tactic is not a recipe. Counting the two together made a binder with every
+ * recipe found read as finished while a Tactic was still unlearned.
+ */
+export interface HandbookTacticView {
+  id: string;
+  title: string;
+  learned: boolean;
+  targetPatternId: string;
+  /** The rule this Tactic widens, named the way the player sees it. */
+  ruleLabel: string;
+  /** What that rule accepts right now, in plain words. */
+  currentlyAccepts: string[];
+  /** What studying it would add. Empty once it is learned. */
+  wouldAdd: string[];
+  /** Who in the office is allowed to study it. */
+  eligibleStaff: string[];
+}
+
 export interface HandbookView {
   entries: HandbookEntry[];
   discoveredCount: number;
   undiscoveredCount: number;
   totalCount: number;
+  tactics: HandbookTacticView[];
+  tacticsLearned: number;
+  tacticsTotal: number;
 }
 
 const FAMILY_LABELS: Record<CardKind, string> = {
@@ -189,11 +211,68 @@ export function buildHandbook(state: TermState, scenario: ScenarioDefinition): H
   });
 
   const discoveredCount = entries.filter((entry) => entry.state !== 'teased').length;
+  const tactics = buildTactics(state, scenario);
 
   return {
     entries,
     discoveredCount,
     undiscoveredCount: entries.length - discoveredCount,
     totalCount: entries.length,
+    tactics,
+    tacticsLearned: tactics.filter((tactic) => tactic.learned).length,
+    tacticsTotal: tactics.length,
   };
+}
+
+/**
+ * What each Tactic changes, and whether it has changed it yet.
+ *
+ * Read from the same `unlockedSlotExpansions` the engine matches against, so the
+ * binder can never claim a rule the desk would refuse.
+ */
+function buildTactics(state: TermState, scenario: ScenarioDefinition): HandbookTacticView[] {
+  return scenario.tacticExpansions.map((expansion) => {
+    const learned = (state.unlockedSlotExpansions[expansion.targetPatternId] ?? []).includes(
+      expansion.id,
+    );
+    const pattern = scenario.patterns.find(
+      (candidate) => candidate.id === expansion.targetPatternId,
+    );
+    const slot =
+      expansion.effect.kind === 'widen-slot'
+        ? pattern?.slots[expansion.effect.slotIndex]
+        : undefined;
+
+    const base = [
+      ...(slot?.anyTags ?? []).map(describeTag),
+      ...(slot?.sourceClasses ?? []),
+    ];
+    const added =
+      expansion.effect.kind === 'widen-slot'
+        ? [
+            ...(expansion.effect.addAnyTags ?? []).map(describeTag),
+            ...(expansion.effect.addSourceClasses ?? []),
+          ]
+        : [];
+
+    return {
+      id: expansion.id,
+      title:
+        scenario.cards.find((card) => card.id === expansion.tacticDefinitionId)?.title ??
+        expansion.tacticDefinitionId,
+      learned,
+      targetPatternId: expansion.targetPatternId,
+      ruleLabel:
+        scenario.cards.find(
+          (card) =>
+            card.id ===
+            (pattern?.output.mode === 'fixed'
+              ? pattern.output.definitionId
+              : (pattern?.output.parameters?.outputDefinitionId as string | undefined)),
+        )?.title ?? expansion.targetPatternId,
+      currentlyAccepts: learned ? [...base, ...added] : base,
+      wouldAdd: learned ? [] : added,
+      eligibleStaff: expansion.eligibleStaffTags.map(describeTag),
+    };
+  });
 }

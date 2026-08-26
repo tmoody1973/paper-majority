@@ -42,6 +42,57 @@ describe('StaffHandbook', () => {
     expect(screen.getByTestId('handbook-progress')).toHaveTextContent('0 of 3 rules found');
   });
 
+  it('counts Tactics separately, so finding every recipe never reads as finished', () => {
+    const base = createFixtureState('interaction-spike');
+    const allRecipes: TermState = {
+      ...base,
+      discoveredPatternIds: [
+        'pattern-evidence-summary',
+        'pattern-drafted-provision',
+        'pattern-coalition-outreach',
+      ],
+    };
+
+    render(<StaffHandbook view={view(allRecipes)} />);
+
+    // The trap: "3 of 3 rules found" on its own reads as a finished binder while a
+    // Tactic is still unlearned.
+    expect(screen.getByTestId('handbook-progress')).toHaveTextContent('3 of 3 rules found');
+    expect(screen.getByTestId('handbook-tactics')).toHaveTextContent('0 of 1 Tactics learned');
+  });
+
+  it('says what the outreach rule accepts right now, before and after the Tactic', () => {
+    const base = createFixtureState('interaction-spike');
+    const discovered: TermState = {
+      ...base,
+      discoveredPatternIds: ['pattern-coalition-outreach'],
+    };
+
+    const { unmount } = render(<StaffHandbook view={view(discovered)} />);
+    const before = screen.getByTestId('handbook-tactic-accepts-expansion-bipartisan-outreach');
+    expect(before).toHaveTextContent(/shares your party/i);
+    // The rule does NOT reach across the aisle yet, however the binder describes
+    // what studying would add.
+    expect(before).not.toHaveTextContent(/from the other party/i);
+    expect(
+      screen.getByTestId('handbook-tactic-expansion-bipartisan-outreach'),
+    ).toHaveTextContent(/Studying it would also allow/i);
+    unmount();
+
+    const expanded: TermState = {
+      ...discovered,
+      unlockedSlotExpansions: {
+        'pattern-coalition-outreach': ['expansion-bipartisan-outreach'],
+      },
+    };
+    render(<StaffHandbook view={view(expanded)} />);
+
+    const after = screen.getByTestId('handbook-tactic-accepts-expansion-bipartisan-outreach');
+    expect(after).toHaveTextContent(/from the other party/i);
+    expect(after).toHaveTextContent(/shares your party/i);
+    expect(screen.getByTestId('handbook-tactics')).toHaveTextContent('1 of 1 Tactics learned');
+  });
+
   it('shows slots, output and a worked example once a rule is Discovered', () => {
     const base = createFixtureState('interaction-spike');
     const discovered: TermState = {
