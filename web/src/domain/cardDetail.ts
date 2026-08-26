@@ -20,6 +20,15 @@ export interface CardDetail {
   simulatedNote?: string;
   /** One plain line explaining the information class, whatever it is. */
   sourceExplainer: string;
+  /**
+   * Present when a card claims a real record but ships no citation.
+   *
+   * The vertical slice has no source manifest yet, so its "official" cards stand
+   * in for documents rather than pointing at them. Saying so is the only honest
+   * option: inventing a citation to fill the gap is forbidden, and staying silent
+   * lets a tester believe the card is sourced.
+   */
+  practicePlaceholderNote?: string;
   workload: number;
   /** Uses the player has already discovered. Never anything they have not. */
   knownUses: string[];
@@ -120,6 +129,10 @@ export function describeCard(
         ? 'In this simulation. This exists only inside your run — it is not a claim about anyone real.'
         : undefined,
     sourceExplainer: SOURCE_EXPLAINERS[definition.sourceClass],
+    practicePlaceholderNote:
+      definition.sourceClass !== 'simulated' && (definition.citations?.length ?? 0) === 0
+        ? 'Practice card. It stands in for a real document, and no source is on file for it — nothing here is a citation.'
+        : undefined,
     workload: definition.workload,
     knownUses,
     noUsesYetNote:

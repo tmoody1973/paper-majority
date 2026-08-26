@@ -115,6 +115,27 @@ describe('describeCard', () => {
     expect(office?.knownUses.join(' ')).toMatch(/Outreach Result/);
   });
 
+  it('admits when a card claims a real record but carries no citation', () => {
+    // The spike ships no citations. A card that says "Official record" and
+    // "Real public information, from a real source" while carrying an empty
+    // citation list is making a claim the game cannot support.
+    const report = describeCard(fresh, scenario, instanceOf(fresh, 'evidence-rent-burden-report'));
+
+    expect(report?.sourceLabel).toBe('Official record');
+    expect(report?.practicePlaceholderNote).toBeDefined();
+    expect(report?.practicePlaceholderNote).toMatch(/no source/i);
+    expect(report?.practicePlaceholderNote).toMatch(/practice/i);
+  });
+
+  it('does not call a simulated card a practice placeholder', () => {
+    // Simulated content is already honest about what it is; it is not pretending
+    // to be a document with a missing citation.
+    const bill = describeCard(fresh, scenario, instanceOf(fresh, 'policy-working-bill'));
+
+    expect(bill?.sourceLabel).toBe('Simulated');
+    expect(bill?.practicePlaceholderNote).toBeUndefined();
+  });
+
   it('returns nothing for a card that is not on the desk', () => {
     expect(describeCard(fresh, scenario, 'no-such-card')).toBeUndefined();
   });

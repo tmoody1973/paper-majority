@@ -90,11 +90,16 @@ export class CardView extends Phaser.GameObjects.Container {
     );
 
     // Information class: colour, shape hint, icon and label — also independent.
+    //
+    // On its own row beneath the family band. Side by side, the two labels shared
+    // 156px and the longest pairs — "Evidence" with "Official record" or "Based on
+    // records" — overlapped into an unreadable smear. Neither system may be
+    // shortened away, so they get a row each; the 42px header has the space.
     this.add(
       scene.add
         .text(
           CARD_WIDTH / 2 - 12,
-          -CARD_HEIGHT / 2 + 14,
+          -CARD_HEIGHT / 2 + 28,
           `${source.glyph} ${source.label}`,
           {
             fontFamily: 'system-ui, sans-serif',
@@ -164,6 +169,27 @@ export class CardView extends Phaser.GameObjects.Container {
             color: '#4a5c68',
           })
           .setOrigin(0, 0.5),
+      );
+    }
+
+    // A card that claims a real record while shipping no citation says so on its
+    // face. The slice has no source manifest yet, and inventing a citation to
+    // close the gap is not an option.
+    if (
+      options.definition.sourceClass !== 'simulated' &&
+      (options.definition.citations?.length ?? 0) === 0
+    ) {
+      this.add(
+        scene.add
+          // A row above the workload line: side by side the two ran into each
+          // other on any card carrying both.
+          .text(CARD_WIDTH / 2 - 12, CARD_HEIGHT / 2 - 44, 'Practice card — no source', {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '10px',
+            fontStyle: 'italic',
+            color: '#7d7263',
+          })
+          .setOrigin(1, 0),
       );
     }
 

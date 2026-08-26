@@ -39,6 +39,15 @@ export function CardInspector({
         {detail.sourceExplainer}
       </p>
 
+      {/* Sits directly under the explainer on purpose: it qualifies the sentence
+          above it, and a tester who reads "real public information" must not get
+          to the end of the card believing it is sourced. */}
+      {detail.practicePlaceholderNote && (
+        <p className="inspector__note inspector__note--practice" data-testid="inspector-practice">
+          {detail.practicePlaceholderNote}
+        </p>
+      )}
+
       {detail.plainLanguage && (
         <p className="inspector__plain" data-testid="inspector-plain">
           {detail.plainLanguage}

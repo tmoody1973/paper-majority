@@ -21,6 +21,23 @@ describe('CardInspector', () => {
     expect(screen.getByTestId('inspector-plain')).toHaveTextContent(/bill you are building/i);
   });
 
+  it('qualifies an "official" card that carries no citation', () => {
+    render(
+      <CardInspector detail={detailFor(fresh, 'evidence-rent-burden-report')} onClose={vi.fn()} />,
+    );
+
+    // The explainer above it says "Real public information, from a real source."
+    // A reader must not reach the end of the card still believing it is sourced.
+    expect(screen.getByTestId('inspector-source-explainer')).toHaveTextContent(/real source/i);
+    expect(screen.getByTestId('inspector-practice')).toHaveTextContent(/no source is on file/i);
+  });
+
+  it('leaves a simulated card alone — it is already honest about what it is', () => {
+    render(<CardInspector detail={detailFor(fresh, 'policy-working-bill')} onClose={vi.fn()} />);
+
+    expect(screen.queryByTestId('inspector-practice')).not.toBeInTheDocument();
+  });
+
   it('shows family and information class as separate labels', () => {
     render(<CardInspector detail={detailFor(fresh, 'evidence-rent-burden-report')} onClose={vi.fn()} />);
 

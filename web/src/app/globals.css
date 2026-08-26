@@ -316,6 +316,14 @@ select:focus-visible {
   padding-left: 7px;
 }
 
+/* Deliberately not a provenance colour: this is a gap in our sourcing, not a
+   fourth information class. */
+.inspector__note--practice {
+  border-left: 3px dashed var(--rule);
+  padding-left: 7px;
+  font-style: italic;
+}
+
 .inspector__uses h3 {
   margin: 10px 0 4px;
   font-size: 12px;
