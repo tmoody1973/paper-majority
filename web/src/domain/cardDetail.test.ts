@@ -136,6 +136,43 @@ describe('describeCard', () => {
     expect(bill?.practicePlaceholderNote).toBeUndefined();
   });
 
+  it('says nothing about cost for a rule the office has not discovered', () => {
+    // A cost the player cannot have seen yet is a leak of an undiscovered rule.
+    const office = describeCard(fresh, scenario, instanceOf(fresh, 'coalition-office-hillcrest'));
+
+    expect(office?.costs).toEqual([]);
+  });
+
+  it('charges a member office in political capital, not staffers', () => {
+    // The bug: every member office read "Uses 1 staffer", but outreach spends
+    // Political Capital and no Staff Attention at all.
+    const discovered: TermState = {
+      ...fresh,
+      discoveredPatternIds: ['pattern-coalition-outreach'],
+    };
+    const office = describeCard(
+      discovered,
+      scenario,
+      instanceOf(discovered, 'coalition-office-hillcrest'),
+    );
+
+    expect(office?.costs.map((cost) => cost.short)).toEqual(['Spends 1 political capital']);
+    expect(office?.costs.map((cost) => cost.short).join(' ')).not.toMatch(/staffer/i);
+    // And it says which kind of cost that is — the open question in decision 003.
+    expect(office?.costs[0].long).toMatch(/does not come back/i);
+  });
+
+  it('ties up a staffer for work that holds one, and says they come back', () => {
+    const discovered: TermState = {
+      ...fresh,
+      discoveredPatternIds: ['pattern-evidence-summary'],
+    };
+    const aide = describeCard(discovered, scenario, instanceOf(discovered, 'staff-policy-aide'));
+
+    expect(aide?.costs.map((cost) => cost.short)).toEqual(['Ties up 1 staffer']);
+    expect(aide?.costs[0].long).toMatch(/get them back/i);
+  });
+
   it('returns nothing for a card that is not on the desk', () => {
     expect(describeCard(fresh, scenario, 'no-such-card')).toBeUndefined();
   });

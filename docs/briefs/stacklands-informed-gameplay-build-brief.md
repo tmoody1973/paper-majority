@@ -1,4 +1,4 @@
-# Stacklands-Informed Gameplay Build Brief
+# 	Stacklands-Informed Gameplay Build Brief
 
 **Audience:** Claude Code and implementation agents  
 **Status:** Proposed Phase 2 build brief; new Linear issues are drafts until Tarik approves their creation  
@@ -248,15 +248,19 @@ Integrate the clock, packs, production chain, coalition decisions and Story Dire
 #### Acceptance criteria
 
 - [ ] Add a persistent Office Agenda driven only by confirmed engine events.
+- [ ] Week 1 presents a visible six-week objective expressed through the Working Bill, coalition support and office obligations; the player can inspect current progress and the remaining gap at any time.
 - [ ] The opening objectives teach opening a pack, assigning Staff, producing a summary, drafting a provision, adding it to the Bill Docket, approaching an office and managing one obligation.
 - [ ] Objectives never complete from UI clicks alone or from unconfirmed intent.
 - [ ] Each of weeks 1–6 contains at least one meaningful assignment, one district or coalition trade-off and one filing/archiving decision.
+- [ ] Each week presents at least one constrained decision with two viable paths, a visible opportunity cost and a consequence that changes a later option; completing the known recipe chain is never the only meaningful decision.
+- [ ] Every completed production chain changes at least one persistent strategic state: the Working Bill, coalition support, an obligation, available capacity or a learned Tactic.
+- [ ] The next Weekly Briefing names at least one consequence carried forward from the player's previous decisions.
 - [ ] The visible weekly loop is: open pack → assign Staff → discover/reuse a rule → add/evaluate bill work → respond to an obligation → file/archive → resolve event → advance → autosave.
 - [ ] The Handbook separately communicates base recipes discovered and Tactic expansions learned; it does not imply completion while a relevant Tactic remains unlearned.
-- [ ] Important completions use consistent progress, transformation, worker-return and result feedback.
+- [ ] Important completions show anticipation, progress, transformation, worker return, the named consequence and the next strategic option through at least two accessible feedback channels.
 - [ ] Decisions pause the clock and require explicit accessible confirmation.
 - [ ] Reload restores the same week, board, bill, relationships, discoveries, objectives and deterministic RNG cursor.
-- [ ] Week 6 ends at a development checkpoint rather than entering unfinished procedure content.
+- [ ] Week 6 resolves the visible six-week objective with an explainable bill-and-coalition assessment, then ends at a development checkpoint rather than entering unfinished procedure content.
 
 #### Verification checklist
 
@@ -269,6 +273,20 @@ Integrate the clock, packs, production chain, coalition decisions and Story Dire
 - [ ] Abuse test: duplicate provisions, repeated amendment confirmation and save reload cannot duplicate benefits.
 - [ ] Readability test: an observer can name the card, demand, deadline or unfinished job behind every setback.
 - [ ] Full unit, E2E, content validation, lint, typecheck and production build gates pass.
+
+#### Engagement and motivation gate (required for completion)
+
+Task 11 cannot move to Done on automated verification alone. Test the complete six-week slice with at least five first-time players who enjoy strategy games; prioritize players who are not already familiar with Congress. Do not coach beyond the instructions available in the build.
+
+- [ ] At least four of five players can state both their immediate objective and the six-week objective after Week 1 without being shown the objective text again.
+- [ ] At least four of five players can identify a decision where they gave up one useful option to protect or pursue another, and can name a later consequence of that choice.
+- [ ] At least four of five players agree or strongly agree with “I wanted to see what happened next,” and each cites a specific bill, coalition, deadline, obligation or event as the reason.
+- [ ] At least four of five players identify a specific action completion or reveal that felt satisfying and can describe the visible or audible feedback that made it land.
+- [ ] At least four of five players can explain why an Evidence Summary or Drafted Provision mattered beyond completing a recipe.
+- [ ] No more than one player describes the primary experience as following a predetermined sequence of correct card combinations.
+- [ ] Run at least two returning-player sessions. Each player can pursue a materially different valid sequence, anticipate at least one consequence and intentionally improve or alter their bill, coalition or office outcome.
+- [ ] Record anonymized session notes, the post-play responses, relevant event traces and every failed threshold. Attach the evidence to the Linear issue.
+- [ ] Any failed threshold blocks completion until the design is revised and the failed check is rerun; do not convert a failed engagement result into a documentation-only exception.
 
 #### Out of scope
 

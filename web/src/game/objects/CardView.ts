@@ -52,6 +52,7 @@ export class CardView extends Phaser.GameObjects.Container {
   private readonly paper: Phaser.GameObjects.Graphics;
   private readonly outline: Phaser.GameObjects.Graphics;
   private readonly deadline: Phaser.GameObjects.Text;
+  private readonly cost: Phaser.GameObjects.Text;
   private readonly progress: Phaser.GameObjects.Graphics;
   private definition: CardDefinition;
   private instance: CardInstance;
@@ -193,24 +194,17 @@ export class CardView extends Phaser.GameObjects.Container {
       );
     }
 
-    if (options.definition.workload > 0) {
-      this.add(
-        scene.add
-          .text(
-            -CARD_WIDTH / 2 + 12,
-            CARD_HEIGHT / 2 - 26,
-            // "1 attention" is a fragment — one attention of what? Name the thing
-            // it actually ties up.
-            `Uses ${options.definition.workload} staffer${options.definition.workload === 1 ? '' : 's'}`,
-            {
-            fontFamily: 'system-ui, sans-serif',
-              fontSize: '11px',
-              color: '#4a5c68',
-            },
-          )
-          .setOrigin(0, 0),
-      );
-    }
+    // What this card costs to use, named by the rule that charges it rather than by
+    // a number on the card. It appears when the rule is discovered, so it is drawn
+    // once here and updated in `refresh` rather than fixed at construction.
+    this.cost = scene.add
+      .text(-CARD_WIDTH / 2 + 12, CARD_HEIGHT / 2 - 26, '', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '11px',
+        color: '#4a5c68',
+      })
+      .setOrigin(0, 0);
+    this.add(this.cost);
 
     // A restrained deadline stamp. This is the visible cause a player can point at
     // before any meter moves.
@@ -255,10 +249,11 @@ export class CardView extends Phaser.GameObjects.Container {
     this.paper.strokeRect(-79, -CARD_HEIGHT / 2 + CARD_HEADER_HEIGHT + 4, 158, 112);
   }
 
-  refresh(instance: CardInstance, definition: CardDefinition): void {
+  refresh(instance: CardInstance, definition: CardDefinition, costLine = ''): void {
     this.instance = instance;
     this.definition = definition;
     this.setPosition(instance.x, instance.y);
+    this.cost.setText(costLine);
 
     const remainingSeconds = Math.ceil(instance.remainingMs / 1000);
     if (instance.status === 'expired') {

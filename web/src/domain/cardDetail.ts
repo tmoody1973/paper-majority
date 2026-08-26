@@ -1,5 +1,11 @@
 import { computeEffectiveTags } from '@/domain/recipes';
-import type { CardKind, ScenarioDefinition, SourceClass, TermState } from '@/domain/types';
+import type {
+  CardKind,
+  Resources,
+  ScenarioDefinition,
+  SourceClass,
+  TermState,
+} from '@/domain/types';
 
 /**
  * What the inspector is allowed to say about one card.
@@ -29,7 +35,17 @@ export interface CardDetail {
    * lets a tester believe the card is sourced.
    */
   practicePlaceholderNote?: string;
-  workload: number;
+  /**
+   * What using this card actually costs, from the rules the player has discovered.
+   *
+   * Cost belongs to the action, not the card. A per-card number could only ever be
+   * one guess: member offices carried "workload: 1" and read "Uses 1 staffer",
+   * while outreach spends Political Capital and no Staff Attention at all.
+   *
+   * Empty until a rule is discovered — a cost for a rule the player has not found
+   * would give the rule away.
+   */
+  costs: CardCost[];
   /** Uses the player has already discovered. Never anything they have not. */
   knownUses: string[];
   noUsesYetNote?: string;
@@ -51,6 +67,37 @@ const SOURCE_LABELS: Record<SourceClass, CardDetail['sourceLabel']> = {
   derived: 'Based on records',
   simulated: 'Simulated',
 };
+
+/**
+ * One cost, said twice: short enough for the card face, and long enough on the
+ * inspector to answer the question decision 003 left open — a player looking at a
+ * cost cannot otherwise tell that Staff Attention comes back and Political
+ * Capital does not.
+ */
+export interface CardCost {
+  short: string;
+  long: string;
+}
+
+const COST_PHRASES: Partial<
+  Record<keyof Resources, (amount: number) => CardCost>
+> = {
+  staffAttention: (amount) => ({
+    short: `Ties up ${amount} staffer${amount === 1 ? '' : 's'}`,
+    long: `Ties up ${amount} staffer${amount === 1 ? '' : 's'} while the work runs. You get them back when it finishes.`,
+  }),
+  politicalCapital: (amount) => ({
+    short: `Spends ${amount} political capital`,
+    long: `Spends ${amount} political capital. That is really spent — it does not come back.`,
+  }),
+};
+
+function describeCost(cost: Partial<Resources>): CardCost[] {
+  return (Object.entries(cost) as [keyof Resources, number][])
+    .filter(([, amount]) => amount > 0)
+    .map(([resource, amount]) => COST_PHRASES[resource]?.(amount))
+    .filter((phrase): phrase is CardCost => phrase !== undefined);
+}
 
 /**
  * The label alone is not enough, so never show one without this.
@@ -79,6 +126,8 @@ export function describeCard(
 
   // Which discovered rules can this card actually take part in?
   const knownUses: string[] = [];
+  const costs: CardCost[] = [];
+  const seenCosts = new Set<string>();
   for (const pattern of scenario.patterns) {
     if (!state.discoveredPatternIds.includes(pattern.id)) continue;
 
@@ -115,6 +164,12 @@ export function describeCard(
     const outputTitle = scenario.cards.find((card) => card.id === outputId)?.title ?? 'a new card';
 
     knownUses.push(`Part of a rule your office knows: it helps make ${outputTitle}.`);
+
+    for (const cost of describeCost(pattern.resourceCost)) {
+      if (seenCosts.has(cost.short)) continue;
+      seenCosts.add(cost.short);
+      costs.push(cost);
+    }
   }
 
   return {
@@ -133,7 +188,7 @@ export function describeCard(
       definition.sourceClass !== 'simulated' && (definition.citations?.length ?? 0) === 0
         ? 'Practice card. It stands in for a real document, and no source is on file for it — nothing here is a citation.'
         : undefined,
-    workload: definition.workload,
+    costs,
     knownUses,
     noUsesYetNote:
       knownUses.length === 0

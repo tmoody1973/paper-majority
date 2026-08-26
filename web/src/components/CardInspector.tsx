@@ -73,11 +73,13 @@ export function CardInspector({
         )}
       </div>
 
-      {detail.workload > 0 && (
-        <p className="inspector__cost">
-          Costs <strong>{detail.workload}</strong> Staff Attention while it is working.
+      {/* The long form, because this is where there is room to say which kind of
+          cost it is. A staffer comes back; political capital does not. */}
+      {detail.costs.map((cost) => (
+        <p className="inspector__cost" key={cost.short} data-testid="inspector-cost">
+          {cost.long}
         </p>
-      )}
+      ))}
     </section>
   );
 }

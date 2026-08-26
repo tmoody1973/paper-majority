@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
+import { describeCard } from '@/domain/cardDetail';
 import { resolveDropIntent, wouldDropBeAccepted } from '@/domain/dropIntent';
 import type { CardDefinition, CardInstance } from '@/domain/types';
 import { resolveDropTarget, type DropTarget } from '@/game/input/dropResolver';
@@ -187,6 +188,11 @@ export class DeskScene extends Phaser.Scene {
           y: anchor.y + indexInStack * STACK_OFFSET_Y,
         };
 
+        // What using this card costs, from the rules the office has discovered. It
+        // appears the moment a rule is found, so it is read on every redraw rather
+        // than fixed when the card is created.
+        const costLine = describeCard(state, this.session.getScenario(), cardId)?.costs[0]?.short;
+
         const existing = this.views.get(cardId);
         if (existing) {
           if (cardId === this.draggingCardId) {
@@ -195,9 +201,10 @@ export class DeskScene extends Phaser.Scene {
             existing.refresh(
               { ...placed, x: existing.x, y: existing.y },
               this.definitionFor(instance),
+              costLine,
             );
           } else {
-            existing.refresh(placed, this.definitionFor(instance));
+            existing.refresh(placed, this.definitionFor(instance), costLine);
             existing.setDepth(indexInStack);
           }
         } else {
@@ -206,6 +213,7 @@ export class DeskScene extends Phaser.Scene {
             definition: this.definitionFor(instance),
             reducedMotion: this.reducedMotion,
           });
+          view.refresh(placed, this.definitionFor(instance), costLine);
           view.setDepth(indexInStack);
           this.views.set(cardId, view);
         }
