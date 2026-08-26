@@ -229,7 +229,9 @@ const patterns: RecipePattern[] = [
     id: 'pattern-coalition-outreach',
     slots: [
       { kind: 'policy', requiredTags: ['working-bill'], quantity: 1, consumed: false },
-      { kind: 'coalition', anyTags: ['same-party'], quantity: 1 },
+      // An office is an institution, like the bill: one conversation must not
+      // destroy it, and Task 9's relationship states need it to persist.
+      { kind: 'coalition', anyTags: ['same-party'], quantity: 1, consumed: false },
     ],
     output: {
       mode: 'derived',

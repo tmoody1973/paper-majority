@@ -779,6 +779,24 @@ describe('catalyst inputs survive their pattern', () => {
     return run(state, ...commands);
   }
 
+  it('stamps a produced card with where it came from', () => {
+    // Two Evidence Summaries from different sources used to render byte-identical,
+    // so the distinction the player paid for evaporated once the result phrase
+    // scrolled away. The transformation knows its inputs; now the card keeps them.
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    const summary = done.state.cards.find(
+      (card) => card.definitionId === 'evidence-housing-summary',
+    );
+    expect(summary?.origin).toEqual({
+      explanationKey: 'result.summary.committee-credibility',
+      inputDefinitionIds: ['evidence-rent-burden-report', 'staff-policy-aide'],
+      consumedDefinitionIds: ['evidence-rent-burden-report'],
+    });
+  });
+
   it('names the cards that came back, so the return can be shown, not guessed', () => {
     const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
@@ -885,13 +903,24 @@ describe('catalyst inputs survive their pattern', () => {
     });
   });
 
-  it('keeps the Working Bill on the desk after outreach completes', () => {
+  it('keeps the Working Bill AND the member office on the desk after outreach', () => {
+    // A conversation must not destroy a congressional office. The office is an
+    // institution like the bill, and Task 9's relationship states need it to
+    // still exist to attach to. Found by Tarik in play: Hillcrest vanished.
     const start = makeState(['policy-working-bill', 'coalition-office-fifth-district']);
     const stacked = run(start, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
     const done = runToCompletion(stacked.state, 6_000);
 
     const definitions = done.state.cards.map((card) => card.definitionId).sort();
-    expect(definitions).toEqual(['coalition-outreach-result', 'policy-working-bill']);
+    expect(definitions).toEqual([
+      'coalition-office-fifth-district',
+      'coalition-outreach-result',
+      'policy-working-bill',
+    ]);
+    const office = done.state.cards.find(
+      (card) => card.definitionId === 'coalition-office-fifth-district',
+    );
+    expect(office?.status).toBe('idle');
     expectOneStackPerCard(done.state);
   });
 
