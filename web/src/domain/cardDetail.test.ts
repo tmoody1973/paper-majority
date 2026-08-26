@@ -173,6 +173,39 @@ describe('describeCard', () => {
     expect(aide?.costs[0].long).toMatch(/get them back/i);
   });
 
+  it('shows lineage instead of the practice label on a card made in play', () => {
+    // A card the player just manufactured is not "a document with a missing
+    // citation" — its source is the input card. Decision 012 carve-out.
+    const withSummary: TermState = {
+      ...fresh,
+      cards: [
+        ...fresh.cards,
+        {
+          id: 'card-99',
+          definitionId: 'evidence-housing-summary',
+          stackId: 'stack-card-99',
+          x: 500,
+          y: 500,
+          remainingMs: 0,
+          status: 'idle' as const,
+          origin: {
+            explanationKey: 'result.summary.district-relevance',
+            inputDefinitionIds: ['evidence-tenant-survey', 'staff-policy-aide'],
+            consumedDefinitionIds: ['evidence-tenant-survey'],
+          },
+        },
+      ],
+      stacks: [...fresh.stacks, { id: 'stack-card-99', cardIds: ['card-99'] }],
+    };
+
+    const summary = describeCard(withSummary, scenario, 'card-99');
+
+    expect(summary?.practicePlaceholderNote).toBeUndefined();
+    expect(summary?.origin?.short).toBe('From: Tenant Survey');
+    expect(summary?.origin?.long).toMatch(/Tenant Survey/);
+    expect(summary?.origin?.long).toMatch(/Policy Aide/);
+  });
+
   it('returns nothing for a card that is not on the desk', () => {
     expect(describeCard(fresh, scenario, 'no-such-card')).toBeUndefined();
   });

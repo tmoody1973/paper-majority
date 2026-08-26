@@ -188,10 +188,12 @@ export class DeskScene extends Phaser.Scene {
           y: anchor.y + indexInStack * STACK_OFFSET_Y,
         };
 
-        // What using this card costs, from the rules the office has discovered. It
-        // appears the moment a rule is found, so it is read on every redraw rather
-        // than fixed when the card is created.
-        const costLine = describeCard(state, this.session.getScenario(), cardId)?.costs[0]?.short;
+        // What using this card costs and where it came from, both read on every
+        // redraw. Cost appears the moment a rule is discovered; origin exists only
+        // on cards produced in play.
+        const detail = describeCard(state, this.session.getScenario(), cardId);
+        const costLine = detail?.costs[0]?.short;
+        const originLine = detail?.origin?.short;
 
         const existing = this.views.get(cardId);
         if (existing) {
@@ -202,9 +204,10 @@ export class DeskScene extends Phaser.Scene {
               { ...placed, x: existing.x, y: existing.y },
               this.definitionFor(instance),
               costLine,
+              originLine,
             );
           } else {
-            existing.refresh(placed, this.definitionFor(instance), costLine);
+            existing.refresh(placed, this.definitionFor(instance), costLine, originLine);
             existing.setDepth(indexInStack);
           }
         } else {
@@ -213,7 +216,7 @@ export class DeskScene extends Phaser.Scene {
             definition: this.definitionFor(instance),
             reducedMotion: this.reducedMotion,
           });
-          view.refresh(placed, this.definitionFor(instance), costLine);
+          view.refresh(placed, this.definitionFor(instance), costLine, originLine);
           view.setDepth(indexInStack);
           this.views.set(cardId, view);
         }

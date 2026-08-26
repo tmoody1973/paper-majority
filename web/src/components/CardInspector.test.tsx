@@ -32,6 +32,37 @@ describe('CardInspector', () => {
     expect(screen.getByTestId('inspector-practice')).toHaveTextContent(/no source is on file/i);
   });
 
+  it('traces a card made in play to its inputs instead of the practice label', () => {
+    const withSummary: TermState = {
+      ...fresh,
+      cards: [
+        ...fresh.cards,
+        {
+          id: 'card-99',
+          definitionId: 'evidence-housing-summary',
+          stackId: 'stack-card-99',
+          x: 500,
+          y: 500,
+          remainingMs: 0,
+          status: 'idle' as const,
+          origin: {
+            explanationKey: 'result.summary.district-relevance',
+            inputDefinitionIds: ['evidence-tenant-survey', 'staff-policy-aide'],
+            consumedDefinitionIds: ['evidence-tenant-survey'],
+          },
+        },
+      ],
+      stacks: [...fresh.stacks, { id: 'stack-card-99', cardIds: ['card-99'] }],
+    };
+    const detail = describeCard(withSummary, scenario, 'card-99')!;
+    render(<CardInspector detail={detail} onClose={vi.fn()} />);
+
+    expect(screen.queryByTestId('inspector-practice')).not.toBeInTheDocument();
+    expect(screen.getByTestId('inspector-origin')).toHaveTextContent(
+      /made this from: .*Tenant Survey/i,
+    );
+  });
+
   it('leaves a simulated card alone — it is already honest about what it is', () => {
     render(<CardInspector detail={detailFor(fresh, 'policy-working-bill')} onClose={vi.fn()} />);
 

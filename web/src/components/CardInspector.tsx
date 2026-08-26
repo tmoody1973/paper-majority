@@ -48,6 +48,13 @@ export function CardInspector({
         </p>
       )}
 
+      {/* A card made in play traces to its inputs, not to a citation. */}
+      {detail.origin && (
+        <p className="inspector__note inspector__note--origin" data-testid="inspector-origin">
+          {detail.origin.long}
+        </p>
+      )}
+
       {detail.plainLanguage && (
         <p className="inspector__plain" data-testid="inspector-plain">
           {detail.plainLanguage}

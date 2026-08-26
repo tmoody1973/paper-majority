@@ -46,6 +46,13 @@ export interface CardDetail {
    * would give the rule away.
    */
   costs: CardCost[];
+  /**
+   * Lineage for a card made in play: where it came from, short for the card face
+   * and long for the inspector. Replaces the practice-placeholder label — a card
+   * the player manufactured is not a document with a missing citation; its
+   * source is the input card.
+   */
+  origin?: { short: string; long: string };
   /** Uses the player has already discovered. Never anything they have not. */
   knownUses: string[];
   noUsesYetNote?: string;
@@ -172,6 +179,29 @@ export function describeCard(
     }
   }
 
+  // Lineage of a card made in play. The face gets the differentiator — the first
+  // consumed input, or the first non-staff input when everything survived (an
+  // outreach result's source is the office, not the staffer). The inspector
+  // lists everything.
+  const titleOf = (definitionId: string) =>
+    scenario.cards.find((card) => card.id === definitionId)?.title ?? definitionId;
+  let origin: CardDetail['origin'];
+  if (instance.origin) {
+    const staffIds = new Set(
+      scenario.cards.filter((card) => card.kind === 'staff').map((card) => card.id),
+    );
+    const faceSource =
+      instance.origin.consumedDefinitionIds[0] ??
+      instance.origin.inputDefinitionIds.find((id) => !staffIds.has(id)) ??
+      instance.origin.inputDefinitionIds[0];
+    origin = {
+      short: `From: ${titleOf(faceSource)}`,
+      long: `Your office made this from: ${instance.origin.inputDefinitionIds
+        .map(titleOf)
+        .join(' + ')}.`,
+    };
+  }
+
   return {
     definitionId: definition.id,
     title: definition.title,
@@ -185,9 +215,12 @@ export function describeCard(
         : undefined,
     sourceExplainer: SOURCE_EXPLAINERS[definition.sourceClass],
     practicePlaceholderNote:
-      definition.sourceClass !== 'simulated' && (definition.citations?.length ?? 0) === 0
+      !instance.origin &&
+      definition.sourceClass !== 'simulated' &&
+      (definition.citations?.length ?? 0) === 0
         ? 'Practice card. It stands in for a real document, and no source is on file for it — nothing here is a citation.'
         : undefined,
+    origin,
     costs,
     knownUses,
     noUsesYetNote:

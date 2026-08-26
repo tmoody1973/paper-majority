@@ -131,6 +131,18 @@ export interface CardInstance {
   y: number;
   remainingMs: number;
   status: 'idle' | 'working' | 'resolved' | 'expired';
+  /**
+   * Where a card produced in play came from: the resolver's explanation and the
+   * definition IDs of every input, with the consumed ones singled out. Authored
+   * starting cards have no origin. This is what lets two Evidence Summaries from
+   * different sources look different, and what replaces the "practice card"
+   * label on cards the player manufactured themselves.
+   */
+  origin?: {
+    explanationKey: string;
+    inputDefinitionIds: string[];
+    consumedDefinitionIds: string[];
+  };
 }
 
 export interface StackState {

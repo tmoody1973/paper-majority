@@ -387,6 +387,17 @@ function completeAction(
         y: anchor.y,
         remainingMs: 0,
         status: 'idle',
+        // The transformation knows exactly what went in; keep it, sorted, so two
+        // outputs of the same definition from different sources stay tellable
+        // apart and replay stays deterministic.
+        origin: {
+          explanationKey: resolved.explanationKey,
+          inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
+          consumedDefinitionIds: memberCards
+            .filter((card) => consumedIds.includes(card.id))
+            .map((card) => card.definitionId)
+            .sort(),
+        },
       },
     ],
     stacks: [

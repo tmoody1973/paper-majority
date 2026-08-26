@@ -53,6 +53,7 @@ export class CardView extends Phaser.GameObjects.Container {
   private readonly outline: Phaser.GameObjects.Graphics;
   private readonly deadline: Phaser.GameObjects.Text;
   private readonly cost: Phaser.GameObjects.Text;
+  private readonly originText: Phaser.GameObjects.Text;
   private readonly progress: Phaser.GameObjects.Graphics;
   private definition: CardDefinition;
   private instance: CardInstance;
@@ -174,9 +175,10 @@ export class CardView extends Phaser.GameObjects.Container {
     }
 
     // A card that claims a real record while shipping no citation says so on its
-    // face. The slice has no source manifest yet, and inventing a citation to
-    // close the gap is not an option.
+    // face. A card the player made in play traces to its inputs instead — its
+    // "source" is the card that went in, not a missing citation.
     if (
+      !options.instance.origin &&
       options.definition.sourceClass !== 'simulated' &&
       (options.definition.citations?.length ?? 0) === 0
     ) {
@@ -193,6 +195,17 @@ export class CardView extends Phaser.GameObjects.Container {
           .setOrigin(1, 0),
       );
     }
+
+    // Lineage line for cards made in play: "From: Tenant Survey". This is what
+    // keeps two same-definition outputs from different sources tellable apart.
+    this.originText = scene.add
+      .text(CARD_WIDTH / 2 - 12, CARD_HEIGHT / 2 - 44, '', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '10px',
+        color: '#267783',
+      })
+      .setOrigin(1, 0);
+    this.add(this.originText);
 
     // What this card costs to use, named by the rule that charges it rather than by
     // a number on the card. It appears when the rule is discovered, so it is drawn
@@ -249,11 +262,17 @@ export class CardView extends Phaser.GameObjects.Container {
     this.paper.strokeRect(-79, -CARD_HEIGHT / 2 + CARD_HEADER_HEIGHT + 4, 158, 112);
   }
 
-  refresh(instance: CardInstance, definition: CardDefinition, costLine = ''): void {
+  refresh(
+    instance: CardInstance,
+    definition: CardDefinition,
+    costLine = '',
+    originLine = '',
+  ): void {
     this.instance = instance;
     this.definition = definition;
     this.setPosition(instance.x, instance.y);
     this.cost.setText(costLine);
+    this.originText.setText(originLine);
 
     const remainingSeconds = Math.ceil(instance.remainingMs / 1000);
     if (instance.status === 'expired') {

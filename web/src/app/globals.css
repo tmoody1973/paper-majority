@@ -324,6 +324,12 @@ select:focus-visible {
   font-style: italic;
 }
 
+/* Lineage, coloured like the derived class it always accompanies. */
+.inspector__note--origin {
+  border-left: 3px solid var(--derived);
+  padding-left: 7px;
+}
+
 .inspector__uses h3 {
   margin: 10px 0 4px;
   font-size: 12px;

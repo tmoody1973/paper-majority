@@ -2,6 +2,8 @@
 
 - **Decision** — Any card whose information class is Official record or Based on records, and whose citation list is empty, is labelled a practice card on its face and in the inspector. Real citations arrive with the Task 5 catalog.
 
+  *Amended 2026-08-26:* the label applies only to **authored** cards. A card the player manufactures in play (an Evidence Summary, an Outreach Result) is not a document with a missing citation — its source is the card that went in. Those cards show their lineage instead: "From: Tenant Survey" on the face, the full input list in the inspector. Tarik caught the original rule mislabelling his own summaries during play.
+
 - **Why this came up** — An external review found that both "official" cards in the spike ship `citations: []`. The Rent Burden Report draws a blue tick and the words **Official record**, its inspector line reads *"Real public information, from a real source,"* and its own description calls it *"A published record of how much of their income renters here spend on housing."* None of that is backed by anything. The Housing Choice Voucher is the same.
 
   What is at stake is the promise the whole project rests on: that a player can always tell a fact from a simulation. A tester who believes they are holding a sourced government document during the very test that measures comprehension has been misled by us, in the direction that matters most.
