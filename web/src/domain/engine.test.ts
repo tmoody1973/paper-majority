@@ -418,6 +418,61 @@ describe('START_ASSIGNMENT', () => {
     expect(state.unlockedSlotExpansions).toEqual({});
   });
 
+  it('refuses to pull a working staffer into a Tactic study', () => {
+    const desk = makeState([
+      'staff-policy-aide',
+      'evidence-rent-burden-report',
+      'tactic-bipartisan-working-group',
+    ]);
+    const busy = run(desk, { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' });
+    expect(busy.state.cards.find((card) => card.id === 'card-1')?.status).toBe('working');
+
+    const before = structuredClone(busy.state);
+    const { state, events } = run(busy.state, {
+      type: 'START_ASSIGNMENT',
+      assignmentKind: 'study-tactic',
+      staffCardId: 'card-1',
+      targetCardId: 'card-3',
+    });
+
+    const rejected = events.find((event) => event.type === 'COMMAND_REJECTED');
+    if (rejected?.type !== 'COMMAND_REJECTED') throw new Error('expected COMMAND_REJECTED');
+    expect(rejected.reason).toBe('card-busy');
+
+    // The harm this guards: the aide used to walk out of its own assignment,
+    // leaving a job that could never complete and attention that never returned.
+    expect(state.resources).toEqual(before.resources);
+    expect(state.stacks).toEqual(before.stacks);
+    expect(state.cards).toEqual(before.cards);
+  });
+
+  it('refuses to start a second study on a Tactic already being studied', () => {
+    const desk = makeState([
+      'staff-policy-aide',
+      'tactic-bipartisan-working-group',
+      'staff-policy-aide',
+    ]);
+    const studying = run(desk, {
+      type: 'START_ASSIGNMENT',
+      assignmentKind: 'study-tactic',
+      staffCardId: 'card-1',
+      targetCardId: 'card-2',
+    });
+
+    const before = structuredClone(studying.state);
+    const { state, events } = run(studying.state, {
+      type: 'START_ASSIGNMENT',
+      assignmentKind: 'study-tactic',
+      staffCardId: 'card-3',
+      targetCardId: 'card-2',
+    });
+
+    const rejected = events.find((event) => event.type === 'COMMAND_REJECTED');
+    if (rejected?.type !== 'COMMAND_REJECTED') throw new Error('expected COMMAND_REJECTED');
+    expect(rejected.reason).toBe('card-busy');
+    expect(state.resources).toEqual(before.resources);
+  });
+
   it('refuses ineligible Staff without charging anything', () => {
     const wrongStaff = makeState(['staff-district-director', 'tactic-bipartisan-working-group']);
     const before = structuredClone(wrongStaff);

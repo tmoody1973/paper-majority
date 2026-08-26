@@ -510,6 +510,13 @@ function startStudyTactic(
     return rejectCommand(state, 'START_ASSIGNMENT', 'unknown-card', 'That card is no longer on the desk.');
   }
 
+  // The same guard `combine` applies to every other assignment. Without it a
+  // working staffer could walk out of their own job, which left that job running
+  // on a stack that could never satisfy its pattern again.
+  if (staff.status !== 'idle' || tactic.status !== 'idle') {
+    return rejectCommand(state, 'START_ASSIGNMENT', 'card-busy', 'That work is still under way.');
+  }
+
   const expansion = services.scenario.tacticExpansions.find(
     (candidate) => candidate.tacticDefinitionId === tactic.definitionId,
   );
