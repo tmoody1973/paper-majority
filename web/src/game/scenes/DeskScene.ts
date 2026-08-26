@@ -316,12 +316,21 @@ export class DeskScene extends Phaser.Scene {
 
       const targetId = resolveDropTarget({ x: view.x, y: view.y }, this.dropTargets(view.cardId));
       if (!targetId) {
-        this.session.dispatch({
-          type: 'MOVE_CARD',
-          cardId: view.cardId,
-          x: Math.round(view.x),
-          y: Math.round(view.y),
-        });
+        const state = this.session.getState();
+        const card = state.cards.find((candidate) => candidate.id === view.cardId);
+        const stack = state.stacks.find((candidate) => candidate.id === card?.stackId);
+        const x = Math.round(view.x);
+        const y = Math.round(view.y);
+
+        // Dropping a card that is part of a pile onto open desk takes it OUT of the
+        // pile — the gesture decision 002 promises. MOVE_CARD only changes
+        // coordinates, and a stacked card is drawn from its stack's anchor, so the
+        // card sprang straight back and the player saw nothing happen.
+        this.session.dispatch(
+          stack && stack.cardIds.length > 1
+            ? { type: 'SEPARATE_STACK', stackId: stack.id, cardId: view.cardId, x, y }
+            : { type: 'MOVE_CARD', cardId: view.cardId, x, y },
+        );
         view.setDepth(0);
         this.draggingCardId = undefined;
         return;

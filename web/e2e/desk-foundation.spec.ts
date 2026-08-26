@@ -40,6 +40,66 @@ async function cardIdFor(page: Page, definitionId: string, skip = 0): Promise<st
   return card.id;
 }
 
+/**
+ * A screen point on the desk that no card occupies and that is actually visible.
+ *
+ * Card drop targets live in world space, so this searches world space and projects
+ * the answer back through the camera the same way `getScreenPoint` does.
+ */
+async function emptyDeskPoint(page: Page, draggedCardId: string) {
+  const canvas = await page.locator('canvas').boundingBox();
+  if (!canvas) throw new Error('canvas has no bounding box');
+
+  const found = await page.evaluate(
+    ({ id, width, height }) => {
+      const CARD_WIDTH = 180;
+      const CARD_HEIGHT = 252;
+      const api = window.__congressGameTestApi!;
+      const probe = (window as unknown as {
+        __congressGameCamera: {
+          getZoom: () => number;
+          getScreenPoint: (c: string) => { x: number; y: number } | undefined;
+        };
+      }).__congressGameCamera;
+
+      const cards = api.getState().cards;
+      const anchor = cards.find((card) => card.id === id);
+      const anchorScreen = probe.getScreenPoint(id);
+      if (!anchor || !anchorScreen) return undefined;
+      const zoom = probe.getZoom();
+
+      const minX = Math.min(...cards.map((card) => card.x));
+      const maxX = Math.max(...cards.map((card) => card.x));
+      const minY = Math.min(...cards.map((card) => card.y));
+      const maxY = Math.max(...cards.map((card) => card.y));
+
+      for (let y = minY; y <= maxY + CARD_HEIGHT * 2; y += 30) {
+        for (let x = minX; x <= maxX + CARD_WIDTH * 2; x += 30) {
+          // A drop target is one card rectangle centred on the card, so anything
+          // more than half a card away in either axis cannot overlap it. The
+          // margin above half keeps the drop clear of a fanned stack's lower cards.
+          const clear = cards.every(
+            (card) =>
+              card.id === id ||
+              Math.abs(card.x - x) > CARD_WIDTH * 0.7 ||
+              Math.abs(card.y - y) > CARD_HEIGHT * 0.7,
+          );
+          if (!clear) continue;
+
+          const sx = anchorScreen.x + (x - anchor.x) * zoom;
+          const sy = anchorScreen.y + (y - anchor.y) * zoom;
+          if (sx > 40 && sy > 40 && sx < width - 40 && sy < height - 40) return { x: sx, y: sy };
+        }
+      }
+      return undefined;
+    },
+    { id: draggedCardId, width: canvas.width, height: canvas.height },
+  );
+
+  if (!found) throw new Error('no empty, visible desk point to drop on');
+  return { x: canvas.x + found.x, y: canvas.y + found.y };
+}
+
 test.describe('desk foundation', () => {
   let consoleErrors: string[] = [];
 
@@ -159,6 +219,56 @@ test.describe('desk foundation', () => {
         return state.stacks.some((stack) => stack.cardIds.length === 2);
       })
       .toBe(true);
+  });
+
+  test('dragging a card off a stack pulls it out and stops the work', async ({ page }) => {
+    // Regression: dropping on empty space dispatched MOVE_CARD, which changes
+    // coordinates and nothing else. The card stayed in the stack, and because the
+    // desk draws stacked cards from the stack anchor it sprang straight back. Only
+    // the keyboard panel could actually separate anything.
+    const staffId = await cardIdFor(page, 'staff-policy-aide');
+    const evidenceId = await cardIdFor(page, 'evidence-rent-burden-report');
+
+    const from = await cardScreenPoint(page, staffId);
+    const onto = await cardScreenPoint(page, evidenceId);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(onto.x, onto.y, { steps: 16 });
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => (await getState(page)).stacks.some((s) => s.cardIds.length === 2))
+      .toBe(true);
+
+    const working = await getState(page);
+    const job = working.stacks.find((stack) => stack.cardIds.length === 2)!;
+    expect(job.activeActionId).toBe('pattern-evidence-summary');
+    expect(working.resources.staffAttention).toBe(2);
+
+    // Now pull the staffer back out with the mouse, exactly as decision 002 says
+    // a player always can.
+    const held = await cardScreenPoint(page, staffId);
+    const empty = await emptyDeskPoint(page, staffId);
+    await page.mouse.move(held.x, held.y);
+    await page.mouse.down();
+    await page.mouse.move(empty.x, empty.y, { steps: 20 });
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => {
+        const state = await getState(page);
+        const stack = state.stacks.find((candidate) => candidate.cardIds.includes(staffId));
+        return stack?.cardIds.length;
+      })
+      .toBe(1);
+
+    const after = await getState(page);
+    const evidenceStack = after.stacks.find((stack) => stack.cardIds.includes(evidenceId))!;
+    expect(evidenceStack.cardIds).toEqual([evidenceId]);
+    expect(evidenceStack.activeActionId).toBeUndefined();
+    expect(after.cards.find((card) => card.id === staffId)?.status).toBe('idle');
+    expect(after.cards.find((card) => card.id === evidenceId)?.status).toBe('idle');
+    expect(after.resources.staffAttention).toBe(3);
   });
 
   test('dragging Staff onto a Tactic starts Study Tactic', async ({ page }) => {

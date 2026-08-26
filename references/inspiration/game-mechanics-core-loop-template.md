@@ -177,4 +177,4 @@ Run this after drafting Sections 1–11. These are the patterns that made Stackl
 
 ---
 
-Use this the same way for a music game, a event-discovery app, or anything else: fill Sections 1–11 with your idea's nouns and verbs, then run the Section 12 checklist to see where the loop still needs sharpening.
+Use this the same way for a music game, a event-discovery app, or anything else: fill Sections 1–11 with your idea's nouns and verbs, then run the Section 12 checklist to see where the loop still needs sharpening. 
