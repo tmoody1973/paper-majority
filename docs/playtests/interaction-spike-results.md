@@ -1,5 +1,8 @@
 # Interaction Spike — Ten-Person Playtest Worksheet
 
+> **Background:** [what-this-test-is.md](./what-this-test-is.md) — what the run is and
+> what the test is for.
+>
 > **Read [interaction-spike-guide.md](./interaction-spike-guide.md) first.** It explains
 > what the game is, why this test exists, how to run a session and what each measure
 > means. This file is only where you write the answers down.

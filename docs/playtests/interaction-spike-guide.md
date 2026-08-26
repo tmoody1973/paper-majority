@@ -7,6 +7,10 @@ about Congress, or about how the game was built.
 
 **What you need:** a laptop, a browser, a quiet-ish room, and this document.
 
+> **New to this?** Read [what-this-test-is.md](./what-this-test-is.md) first — five
+> minutes, plain English, explains what the ten-minute run actually contains, what the
+> test is for, and what it is deliberately *not* for.
+
 ---
 
 ## The one-page version
