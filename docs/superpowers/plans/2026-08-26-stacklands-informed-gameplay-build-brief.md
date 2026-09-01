@@ -74,6 +74,7 @@ This is the player-facing form of the approved design loop:
 - Produced cards carry origin lineage (`fe9ea44`, decision 012 as amended): the face shows "From: Tenant Survey", the inspector lists all inputs, and the practice-placeholder label applies only to authored cards. Already implemented; Task 5 authors its catalog knowing outputs display lineage.
 - The Handbook already counts Tactics apart from recipes, refusals already name the Tactic that would unblock them, and cost lines already derive from discovered rules (`8e40b3d`, `60e1492`, `3b2c7bd`). Task 9's and Task 11's restatements of these are regression criteria protecting existing behavior, not new scope.
 - The current fixture is an interaction test, not evidence that the complete strategy loop works.
+- **Proposed, pending Tarik (2026-09-01 gameplay review):** decisions 015–018 in `docs/decisions/`. 015: the six-week loop ships permanently as a **Session** mode beside the 24-week Term. 016: staff cards carry a name and one professional trait that resolvers may read. 017: shared seeds are allowed; rewards, streaks and login prompts are not. 018: Political Capital is earned by visible acts with a small weekly floor, never converted from Trust or Integrity. Contract lines below marked *pending 01x* take effect only if that record is approved.
 
 ## 5. Milestone-level acceptance
 
@@ -129,6 +130,9 @@ Replace force-cast fixture content with a validated, sourced six-week housing sc
 - [ ] Add the reviewed six-week snapshot with exactly 30 playable definitions, 16 patterns, four Tactic expansions and 12 separately stored Story Director events.
 - [ ] Include the six-week House baseline: four curated member-office seats plus 430 simulated anonymous seats totalling exactly 435, stored under `sourceClass: 'simulated'` (plan lines 1094 and 1470). Task 9's forecast consumes this model; without it here, Task 9 blocks on a model no task builds.
 - [ ] Derived outputs must be distinguishable: produced cards carry origin lineage (implemented in `fe9ea44` — face shows "From: Tenant Survey", inspector lists all inputs), and the catalog's derived-output definitions are authored knowing two same-definition outputs will display different origins. Cards produced in play show lineage instead of the practice-placeholder label (decision 012 as amended).
+- [ ] *Pending 016:* every Staff definition has a fictional name and exactly one professional trait expressed as a tag. Traits are never demographic and no staffer is modelled on a real person. At least one derived resolver reads a staff trait so that which staffer does a job can change the result.
+- [ ] *Pending 018:* every act that grants Political Capital is authored with a visible amount and reason on the card or event that grants it. No content converts District Trust or Policy Integrity into capital.
+- [ ] District choice changes the opening desk materially — different constituency cards, offices and evidence — not only resource numbers. The validator reports, per district, which starting definitions differ. "Same bill, six districts, six different games" is the replay hook nobody else has; it must be true in the content, not in the marketing.
 - [ ] Enumerate at least 50 valid unordered concrete stacks and report density by pattern, family combination and output.
 - [ ] Preserve official/derived/simulated information classes and require HTTPS citations plus retrieval dates for official and derived records.
 - [ ] Keep real member-office facts separate from simulated relationship state.
@@ -233,6 +237,7 @@ Give each week variable but auditable political developments so players must ada
 - [ ] Weekly Briefing Packs reveal exact contents sequentially while keeping their category visible beforehand.
 - [ ] Packs represent office capacity and uncertainty only; they contain no real-money or retention mechanics.
 - [ ] Packs stay load-bearing as the engine matures: every pack from week 2 onward contains at least one card that interacts with the player's current obligations, bill state or active relationships. Stacklands' documented mid-game failure ran opposite to the dead-end worry — players stopped opening packs because a mature engine made them irrelevant. Both failure directions need a criterion.
+- [ ] Something is always mid-flight at the week boundary. Weekly resolution bundles every pressure and then autosaves, which makes it a clean quit point every ninety seconds. At least one of: an assignment that completes next week, a deadline more than one week out, or an announced event arriving mid-week must straddle every boundary from week 1 to week 5. A validator check, not a hope; "one more turn" comes from staggered timers, and this loop has none by default.
 
 #### Verification checklist
 
@@ -271,6 +276,9 @@ Integrate the clock, packs, production chain, coalition decisions and Story Dire
 - [ ] Reload restores the same week, board, bill, relationships, discoveries, objectives and deterministic RNG cursor.
 - [ ] Week 6 resolves the visible six-week objective with an explainable bill-and-coalition assessment, then ends at a development checkpoint rather than entering unfinished procedure content.
 - [ ] The six-week objective can visibly **fail**. Week 6's assessment states pass or fail and names the specific bill, coalition or obligation gaps behind a failure. Decision 009's principle applies at loop scale: a countdown that costs nothing is theatre, and so is an objective that cannot be missed. Stacklands' pressure works because villagers actually starve; staff here are deliberately indestructible (decision 011), so the stakes must live in the objective instead — and no other task owns them.
+- [ ] *Pending 015:* week 6 is designed as a permanent ending, not a development checkpoint. It produces a **Session Record**: the six-week outcome, provisions docketed, coalition state reached, obligations kept or missed. No election and no vote share; those belong to the Term.
+- [ ] The Session Record shows the road not taken and the map still unexplored: every amendment or offer the player rejected with the state at the time, patterns discovered out of the catalog total, Tactics never learned, and offices never approached. All of this exists in the event log and profile already. It is the cheapest curiosity gap the game can open, and it is where "next time I'll take the deal" gets planted.
+- [ ] *Pending 017:* a run's seed is visible in the Session Record and can be entered at setup, so two people can play the identical six weeks. No reward, badge, streak or prompt is ever tied to when or how often a player plays. No server.
 
 #### Verification checklist
 
@@ -347,6 +355,8 @@ Do not authorize full-term content until human playtests answer this positively.
 - A crowded desk must create prioritization without making cards physically unusable.
 - Coalition support must never imply a prediction of actual member behavior.
 - Adding more systems must not create additional primary interaction languages.
+- **Strategy convergence.** On the spec's provisional election ledger, District Trust swings ±12 while the bill outcome swings +4 to −4. The dominant strategy may be "answer district mail and ignore the bill." That is realistic and fatal to replay. Task 12's 1,000-seed balance simulation must name trust-farming as the hypothesis it has to refute, and the bill's weight moves if it cannot.
+- **Content volume is not the replay plan.** Spec 2.1 puts long-term breadth in more issues and districts. That is the Stacklands ceiling restated: a mature engine with nothing left to challenge it. Session mode, named staff, the road-not-taken record and shared seeds (decisions 015–017) together cost less than one issue module. They come first.
 
 ## 12. References
 
