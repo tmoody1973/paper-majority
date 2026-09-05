@@ -149,6 +149,8 @@ export interface StackState {
   id: string;
   cardIds: string[];
   activeActionId?: string;
+  /** The actual positive resource amounts paid when the current action began. */
+  paidCost?: Partial<Resources>;
 }
 
 export interface Resources {

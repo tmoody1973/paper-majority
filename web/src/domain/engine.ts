@@ -2,6 +2,7 @@ import type { GameCommand, GameCommandType } from '@/domain/commands';
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
+import { applyResourceDelta } from '@/domain/resources';
 import { describeTag } from '@/domain/selectors';
 import type {
   CardInstance,
@@ -83,14 +84,6 @@ function canAfford(resources: Resources, cost: Partial<Resources>): boolean {
   );
 }
 
-function payCost(resources: Resources, cost: Partial<Resources>): Resources {
-  const next = { ...resources };
-  for (const [key, amount] of Object.entries(cost) as [keyof Resources, number][]) {
-    next[key] -= amount;
-  }
-  return next;
-}
-
 /** Move one card into a target stack, dropping any stack that is left empty. */
 function mergeIntoStack(
   stacks: StackState[],
@@ -156,6 +149,7 @@ export function applyTacticExpansion(
                 ...stack,
                 cardIds: stack.cardIds.filter((id) => id !== tacticCardId),
                 activeActionId: undefined,
+                paidCost: undefined,
               }
             : stack,
         )
@@ -172,34 +166,6 @@ export function applyTacticExpansion(
       targetPatternId: expansion.targetPatternId,
     },
   };
-}
-
-/**
- * Clamp resources to their approved ranges.
- *
- * Staff Attention and Political Capital are small counters; the four percentage
- * meters live on a 0–100 scale.
- */
-function clampResources(resources: Resources): Resources {
-  const bound = (value: number, low: number, high: number) =>
-    Math.min(high, Math.max(low, value));
-
-  return {
-    staffAttention: bound(resources.staffAttention, 0, 9),
-    politicalCapital: bound(resources.politicalCapital, 0, 9),
-    districtTrust: bound(resources.districtTrust, 0, 100),
-    billMomentum: bound(resources.billMomentum, 0, 100),
-    policyIntegrity: bound(resources.policyIntegrity, 0, 100),
-    staffMorale: bound(resources.staffMorale, 0, 100),
-  };
-}
-
-function addEffects(resources: Resources, effects: Partial<Resources>): Resources {
-  const next = { ...resources };
-  for (const [key, amount] of Object.entries(effects) as [keyof Resources, number][]) {
-    next[key] += amount;
-  }
-  return clampResources(next);
 }
 
 /**
@@ -258,9 +224,15 @@ function blockingTactic(
  * spends and are never returned by this function.
  */
 function heldAttention(
-  activeActionId: string | undefined,
+  stack: StackState,
   services: EngineServices,
 ): Partial<Resources> {
+  const paidAttention = stack.paidCost?.staffAttention;
+  if (stack.paidCost) {
+    return paidAttention && paidAttention > 0 ? { staffAttention: paidAttention } : {};
+  }
+
+  const { activeActionId } = stack;
   if (!activeActionId) return {};
 
   const studyExpansionId = parseStudyActionId(activeActionId);
@@ -303,9 +275,10 @@ function completeAction(
     );
     if (!expansion || !tacticCard) return { state, events: [] };
 
-    const released: Partial<Resources> = { staffAttention: expansion.studyCost };
+    const released = heldAttention(stack, services);
+    const release = applyResourceDelta(state.resources, released);
     const applied = applyTacticExpansion(
-      { ...state, resources: addEffects(state.resources, released) },
+      { ...state, resources: release.resources },
       expansion,
       tacticCard.id,
     );
@@ -313,7 +286,11 @@ function completeAction(
     return {
       state: applied.state,
       events: [
-        { type: 'RESOURCE_CHANGED', changes: released, reason: `study-complete:${expansion.id}` },
+        {
+          type: 'RESOURCE_CHANGED',
+          changes: release.applied,
+          reason: `study-complete:${expansion.id}`,
+        },
         applied.event,
       ],
     };
@@ -339,13 +316,12 @@ function completeAction(
   const producedId = `card-${seq}`;
   const producedStackId = `stack-${producedId}`;
 
-  const released: Partial<Resources> = pattern.resourceCost.staffAttention
-    ? { staffAttention: pattern.resourceCost.staffAttention }
-    : {};
-  const changes = { ...resolved.effects };
+  const released = heldAttention(stack, services);
+  const requested = { ...resolved.effects };
   for (const [key, amount] of Object.entries(released) as [keyof Resources, number][]) {
-    changes[key] = (changes[key] ?? 0) + amount;
+    requested[key] = (requested[key] ?? 0) + amount;
   }
+  const change = applyResourceDelta(state.resources, requested);
 
   // A catalyst slot takes part in the rule but is not used up. The Working Bill is
   // the obvious one: approaching a member office must not destroy your bill.
@@ -373,7 +349,7 @@ function completeAction(
   const next: TermState = {
     ...state,
     cardSeq: seq,
-    resources: addEffects(state.resources, changes),
+    resources: change.resources,
     cards: [
       ...state.cards.filter(
         (card) => !consumedIds.includes(card.id) && !survivingIds.has(card.id),
@@ -419,7 +395,11 @@ function completeAction(
         outputDefinitionId: resolved.definitionId,
         explanationKey: resolved.explanationKey,
       },
-      { type: 'RESOURCE_CHANGED', changes, reason: `pattern-complete:${pattern.id}` },
+      {
+        type: 'RESOURCE_CHANGED',
+        changes: change.applied,
+        reason: `pattern-complete:${pattern.id}`,
+      },
     ],
   };
 }
@@ -436,6 +416,13 @@ function startPattern(
   memberCardIds: string[],
 ): EngineResult {
   const alreadyDiscovered = state.discoveredPatternIds.includes(pattern.id);
+  const requested = Object.fromEntries(
+    Object.entries(pattern.resourceCost).map(([key, amount]) => [key, -amount]),
+  ) as Partial<Resources>;
+  const change = applyResourceDelta(state.resources, requested);
+  const paidCost = Object.fromEntries(
+    Object.entries(change.applied).map(([key, amount]) => [key, -amount]),
+  ) as Partial<Resources>;
   const events: GameEvent[] = [
     {
       type: 'STACK_ACCEPTED',
@@ -451,7 +438,7 @@ function startPattern(
   if (Object.keys(pattern.resourceCost).length > 0) {
     events.push({
       type: 'RESOURCE_CHANGED',
-      changes: pattern.resourceCost,
+      changes: change.applied,
       reason: `pattern:${pattern.id}`,
     });
   }
@@ -467,14 +454,14 @@ function startPattern(
 
   const next: TermState = {
     ...state,
-    resources: payCost(state.resources, pattern.resourceCost),
+    resources: change.resources,
     cards: state.cards.map((card) =>
       memberCardIds.includes(card.id)
         ? { ...card, stackId: targetStackId, status: 'working', remainingMs: pattern.durationMs }
         : card,
     ),
     stacks: state.stacks.map((stack) =>
-      stack.id === targetStackId ? { ...stack, activeActionId: pattern.id } : stack,
+      stack.id === targetStackId ? { ...stack, activeActionId: pattern.id, paidCost } : stack,
     ),
     discoveredPatternIds: alreadyDiscovered
       ? state.discoveredPatternIds
@@ -632,6 +619,13 @@ function startStudyTactic(
 
   const targetStackId = tactic.stackId;
   const memberCardIds = [tacticCardId, staffCardId];
+  const requested = Object.fromEntries(
+    Object.entries(cost).map(([key, amount]) => [key, -amount]),
+  ) as Partial<Resources>;
+  const change = applyResourceDelta(state.resources, requested);
+  const paidCost = Object.fromEntries(
+    Object.entries(change.applied).map(([key, amount]) => [key, -amount]),
+  ) as Partial<Resources>;
   const events: GameEvent[] = [
     {
       type: 'STACK_ACCEPTED',
@@ -639,7 +633,7 @@ function startStudyTactic(
       cardIds: memberCardIds,
       definitionIds: [tactic.definitionId, staff.definitionId].sort(),
     },
-    { type: 'RESOURCE_CHANGED', changes: cost, reason: `study:${expansion.id}` },
+    { type: 'RESOURCE_CHANGED', changes: change.applied, reason: `study:${expansion.id}` },
     {
       type: 'ACTION_STARTED',
       stackId: targetStackId,
@@ -650,7 +644,7 @@ function startStudyTactic(
 
   const next: TermState = {
     ...state,
-    resources: payCost(state.resources, cost),
+    resources: change.resources,
     cards: state.cards.map((card) =>
       memberCardIds.includes(card.id)
         ? {
@@ -662,7 +656,9 @@ function startStudyTactic(
         : card,
     ),
     stacks: mergeIntoStack(state.stacks, staffCardId, targetStackId).map((stack) =>
-      stack.id === targetStackId ? { ...stack, activeActionId: studyActionId(expansion.id) } : stack,
+      stack.id === targetStackId
+        ? { ...stack, activeActionId: studyActionId(expansion.id), paidCost }
+        : stack,
     ),
   };
 
@@ -697,13 +693,14 @@ export function executeCommand(
       // The office stops the work but gets its staffer back. Without this, three
       // careless drags left the desk with zero attention and no way to start
       // anything again.
-      const released = cancelling ? heldAttention(stack.activeActionId, services) : {};
+      const released = cancelling ? heldAttention(stack, services) : {};
       const refunding = Object.keys(released).length > 0;
+      const refund = applyResourceDelta(state.resources, released);
 
       const newStackId = `stack-${command.cardId}`;
       const next: TermState = {
         ...state,
-        resources: refunding ? addEffects(state.resources, released) : state.resources,
+        resources: refunding ? refund.resources : state.resources,
         cards: state.cards.map((candidate) => {
           if (candidate.id === command.cardId) {
             return {
@@ -728,6 +725,7 @@ export function executeCommand(
                     ...candidate,
                     cardIds: candidate.cardIds.filter((id) => id !== command.cardId),
                     activeActionId: undefined,
+                    paidCost: undefined,
                   }
                 : candidate,
             )
@@ -740,7 +738,7 @@ export function executeCommand(
       if (refunding) {
         separationEvents.push({
           type: 'RESOURCE_CHANGED',
-          changes: released,
+          changes: refund.applied,
           reason: `cancel:${stack.activeActionId}`,
         });
       }

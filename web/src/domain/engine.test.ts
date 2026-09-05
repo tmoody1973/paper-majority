@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { executeCommand, type EngineServices } from '@/domain/engine';
-import { createInitialState } from '@/domain/initialState';
+import { createInitialState, OPENING_RESOURCES } from '@/domain/initialState';
 import type { GameCommand } from '@/domain/commands';
 import type { GameEvent } from '@/domain/events';
-import type { TermState } from '@/domain/types';
+import type { Resources, TermState } from '@/domain/types';
 import { testScenario } from '@/test/fixtures/scenario';
 
 const services: EngineServices = { scenario: testScenario };
@@ -49,6 +49,28 @@ function run(state: TermState, ...commands: GameCommand[]) {
 
 function typesOf(events: GameEvent[]): string[] {
   return events.map((event) => event.type);
+}
+
+function sumResourceChanges(events: GameEvent[]): Partial<Resources> {
+  const total: Partial<Resources> = {};
+  for (const event of events) {
+    if (event.type !== 'RESOURCE_CHANGED') continue;
+    for (const [key, amount] of Object.entries(event.changes) as [keyof Resources, number][]) {
+      total[key] = (total[key] ?? 0) + amount;
+    }
+  }
+  return total;
+}
+
+function expectResourceEventsToReconcile(
+  initial: Resources,
+  final: Resources,
+  events: GameEvent[],
+) {
+  const summed = sumResourceChanges(events);
+  for (const key of Object.keys(initial) as (keyof Resources)[]) {
+    expect(summed[key] ?? 0, key).toBe(final[key] - initial[key]);
+  }
 }
 
 function expectOneStackPerCard(state: TermState) {
@@ -213,7 +235,79 @@ describe('SEPARATE_STACK and MOVE_CARD', () => {
     // that was only ever being held.
     expect(cancelled.state.resources.staffAttention).toBe(start.resources.staffAttention);
     expect(typesOf(cancelled.events)).toContain('RESOURCE_CHANGED');
+    expect(sumResourceChanges(stacked.events).staffAttention).toBe(-1);
+    expect(sumResourceChanges(cancelled.events).staffAttention).toBe(1);
+    expectResourceEventsToReconcile(
+      start.resources,
+      cancelled.state.resources,
+      [...stacked.events, ...cancelled.events],
+    );
     expect(cancelled.state.cards.every((card) => card.status === 'idle')).toBe(true);
+  });
+
+  it('refunds the attention paid at start even if the pattern cost later changes', () => {
+    const scenario = structuredClone(testScenario);
+    const localServices: EngineServices = { scenario };
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = executeCommand(
+      start,
+      { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' },
+      localServices,
+    );
+
+    const pattern = scenario.patterns.find(
+      (candidate) => candidate.id === 'pattern-evidence-summary',
+    );
+    if (!pattern) throw new Error('expected pattern-evidence-summary');
+    pattern.resourceCost = { staffAttention: 2 };
+
+    const cancelled = executeCommand(
+      stacked.state,
+      {
+        type: 'SEPARATE_STACK',
+        stackId: 'stack-2',
+        cardId: 'card-1',
+        x: 40,
+        y: 50,
+      },
+      localServices,
+    );
+
+    expect(sumResourceChanges(cancelled.events).staffAttention).toBe(1);
+    expect(cancelled.state.resources.staffAttention).toBe(start.resources.staffAttention);
+  });
+
+  it('releases no attention when a zero-cost job later acquires an attention cost', () => {
+    const scenario = structuredClone(testScenario);
+    const localServices: EngineServices = { scenario };
+    const pattern = scenario.patterns.find(
+      (candidate) => candidate.id === 'pattern-evidence-summary',
+    );
+    if (!pattern) throw new Error('expected pattern-evidence-summary');
+    pattern.resourceCost = {};
+
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report']);
+    const stacked = executeCommand(
+      start,
+      { type: 'STACK_CARD', cardId: 'card-1', targetStackId: 'stack-2' },
+      localServices,
+    );
+    pattern.resourceCost = { staffAttention: 1 };
+
+    const cancelled = executeCommand(
+      stacked.state,
+      {
+        type: 'SEPARATE_STACK',
+        stackId: 'stack-2',
+        cardId: 'card-1',
+        x: 40,
+        y: 50,
+      },
+      localServices,
+    );
+
+    expect(typesOf(cancelled.events)).not.toContain('RESOURCE_CHANGED');
+    expect(cancelled.state.resources.staffAttention).toBe(start.resources.staffAttention);
   });
 
   it('returns the held Staff Attention when a Tactic study is cancelled', () => {
@@ -235,6 +329,13 @@ describe('SEPARATE_STACK and MOVE_CARD', () => {
     });
 
     expect(cancelled.state.resources.staffAttention).toBe(start.resources.staffAttention);
+    expect(sumResourceChanges(studying.events).staffAttention).toBe(-1);
+    expect(sumResourceChanges(cancelled.events).staffAttention).toBe(1);
+    expectResourceEventsToReconcile(
+      start.resources,
+      cancelled.state.resources,
+      [...studying.events, ...cancelled.events],
+    );
     expect(cancelled.state.unlockedSlotExpansions).toEqual({});
   });
 
@@ -443,6 +544,7 @@ describe('START_ASSIGNMENT', () => {
     expect(started.assignmentKind).toBe('study-tactic');
     expect(started.durationMs).toBe(8_000);
     expect(state.resources.staffAttention).toBe(start.resources.staffAttention - 1);
+    expect(sumResourceChanges(events).staffAttention).toBe(-1);
     expect(state.cards[0].status).toBe('working');
     expect(state.cards[1].status).toBe('working');
     expectOneStackPerCard(state);
@@ -666,6 +768,33 @@ describe('TICK completes an action', () => {
 
     const done = runToCompletion(stacked.state, 6_000);
     expect(done.state.resources.staffAttention).toBe(3);
+    expect(sumResourceChanges(stacked.events).staffAttention).toBe(-1);
+    expect(sumResourceChanges(done.events).staffAttention).toBe(1);
+    expectResourceEventsToReconcile(
+      start.resources,
+      done.state.resources,
+      [...stacked.events, ...done.events],
+    );
+  });
+
+  it('reports only the completion gain that fits below a resource cap', () => {
+    const start = makeState(['staff-policy-aide', 'evidence-rent-burden-report'], {
+      resources: { ...OPENING_RESOURCES, billMomentum: 99 },
+    });
+    const stacked = run(start, {
+      type: 'STACK_CARD',
+      cardId: 'card-1',
+      targetStackId: 'stack-2',
+    });
+    const done = runToCompletion(stacked.state, 6_000);
+
+    expect(done.state.resources.billMomentum).toBe(100);
+    expect(sumResourceChanges(done.events).billMomentum).toBe(1);
+    expectResourceEventsToReconcile(
+      start.resources,
+      done.state.resources,
+      [...stacked.events, ...done.events],
+    );
   });
 
   it('records the discovery once even after the transformation completes', () => {
@@ -704,6 +833,12 @@ describe('TICK completes an action', () => {
     const aide = done.state.cards.find((card) => card.definitionId === 'staff-policy-aide');
     expect(aide?.status).toBe('idle');
     expect(done.state.resources.staffAttention).toBe(3);
+    expect(sumResourceChanges(done.events).staffAttention).toBe(1);
+    expectResourceEventsToReconcile(
+      start.resources,
+      done.state.resources,
+      [...studying.events, ...done.events],
+    );
 
     const outreach = run(done.state, {
       type: 'STACK_CARD',

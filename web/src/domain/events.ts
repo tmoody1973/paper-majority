@@ -83,7 +83,12 @@ export type GameEvent =
       tacticDefinitionId: string;
       targetPatternId: string;
     }
-  | { type: 'RESOURCE_CHANGED'; changes: Partial<Resources>; reason: string }
+  | {
+      type: 'RESOURCE_CHANGED';
+      /** Signed differences actually applied after resource bounds are enforced. */
+      changes: Partial<Resources>;
+      reason: string;
+    }
   | { type: 'ELECTION_EFFECT_ADDED'; effect: ElectionEffectEntry }
   | { type: 'ELECTION_OUTLOOK_UPDATED'; forecast: ElectionForecast }
   | { type: 'PAUSE_CHANGED'; paused: boolean }
