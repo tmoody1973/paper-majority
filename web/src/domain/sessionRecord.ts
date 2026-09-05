@@ -22,6 +22,41 @@ const CAUSE_TYPES = new Set<GameEvent['type']>([
   'WEEK_RESOLVED', 'READINESS_MILESTONE_REWARDED',
 ]);
 
+/** Suggestions describe a test the player can try; they never promise a different outcome. */
+export function buildNextExperiments(state: TermState, scenario: ScenarioDefinition): string[] {
+  const readiness = sessionReadiness(state);
+  const suggestions: string[] = [];
+  if (readiness.provisionGap > 0) {
+    suggestions.push(`Try drafting and docketing ${readiness.provisionGap} more distinct provision${readiness.provisionGap === 1 ? '' : 's'}. This would test the provision gap recorded in this ending.`);
+  }
+  if (readiness.supportGap > 0) {
+    suggestions.push(`Try earning ${readiness.supportGap} more office commitment${readiness.supportGap === 1 ? '' : 's'}. This would test the support gap recorded in this ending.`);
+  }
+  if (readiness.overdueMandatoryIds.length > 0) {
+    suggestions.push(`Try scheduling the ${readiness.overdueMandatoryIds.length} overdue mandatory commitment${readiness.overdueMandatoryIds.length === 1 ? '' : 's'} earlier: ${readiness.overdueMandatoryIds.join(', ')}.`);
+  }
+
+  const availableTacticIds = new Set(state.cards
+    .filter((card) => card.location === 'desk' && card.status === 'idle')
+    .filter((card) => scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'tactic')
+    .map((card) => card.definitionId));
+  for (const expansion of [...scenario.tacticExpansions].sort((a, b) => a.id.localeCompare(b.id))) {
+    const tactic = scenario.cards.find((card) => card.id === expansion.tacticDefinitionId);
+    const title = tactic?.title ?? expansion.tacticDefinitionId;
+    const activatedAt = state.eventLog.findIndex((event) =>
+      event.type === 'TACTIC_EXPANSION_ACTIVATED' && event.expansionId === expansion.id);
+    if (activatedAt < 0 && availableTacticIds.has(expansion.tacticDefinitionId)) {
+      suggestions.push(`Try studying ${title} with an eligible staff card. It may let you test this use: ${expansion.expansionNote}`);
+      continue;
+    }
+    if (activatedAt >= 0 && !state.eventLog.slice(activatedAt + 1).some((event) =>
+      event.type === 'PATTERN_COMPLETED' && event.patternId === expansion.targetPatternId)) {
+      suggestions.push(`Try the learned ${title} use in ${expansion.targetPatternId}. This tests an available use that was not completed after it was learned.`);
+    }
+  }
+  return suggestions;
+}
+
 /** Build a detached, serializable explanation of the run's actual state and causes. */
 export function buildSessionRecord(state: TermState, scenario: ScenarioDefinition): SessionRecord {
   void scenario;

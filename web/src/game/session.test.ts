@@ -4,6 +4,8 @@ import { createRun } from '@/domain/initialState';
 import { createGameSession } from '@/game/session';
 import { loadCheckpoint, SAVE_KEYS, saveCheckpoint, type SaveStorage } from '@/persistence/saveRepository';
 import { PLAYER_PROFILE_KEY } from '@/persistence/playerProfile';
+import { createChallengeSetup, decodeChallenge, encodeChallenge } from '@/persistence/challengeCode';
+import { DEFAULT_RUN_SETTINGS } from '@/domain/initialState';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 import { getCandidateScenario } from '@/content/loadScenario';
 
@@ -228,6 +230,70 @@ describe('GameSession persistence owner', () => {
     expect(emptyReader.resume(emptyStorage).kind).toBe('loaded');
     expect(emptyReader.getState().storyHistory).toEqual([]);
     expect(emptyReader.getState().pendingStoryDecisions).toEqual([]);
+  });
+
+  it('starts identical challenge states for clean and returning profiles without rerolling Resume', () => {
+    const scenario = getCandidateScenario();
+    const challenge = createChallengeSetup({
+      districtId: scenario.districts[2]!.id,
+      party: 'republican',
+      values: ['Local Control', 'Fiscal Stewardship'],
+      seed: 918273,
+      settings: { ...DEFAULT_RUN_SETTINGS, pace: 'brisk', reducedMotion: true },
+    }, scenario);
+    const decoded = decodeChallenge(encodeChallenge(challenge), scenario);
+    if (!decoded.ok) throw new Error(decoded.reason);
+
+    const cleanStorage = new SessionStorage();
+    const returningStorage = new SessionStorage();
+    returningStorage.values.set(PLAYER_PROFILE_KEY, JSON.stringify({
+      schemaVersion: 1,
+      lifetimeDiscoveredPatternIds: ['pattern-summarize-evidence'],
+    }));
+    const direct = createRun({ scenario, ...challenge });
+    const imported = createRun({ scenario, ...decoded.setup });
+    const clean = createGameSession(direct, scenario);
+    const returning = createGameSession(imported, scenario);
+    expect(clean.startNew(direct, cleanStorage).kind).toBe('started');
+    expect(returning.startNew(imported, returningStorage).kind).toBe('started');
+    expect(returning.getState()).toEqual(clean.getState());
+    expect(returning.getState()).toMatchObject({
+      rngCursor: clean.getState().rngCursor,
+      runVariation: clean.getState().runVariation,
+      settings: challenge.settings,
+      pendingStoryDecisions: clean.getState().pendingStoryDecisions,
+    });
+    expect(returning.getState().cards.map((card) => card.staffTraitId))
+      .toEqual(clean.getState().cards.map((card) => card.staffTraitId));
+    expect(returning.getPlayerProfile().lifetimeDiscoveredPatternIds)
+      .toEqual(['pattern-summarize-evidence']);
+    expect(clean.getPlayerProfile().lifetimeDiscoveredPatternIds).toEqual([]);
+
+    const beforeResume = structuredClone(returning.getState());
+    const resumed = createGameSession(createRun({ ...sessionSetup, scenario, mode: 'session' }), scenario);
+    expect(resumed.resume(returningStorage).kind).toBe('loaded');
+    expect(resumed.getState()).toEqual({ ...beforeResume, paused: true });
+    expect(resumed.getState().storyHistory).toEqual(beforeResume.storyHistory);
+  });
+
+  it('merges the finished run discoveries into the local lifetime profile', () => {
+    const storage = new SessionStorage();
+    const initial = createRun({ ...sessionSetup, mode: 'session' });
+    const boundary = {
+      ...initial,
+      discoveredPatternIds: ['pattern-draft-policy', 'pattern-summarize-evidence'],
+      elapsedMs: initial.weekLengthMs,
+      simulationMs: initial.weekLengthMs,
+      weekPhase: 'boundary' as const,
+    };
+    const session = createGameSession(boundary, sessionScenario);
+    expect(session.recover(storage).kind).toBe('empty');
+    expect(session.dispatch({ type: 'CONCLUDE_SESSION' }).events)
+      .toContainEqual(expect.objectContaining({ type: 'SESSION_CONCLUDED' }));
+    expect(JSON.parse(storage.values.get(PLAYER_PROFILE_KEY)!)).toEqual({
+      schemaVersion: 1,
+      lifetimeDiscoveredPatternIds: ['pattern-draft-policy', 'pattern-summarize-evidence'],
+    });
   });
 
   it('keeps the chosen run authoritative and unbound when its initial save cannot be promoted', () => {

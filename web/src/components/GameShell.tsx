@@ -18,6 +18,7 @@ import { WorkMat } from '@/components/WorkMat';
 import { WeekSummary } from '@/components/WeekSummary';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
 import { describeCard } from '@/domain/cardDetail';
+import { buildNextExperiments } from '@/domain/sessionRecord';
 import { buildHandbook, nextPendingDecision } from '@/domain/selectors';
 import type { ScenarioDefinition, TermState } from '@/domain/types';
 import { createGameSession, type GameSession } from '@/game/session';
@@ -243,6 +244,8 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
       {state.runStatus === 'complete' && state.sessionRecord ? (
         <SessionRecord
           record={state.sessionRecord}
+          scenario={scenario}
+          nextExperiments={buildNextExperiments(state, scenario)}
           onRestart={onRestart}
           preservedSaveBytes={session.getPreservedSaveBytes()}
           currentSaveBytes={session.getCurrentSaveBytes()}

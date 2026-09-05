@@ -1,6 +1,9 @@
 'use client';
 
-import type { SessionRecord as SessionRecordValue } from '@/domain/types';
+import { useState } from 'react';
+
+import type { ScenarioDefinition, SessionRecord as SessionRecordValue } from '@/domain/types';
+import { challengeSetupFromRecord, encodeChallenge } from '@/persistence/challengeCode';
 
 function conditionLabel(condition: SessionRecordValue['promises'][number]['conditions'][number]): string {
   if (condition.kind === 'governing-value') return `governing value: ${condition.value}`;
@@ -8,19 +11,32 @@ function conditionLabel(condition: SessionRecordValue['promises'][number]['condi
   return `bill includes: ${condition.tag}`;
 }
 
-export function SessionRecord({ record, onRestart, preservedSaveBytes, currentSaveBytes }: {
+export function SessionRecord({ record, scenario, nextExperiments = [], onRestart, preservedSaveBytes, currentSaveBytes }: {
   record: SessionRecordValue;
+  scenario: ScenarioDefinition;
+  nextExperiments?: readonly string[];
   onRestart?: () => void;
   preservedSaveBytes?: string;
   currentSaveBytes?: string;
 }) {
-  const recordHref = `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(record, null, 2))}`;
+  const [copyNotice, setCopyNotice] = useState<string>();
+  const recordText = JSON.stringify(record, null, 2);
+  const recordHref = `data:application/json;charset=utf-8,${encodeURIComponent(recordText)}`;
   const priorHref = preservedSaveBytes
     ? `data:application/json;charset=utf-8,${encodeURIComponent(preservedSaveBytes)}`
     : undefined;
   const currentHref = currentSaveBytes
     ? `data:application/json;charset=utf-8,${encodeURIComponent(currentSaveBytes)}`
     : undefined;
+  const copy = async (text: string, success: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyNotice(success);
+    } catch {
+      setCopyNotice('The text could not be copied. Browser clipboard access may be unavailable.');
+    }
+  };
+  const challengeCode = encodeChallenge(challengeSetupFromRecord(record, scenario));
   return (
     <section className="session-record" aria-label="Session record" data-testid="session-record">
       <p className="session-record__eyebrow">Immutable Session record</p>
@@ -59,12 +75,21 @@ export function SessionRecord({ record, onRestart, preservedSaveBytes, currentSa
         <li key={contribution.id}>{contribution.reason}: {contribution.appliedDelta > 0 ? '+' : ''}{contribution.appliedDelta}</li>
       ))}</ul> : <p>No Policy Integrity changes were applied.</p>}
       <p>{record.integrity.explanation}</p>
+      <h2>Possible next experiments</h2>
+      <p>These ideas come from this ending&apos;s recorded gaps and unused available tools. They do not guarantee a different outcome.</p>
+      {nextExperiments.length > 0
+        ? <ul data-testid="session-next-experiments">{nextExperiments.map((experiment) => <li key={experiment}>{experiment}</li>)}</ul>
+        : <p data-testid="session-next-experiments">No unused available Tactic or readiness gap was recorded.</p>}
       <div className="session-record__actions">
+        <button type="button" data-testid="session-copy-challenge" onClick={() => void copy(challengeCode, 'Challenge copied locally. It shares the frozen setup only, not an authenticated score.')}>Copy Challenge</button>
+        <button type="button" data-testid="session-copy-record" onClick={() => void copy(recordText, 'Record copied locally. It is a record of this ending, not an authenticated score.')}>Copy Record</button>
         <a href={recordHref} download={`paper-majority-${record.id.replaceAll(':', '-')}.json`} data-testid="session-record-export">Export this record</a>
         {priorHref && <a href={priorHref} download="paper-majority-preserved-save.json" data-testid="session-prior-save-export">Export prior replaced checkpoint</a>}
         {currentHref && <a href={currentHref} download="paper-majority-current-save.json" data-testid="session-current-save-export">Export current checkpoint</a>}
         {onRestart && <button type="button" data-testid="session-restart" onClick={onRestart}>Set up another Session</button>}
       </div>
+      <p>A challenge shares the frozen setup. A record shares the recorded ending. Neither is proof of an authenticated score, and neither is uploaded.</p>
+      {copyNotice && <p role="status" data-testid="session-copy-notice">{copyNotice}</p>}
     </section>
   );
 }

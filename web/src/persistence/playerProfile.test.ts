@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  emptyPlayerProfile,
   loadPlayerProfile,
+  mergeLifetimeDiscoveries,
   PLAYER_PROFILE_KEY,
   savePlayerProfile,
 } from '@/persistence/playerProfile';
 import type { SaveStorage } from '@/persistence/saveRepository';
+import { createRun } from '@/domain/runSetup';
+import { sessionSetup } from '@/test/fixtures/session';
 
 function storage(initial?: string): SaveStorage & { value: string | null; fail?: 'get' | 'set' } {
   return {
@@ -46,5 +50,23 @@ describe('player profile discovery archive', () => {
     const local = storage('{bad');
     expect(savePlayerProfile(local, ['pattern-a']).kind).toBe('storage-unavailable');
     expect(local.value).toBe('{bad');
+  });
+
+  it('purely merges sorted lifetime discoveries without changing run rules or numbers', () => {
+    const finished = {
+      ...createRun({ ...sessionSetup, mode: 'session' }),
+      discoveredPatternIds: ['pattern-z', 'pattern-a'],
+    };
+    const before = structuredClone(finished);
+    const merged = mergeLifetimeDiscoveries({
+      schemaVersion: 1,
+      lifetimeDiscoveredPatternIds: ['pattern-b', 'pattern-a'],
+    }, finished);
+    expect(merged.lifetimeDiscoveredPatternIds).toEqual(['pattern-a', 'pattern-b', 'pattern-z']);
+    expect(finished).toEqual(before);
+    expect(finished.resources).toEqual(before.resources);
+    expect(finished.unlockedSlotExpansions).toEqual(before.unlockedSlotExpansions);
+    expect(finished.rngCursor).toBe(before.rngCursor);
+    expect(mergeLifetimeDiscoveries(emptyPlayerProfile(), finished).schemaVersion).toBe(1);
   });
 });

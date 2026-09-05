@@ -1,4 +1,4 @@
-import type { PlayerProfile } from '@/domain/types';
+import type { PlayerProfile, TermState } from '@/domain/types';
 import type { SaveStorage } from '@/persistence/saveRepository';
 
 export const PLAYER_PROFILE_KEY = 'congress-game.player-profile';
@@ -19,6 +19,23 @@ export function emptyPlayerProfile(): PlayerProfile {
 
 function normalize(ids: string[]): string[] {
   return [...new Set(ids)].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Carry explanation knowledge between Sessions without writing into the finished
+ * run or granting resources, rules, Tactics, cards, or extra random draws.
+ */
+export function mergeLifetimeDiscoveries(
+  profile: PlayerProfile,
+  finishedState: TermState,
+): PlayerProfile {
+  return {
+    schemaVersion: 1,
+    lifetimeDiscoveredPatternIds: normalize([
+      ...profile.lifetimeDiscoveredPatternIds,
+      ...finishedState.discoveredPatternIds,
+    ]),
+  };
 }
 
 function parseProfile(raw: string): PlayerProfile | undefined {

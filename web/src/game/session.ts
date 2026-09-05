@@ -3,6 +3,7 @@ import type { GameCommand } from '@/domain/commands';
 import type { PlayerProfile, ScenarioDefinition, TermState } from '@/domain/types';
 import {
   loadPlayerProfile,
+  mergeLifetimeDiscoveries,
   savePlayerProfile,
   emptyPlayerProfile,
 } from '@/persistence/playerProfile';
@@ -150,6 +151,12 @@ export function createGameSession(
         const discoveries = result.events.flatMap((event) => event.type === 'PATTERN_DISCOVERED' ? [event.patternId] : []);
         if (discoveries.length > 0) {
           const savedProfile = savePlayerProfile(storage, discoveries);
+          profile = savedProfile.profile;
+          if (savedProfile.kind === 'storage-unavailable') persistenceNotice = savedProfile.message;
+        }
+        if (result.events.some((event) => event.type === 'SESSION_CONCLUDED')) {
+          const merged = mergeLifetimeDiscoveries(profile, state);
+          const savedProfile = savePlayerProfile(storage, merged.lifetimeDiscoveredPatternIds);
           profile = savedProfile.profile;
           if (savedProfile.kind === 'storage-unavailable') persistenceNotice = savedProfile.message;
         }

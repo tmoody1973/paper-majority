@@ -112,7 +112,8 @@ async function start(page: Page, pace: 'standard' | 'relaxed') {
   await expect(page.getByTestId('week-one-agenda').locator('[data-observed="true"]')).toHaveCount(1);
 }
 
-test('completes standard and relaxed six-week Sessions through canvas and keyboard controls', async ({ page }) => {
+test('completes standard and relaxed six-week Sessions through canvas and keyboard controls', async ({ context, page }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'http://127.0.0.1:3100' });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /six-week housing package/i })).toBeVisible();
   await expect(page.getByTestId('session-district').locator('option')).toHaveCount(6);
@@ -130,6 +131,19 @@ test('completes standard and relaxed six-week Sessions through canvas and keyboa
   const storyHistoryA = [...(await state(page)).storyHistory];
   const bytesA = await page.evaluate(() => window.localStorage.getItem('congress-game.save.current'));
   if (!bytesA) throw new Error('Run A has no current checkpoint');
+
+  await page.getByTestId('session-copy-record').focus();
+  await page.keyboard.press('Enter');
+  const copiedRecord = await page.evaluate(() => navigator.clipboard.readText());
+  expect(JSON.stringify(JSON.parse(copiedRecord))).toBe(frozenRecord);
+  const frozenReducedMotion = (await state(page)).sessionRecord!.setup.settings.reducedMotion;
+  await page.getByTestId('hud-reduced-motion').click();
+  expect((await state(page)).settings.reducedMotion).not.toBe(frozenReducedMotion);
+  await page.getByTestId('session-copy-challenge').click();
+  const copiedChallenge = await page.evaluate(() => navigator.clipboard.readText());
+  const copiedSetup = JSON.parse(decodeURIComponent(copiedChallenge.slice(copiedChallenge.indexOf(':') + 1)));
+  expect(copiedSetup.settings.reducedMotion).toBe(frozenReducedMotion);
+  expect(copiedSetup.seed).toBe((await state(page)).sessionRecord!.setup.seed);
 
   await page.reload();
   expect(await exportedBytes(page, 'export-current-save')).toBe(bytesA);

@@ -181,13 +181,34 @@ a:focus-visible {
 }
 
 .session-setup select,
-.session-setup input {
+.session-setup input,
+.session-setup textarea {
   min-height: 42px;
   border: 2px solid var(--ink);
   border-radius: 8px;
   background: var(--card);
   color: var(--ink);
   padding: 7px;
+}
+
+.session-setup textarea {
+  min-height: 92px;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+
+.session-setup__challenge {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.session-setup__challenge label {
+  max-width: none;
 }
 
 .session-setup__resume,

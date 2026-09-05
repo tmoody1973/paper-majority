@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { executeCommand } from '@/domain/engine';
-import { buildSessionRecord } from '@/domain/sessionRecord';
+import { buildNextExperiments, buildSessionRecord } from '@/domain/sessionRecord';
 import { createRun } from '@/domain/runSetup';
 import type { TermState } from '@/domain/types';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
@@ -54,5 +54,29 @@ describe('Session record and conclusion', () => {
     expect(record.setup.values).toEqual(sessionSetup.values);
     expect(record.setup.settings.pace).toBe('standard');
     expect(record.causeEventIds).toEqual([]);
+  });
+
+  it('freezes possibilities from actual ending gaps and available untried Tactics', () => {
+    const state = boundary();
+    state.cards.push({
+      id: 'card-tactic',
+      definitionId: 'tactic-bipartisan-working-group',
+      stackId: 'stack-tactic',
+      x: 100,
+      y: 100,
+      remainingMs: 0,
+      status: 'idle',
+      form: 'raw',
+      location: 'desk',
+      sourceDefinitionIds: [],
+    });
+    const suggestions = buildNextExperiments(state, sessionScenario);
+    expect(suggestions).toEqual(expect.arrayContaining([
+      expect.stringMatching(/2 more distinct provisions.*recorded in this ending/i),
+      expect.stringMatching(/2 more office commitments.*recorded in this ending/i),
+      expect.stringMatching(/try studying Bipartisan Working Group.*may let you test/i),
+    ]));
+    expect(suggestions.join(' ')).not.toMatch(/will (win|succeed|make)/i);
+    expect(buildNextExperiments(state, sessionScenario)).toEqual(suggestions);
   });
 });

@@ -96,7 +96,7 @@ function validResourceTotals(value: unknown): boolean {
       resources[key as keyof typeof resources] >= 0 && resources[key as keyof typeof resources] <= 100);
 }
 
-function validSettings(value: unknown): boolean {
+export function isValidRunSettings(value: unknown): value is TermState['settings'] {
   if (!isRecord(value) || !hasOnlyKeys(value, ['pace', 'guidance', 'termStyle', 'voteInformation', 'policyComplexity', 'locale', 'reducedMotion'])) return false;
   return ['relaxed', 'standard', 'brisk'].includes(value.pace as string)
     && ['guided', 'standard', 'expert'].includes(value.guidance as string)
@@ -512,7 +512,7 @@ function validSessionRecord(value: unknown): boolean {
     && typeof value.id === 'string'
     && ['ready', 'not-ready'].includes(value.outcome as string)
     && isInteger(value.completedAtSimulationMs, 0)
-    && isRecord(value.setup) && validSettings(value.setup.settings)
+    && isRecord(value.setup) && isValidRunSettings(value.setup.settings)
     && isRecord(value.objective) && isRecord(value.gaps)
     && isRecord(value.bill) && isRecord(value.integrity)
     && Array.isArray(value.promises) && Array.isArray(value.obligations)
@@ -551,7 +551,7 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   if (!isInteger(input.simulationMs, 0) || !isInteger(input.elapsedMs, 0) || !isInteger(input.weekLengthMs, 1)) return false;
   if ((input.elapsedMs as number) > (input.weekLengthMs as number)) return false;
   if (!['active', 'boundary'].includes(input.weekPhase as string) || typeof input.paused !== 'boolean') return false;
-  if (!validSettings(input.settings) || !isInteger(input.cardSeq, 0) || !validResourceTotals(input.resources)) return false;
+  if (!isValidRunSettings(input.settings) || !isInteger(input.cardSeq, 0) || !validResourceTotals(input.resources)) return false;
 
   if (!isRecord(input.runVariation)
     || !hasOnlyKeys(input.runVariation, ['selectedDemandIdsByOffice', 'obligationDueByDefinitionId'])
