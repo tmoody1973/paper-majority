@@ -4,6 +4,8 @@
 
 Use the implemented Session candidate only after its automated checks pass. Record the commit, snapshot ID/hash, seed, district, party, selected values and settings for every run. This is a small qualitative pilot, not a retention study representative of all players.
 
+Before each participant begins, verify the page title is **Paper Majority**, record the exact URL, and export the frozen Session record after every completed run. Record keyboard-only or reduced-motion use as an observation; do not substitute an automated browser run for a participant.
+
 Recruit eight adults who are interested in strategy games; include people unfamiliar with Congress. Explain what will be observed, obtain permission to keep anonymized notes, and let participants stop whenever they want. Do not record names, contact details or audio/video in the repository.
 
 ## First run

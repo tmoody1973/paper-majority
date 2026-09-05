@@ -1,5 +1,33 @@
 # Handoff — Paper Majority, Phase 1
 
+> **Checkpoint 2 automated candidate — 2026-09-05:** The six-week Session implementation is on `codex/replayable-session`, based on reviewed commit `770077cf0f84c4267f9c75929942686ffbfeab2b`. The frozen candidate is `housing-session-2026-09-04-candidate`, rules version 2, hash `ff90f497eaf2efc4c4e18877ff360f824f2ffe2391badbb44900d6301f0a13e4`. Task 11's commit is identified by message `test: validate session strategy variety and replay gates` in this branch's git history.
+>
+> The automated balance manifest covers seeds 1–1000, both parties, five policies, standard pace, and the deterministic six-district/value rotation in `web/reports/session-balance/manifest.json`. All 10,000 runs completed with zero harness failures. Ready outcomes were district advocate 2,000/2,000, committee specialist 1,892/2,000, coalition broker 2,000/2,000, greedy same-party 2,000/2,000 and district reward 2,000/2,000. The committee policy's 108 completed `not-ready` endings remain in the denominator as outcomes. Illegal commands, stuck runs, invariant violations and the 10,000-command bound remain harness failures.
+>
+> The five scripts produce different staff, Story, office-order and Tactic priorities. Their action frequencies, completed paths and trace counts are in `web/reports/session-balance/report.md`; all policy runs use player-observable information only. Matched comparisons found neither greedy same-party nor district reward dominated all three intended approaches: their readiness results carried trust, momentum, morale or idle-time tradeoffs. This supports strategy distinction in the automated model without proving that humans notice, enjoy or intentionally choose those paths.
+>
+> Actual-control browser acceptance is `web/e2e/session-accessibility.spec.ts`: it closes the opening Story, moves a real canvas card by pointer, completes the documented ready strategy through keyboard controls, checks the ending with axe, copies/exports the frozen record, reloads exact saved bytes and Resumes the same record. Existing not-ready, accept/reject/counter, Work Mat, Docket, reduced-motion and legacy fixture tests remain separate.
+>
+> **Checkpoint 2 is not accepted.** The housing content is still candidate/human-review-pending. Human source/editorial review, the MOO-746 reviewed eight-card art pilot and eight consented participant sessions are pending. `docs/playtests/session-replay-results.md` remains `NOT RUN`; bot readiness does not establish fun or human replayability. No 24-week or 77-card work is authorized before explicit acceptance.
+
+The review build is currently verified as **Paper Majority — A Congressional Strategy Game** at [http://127.0.0.1:3100](http://127.0.0.1:3100) (local Next dev process PID 20039). If the process has ended, restart the same worktree with the command below and verify the title before review.
+
+## Current Session commands
+
+```bash
+npm --prefix web run lint
+npm --prefix web run typecheck
+npm --prefix web run test:run
+npm --prefix web run report:patterns
+npm --prefix web run report:patterns:session
+npm --prefix web run validate:content
+npm --prefix web run balance -- --mode session --seeds 1000 --parties both --pace standard
+npm --prefix web run test:e2e
+npm --prefix web run build
+```
+
+Playwright owns `http://127.0.0.1:3100` for its suite. If a verified Paper Majority server is already running there, use `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`; never reuse ports 3000/3001 without checking the page title.
+
 > **Active implementation — 2026-09-04:** Tarik authorized the [replayable Session plan](superpowers/plans/2026-09-04-replayable-session.md). Work runs in `.worktrees/replayable-session` on `codex/replayable-session`, with progress tracked in that worktree's `.superpowers/sdd/2026-09-04-replayable-session/progress.md`. The historical Phase 1 report below remains evidence of that earlier build. Its old stop instruction does not override the new execution request; human replay, content and art acceptance remain pending.
 
 **Written:** 2026-08-26 · **HEAD:** `776b295` · **Branch:** `main`
