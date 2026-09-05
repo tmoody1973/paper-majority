@@ -26,7 +26,9 @@ test('filing, cancellation, fast-forward and boundary review use visible Session
   await page.getByTestId('controls-source').selectOption(evidence);
   await page.getByTestId('controls-file').click();
   expect((await state(page)).cards.find((card) => card.id === evidence)?.location).toBe('filed');
-  await expect(page.getByRole('list', { name: 'Mandatory filing obligations' })).toContainText('Answer renter concern');
+  await page.getByTestId('all-commitments').locator('summary').click();
+  await expect(page.getByRole('list', { name: 'All commitments and deadlines' })).toContainText('Answer renter concern');
+  await expect(page.getByRole('list', { name: 'All commitments and deadlines' })).toContainText('Source card: not currently held');
   await page.getByRole('button', { name: 'Return to desk' }).click();
   expect((await state(page)).cards.find((card) => card.id === evidence)?.location).toBe('desk');
 

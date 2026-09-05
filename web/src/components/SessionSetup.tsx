@@ -23,6 +23,7 @@ export function SessionSetup({
   canResume,
   recoveryMessage,
   preservedSaveBytes,
+  currentSaveBytes,
   onResume,
   onStart,
 }: {
@@ -30,6 +31,7 @@ export function SessionSetup({
   canResume: boolean;
   recoveryMessage?: string;
   preservedSaveBytes?: string;
+  currentSaveBytes?: string;
   onResume: () => void;
   onStart: (choice: SessionSetupChoice) => void;
 }) {
@@ -44,6 +46,9 @@ export function SessionSetup({
   const distinct = firstValue !== secondValue;
   const exportHref = preservedSaveBytes
     ? `data:application/json;charset=utf-8,${encodeURIComponent(preservedSaveBytes)}`
+    : undefined;
+  const currentHref = currentSaveBytes
+    ? `data:application/json;charset=utf-8,${encodeURIComponent(currentSaveBytes)}`
     : undefined;
 
   return (
@@ -64,7 +69,12 @@ export function SessionSetup({
         )}
         {exportHref && (
           <a href={exportHref} download="paper-majority-preserved-save.json" data-testid="export-preserved-save">
-            Export preserved checkpoint
+            Export prior replaced checkpoint
+          </a>
+        )}
+        {currentHref && (
+          <a href={currentHref} download="paper-majority-current-save.json" data-testid="export-current-save">
+            Export current checkpoint
           </a>
         )}
 

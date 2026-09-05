@@ -8,14 +8,18 @@ function conditionLabel(condition: SessionRecordValue['promises'][number]['condi
   return `bill includes: ${condition.tag}`;
 }
 
-export function SessionRecord({ record, onRestart, preservedSaveBytes }: {
+export function SessionRecord({ record, onRestart, preservedSaveBytes, currentSaveBytes }: {
   record: SessionRecordValue;
   onRestart?: () => void;
   preservedSaveBytes?: string;
+  currentSaveBytes?: string;
 }) {
   const recordHref = `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(record, null, 2))}`;
   const priorHref = preservedSaveBytes
     ? `data:application/json;charset=utf-8,${encodeURIComponent(preservedSaveBytes)}`
+    : undefined;
+  const currentHref = currentSaveBytes
+    ? `data:application/json;charset=utf-8,${encodeURIComponent(currentSaveBytes)}`
     : undefined;
   return (
     <section className="session-record" aria-label="Session record" data-testid="session-record">
@@ -57,7 +61,8 @@ export function SessionRecord({ record, onRestart, preservedSaveBytes }: {
       <p>{record.integrity.explanation}</p>
       <div className="session-record__actions">
         <a href={recordHref} download={`paper-majority-${record.id.replaceAll(':', '-')}.json`} data-testid="session-record-export">Export this record</a>
-        {priorHref && <a href={priorHref} download="paper-majority-preserved-save.json">Export prior checkpoint</a>}
+        {priorHref && <a href={priorHref} download="paper-majority-preserved-save.json" data-testid="session-prior-save-export">Export prior replaced checkpoint</a>}
+        {currentHref && <a href={currentHref} download="paper-majority-current-save.json" data-testid="session-current-save-export">Export current checkpoint</a>}
         {onRestart && <button type="button" data-testid="session-restart" onClick={onRestart}>Set up another Session</button>}
       </div>
     </section>

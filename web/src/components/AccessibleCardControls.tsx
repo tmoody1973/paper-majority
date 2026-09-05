@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { describeStudyOption, openObligations } from '@/domain/selectors';
+import { describeStudyOption } from '@/domain/selectors';
 import { remainingWorkMs } from '@/domain/work';
 import type { TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
@@ -201,13 +201,8 @@ export function AccessibleCardControls({
               ))}
             </ul>
           ) : <p>No filed cards.</p>}
-          <h3>Open mandatory obligations</h3>
-          <ul aria-label="Mandatory filing obligations">
-            {openObligations(state, true).map((obligation) => {
-              const definition = scenario.obligationDefinitions.find((item) => item.id === obligation.sourceId);
-              return <li key={obligation.id}>{definition?.title ?? obligation.id} — due week {obligation.due.week}</li>;
-            })}
-          </ul>
+          <h3>Commitments</h3>
+          <p>All current, future, filed, optional, fulfilled, and missed commitments remain available in “All commitments and deadlines.”</p>
         </section>
       )}
 

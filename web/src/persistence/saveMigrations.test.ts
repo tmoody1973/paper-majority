@@ -12,6 +12,8 @@ import {
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 import { getCandidateScenario } from '@/content/loadScenario';
 import { drawStoryEvent } from '@/domain/storyDirector';
+import { SESSION_READINESS_MILESTONE_ID } from '@/domain/objectives';
+import { loadCheckpoint, saveCheckpoint, type SaveStorage } from '@/persistence/saveRepository';
 
 describe('canonical scenario identity', () => {
   it('sorts object keys, preserves array order and uses real SHA-256', () => {
@@ -390,8 +392,45 @@ describe('save migrations', () => {
     if (valid.kind !== 'valid') throw new Error('expected finished record round trip');
     expect(valid.envelope.state.sessionRecord).toEqual(finished.sessionRecord);
 
+    const changedPresentation = {
+      ...finished,
+      settings: { ...finished.settings, reducedMotion: !finished.settings.reducedMotion },
+    };
+    const presentationRoundTrip = validateAndMigrateSave(createSaveEnvelope(changedPresentation, sessionScenario), sessionScenario);
+    expect(presentationRoundTrip.kind).toBe('valid');
+    if (presentationRoundTrip.kind !== 'valid') throw new Error('expected presentation-only change to remain valid');
+    expect(presentationRoundTrip.envelope.state.sessionRecord).toEqual(finished.sessionRecord);
+
     const changed = structuredClone(createSaveEnvelope(finished, sessionScenario));
     (changed.state.sessionRecord!.gaps as { provisionGap: number }).provisionGap = 0;
     expect(validateAndMigrateSave(changed, sessionScenario).kind).toBe('corrupt');
+  });
+
+  it.each([0, 1])('saves and reloads a readiness milestone with actual gain %i', (appliedCapital) => {
+    const values = new Map<string, string>();
+    const storage: SaveStorage = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+      removeItem: (key) => { values.delete(key); },
+    };
+    const base = createRun({ ...sessionSetup, mode: 'session' });
+    const milestone = {
+      ...base,
+      resources: { ...base.resources, politicalCapital: appliedCapital === 0 ? 9 : base.resources.politicalCapital + 1 },
+      rewardedOccurrenceIds: [SESSION_READINESS_MILESTONE_ID],
+      eventLog: [
+        { type: 'READINESS_MILESTONE_REWARDED' as const, rewardId: SESSION_READINESS_MILESTONE_ID, appliedCapital },
+        ...(appliedCapital === 1 ? [{
+          type: 'RESOURCE_CHANGED' as const,
+          changes: { politicalCapital: 1 },
+          reason: SESSION_READINESS_MILESTONE_ID,
+        }] : []),
+      ],
+    };
+    expect(saveCheckpoint(storage, milestone, sessionScenario).kind).toBe('saved');
+    const loaded = loadCheckpoint(storage, sessionScenario);
+    expect(loaded).toMatchObject({ kind: 'loaded', state: { rewardedOccurrenceIds: [SESSION_READINESS_MILESTONE_ID] } });
+    if (loaded.kind !== 'loaded') throw new Error('expected milestone reload');
+    expect(loaded.state.eventLog).toEqual(milestone.eventLog);
   });
 });

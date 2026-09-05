@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { GameShell } from '@/components/GameShell';
@@ -47,30 +47,29 @@ function NormalSession() {
   const session = useMemo(() => createGameSession(initial, scenario), [initial, scenario]);
   const [started, setStarted] = useState(false);
   const [recovery, setRecovery] = useState<LoadResult>();
+  const setupTransition = useRef(0);
 
   useEffect(() => {
     let active = true;
+    const expectedTransition = setupTransition.current;
     queueMicrotask(() => {
-      if (active) setRecovery(session.probe(browserStorage()));
+      if (active && setupTransition.current === expectedTransition) {
+        setRecovery(session.probe(browserStorage()));
+      }
     });
     return () => { active = false; };
   }, [session]);
 
-  const dispatchOpeningStory = () => {
-    if (session.getState().storyHistory.length === 0 && session.getState().runStatus === 'active') {
-      session.dispatch({ type: 'DRAW_STORY_EVENT' });
-    }
-  };
   const onResume = () => {
+    setupTransition.current += 1;
     const loaded = session.resume(browserStorage());
     if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous') {
-      dispatchOpeningStory();
       setStarted(true);
     }
   };
   const onStart = (choice: SessionSetupChoice) => {
+    setupTransition.current += 1;
     session.startNew(createRun({ scenario, mode: 'session', ...choice }), browserStorage());
-    dispatchOpeningStory();
     setStarted(true);
   };
 
@@ -85,6 +84,7 @@ function NormalSession() {
         canResume={canResume}
         recoveryMessage={recoveryMessage}
         preservedSaveBytes={session.getPreservedSaveBytes()}
+        currentSaveBytes={session.getCurrentSaveBytes()}
         onResume={onResume}
         onStart={onStart}
       />
@@ -96,6 +96,7 @@ function NormalSession() {
       scenario={scenario}
       session={session}
       onRestart={() => {
+        setupTransition.current += 1;
         setRecovery(session.probe(browserStorage()));
         setStarted(false);
       }}

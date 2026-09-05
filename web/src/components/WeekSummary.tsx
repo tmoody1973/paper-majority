@@ -5,6 +5,7 @@ import { openObligations } from '@/domain/selectors';
 import type { Resources, TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
 import { readinessMilestonePhrase } from '@/content/i18n/en';
+import { dueSimulationMs } from '@/domain/obligations';
 
 const RESOURCE_LABELS: Record<keyof Resources, string> = {
   staffAttention: 'Staff Attention',
@@ -28,6 +29,24 @@ export function WeekSummary({
   const preview = previewWeek(state, scenario);
   const due = openObligations(state)
     .filter((obligation) => obligation.due.week <= state.week)
+    .sort((a, b) => dueSimulationMs(state, a) - dueSimulationMs(state, b))
+    .slice(0, 3);
+  const allCommitments = [...state.obligations].sort((a, b) =>
+    dueSimulationMs(state, a) - dueSimulationMs(state, b) || a.id.localeCompare(b.id));
+  const agenda = [
+    {
+      label: 'Choose the opening Story response',
+      observed: state.eventLog.some((event) => event.type === 'STORY_DECISION_RESOLVED'),
+    },
+    {
+      label: 'Start immediate staff work',
+      observed: state.eventLog.some((event) => event.type === 'WORK_SUBMITTED'),
+    },
+    {
+      label: 'Confirm a provision on the Bill Docket',
+      observed: state.eventLog.some((event) => event.type === 'PROVISION_DOCKETED'),
+    },
+  ];
   const titleOf = (obligationId: string) => {
     const obligation = state.obligations.find((candidate) => candidate.id === obligationId);
     return scenario.obligationDefinitions.find((definition) => definition.id === obligation?.sourceId)?.title
@@ -51,6 +70,17 @@ export function WeekSummary({
         <span>{state.weekPhase === 'boundary' ? 'Paused for review' : `${Math.ceil((state.weekLengthMs - state.elapsedMs) / 1000)}s left`}</span>
       </div>
 
+      {state.week === 1 && (
+        <section className="week-summary__agenda" aria-label="Week 1 agenda" data-testid="week-one-agenda">
+          <h3>Week 1 agenda</h3>
+          <ol>{agenda.map((item) => (
+            <li key={item.label} data-observed={item.observed}>
+              <span>{item.observed ? 'Confirmed' : 'Next'}</span> · {item.label}
+            </li>
+          ))}</ol>
+        </section>
+      )}
+
       {due.length > 0 ? (
         <ul className="week-summary__obligations" aria-label="Open obligations">
           {due.map((obligation) => {
@@ -72,6 +102,30 @@ export function WeekSummary({
           })}
         </ul>
       ) : <p className="week-summary__empty">No open obligations due this week.</p>}
+
+      <details className="week-summary__all" data-testid="all-commitments">
+        <summary>All commitments and deadlines ({allCommitments.length})</summary>
+        {allCommitments.length > 0 ? (
+          <ul aria-label="All commitments and deadlines">
+            {allCommitments.map((obligation) => {
+              const definition = scenario.obligationDefinitions.find((item) => item.id === obligation.sourceId);
+              const sourceCard = state.cards.find((card) => card.id === obligation.sourceCardInstanceId)
+                ?? state.cards.find((card) => card.definitionId === definition?.sourceDefinitionId);
+              return (
+                <li key={obligation.id}>
+                  <strong>{definition?.title ?? obligation.id}</strong>
+                  <span>{obligation.status} · {obligation.mandatory ? 'Mandatory' : 'Optional'}</span>
+                  <span>Due week {obligation.due.week}, {Math.ceil(obligation.due.offsetMs / 1000)}s</span>
+                  <span>
+                    Consequence: {obligation.mandatory ? `-${obligation.trustPenalty} District Trust if missed` : 'no trust penalty if declined'}; reward +{obligation.rewardCapital} Political Capital
+                  </span>
+                  <span>Source card: {sourceCard?.location ?? 'not currently held'}</span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : <p>No commitments have been created.</p>}
+      </details>
 
       {state.weekPhase === 'boundary' && (
         <div className="week-summary__preview" data-testid="week-boundary-preview">

@@ -843,14 +843,25 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     const applied = milestoneEvents[0].appliedCapital;
     const resourceEvents = eventLog.filter((event) => event.type === 'RESOURCE_CHANGED')
       .filter((event) => event.reason === SESSION_READINESS_MILESTONE_ID);
-    if (resourceEvents.length !== (applied === 0 ? 0 : 1)
-      || resourceEvents[0]?.changes.politicalCapital !== applied) return false;
+    if (resourceEvents.length !== (applied === 0 ? 0 : 1)) return false;
+    if (applied !== 0 && resourceEvents[0]?.changes.politicalCapital !== applied) return false;
   }
   const conclusionEvents = eventLog.filter((event) => event.type === 'SESSION_CONCLUDED');
   if (input.runStatus === 'active' && (input.sessionRecord !== undefined || conclusionEvents.length !== 0)) return false;
   if (input.runStatus === 'complete') {
     if (!validSessionRecord(input.sessionRecord) || conclusionEvents.length !== 1) return false;
-    const rebuilt = buildSessionRecord(input as unknown as TermState, scenario);
+    const record = input.sessionRecord as TermState['sessionRecord'];
+    const stateForRecord = {
+      ...input,
+      settings: {
+        ...(input.settings as TermState['settings']),
+        // Reduced motion remains mutable presentation after an ending. Its
+        // captured value belongs to the frozen record and is not reconstructed
+        // from the current presentation preference.
+        reducedMotion: record!.setup.settings.reducedMotion,
+      },
+    } as unknown as TermState;
+    const rebuilt = buildSessionRecord(stateForRecord, scenario);
     if (canonicalJson(input.sessionRecord) !== canonicalJson(rebuilt)
       || conclusionEvents[0]?.outcome !== rebuilt.outcome) return false;
   }

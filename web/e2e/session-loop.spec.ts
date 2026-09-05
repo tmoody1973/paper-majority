@@ -6,6 +6,12 @@ async function state(page: Page): Promise<TermState> {
   return page.evaluate(() => window.__congressGameTestApi!.getState());
 }
 
+async function exportedBytes(page: Page, testId: string): Promise<string> {
+  const href = await page.getByTestId(testId).getAttribute('href');
+  if (!href?.includes(',')) throw new Error(`${testId} has no data export`);
+  return decodeURIComponent(href.slice(href.indexOf(',') + 1));
+}
+
 async function activate(page: Page, locator: ReturnType<Page['locator']>, keyboard: boolean) {
   if (!keyboard) {
     await locator.click();
@@ -65,7 +71,7 @@ async function makeCoalitionChoice(page: Page, choice: 'accept' | 'reject', keyb
     await expect(page.locator('[data-testid^="work-mat-ghost-"]')).toHaveCount(2);
     await page.getByTestId('work-mat-begin').click();
   }
-  await page.getByTestId('week-fast-forward').click();
+  await activate(page, page.getByTestId('week-fast-forward'), keyboard);
   const decision = page.getByTestId('decision-modal');
   await expect(decision).toBeVisible();
   const action = page.getByTestId(`decision-resolve-${choice}`);
@@ -100,7 +106,10 @@ async function start(page: Page, pace: 'standard' | 'relaxed') {
   await page.getByTestId('session-start-new').click();
   await page.waitForFunction(() => Boolean(window.__congressGameTestApi));
   await expect(page.locator('canvas')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId('week-one-agenda')).toBeVisible();
+  await expect(page.getByTestId('week-one-agenda').locator('[data-observed="true"]')).toHaveCount(0);
   await resolveStory(page);
+  await expect(page.getByTestId('week-one-agenda').locator('[data-observed="true"]')).toHaveCount(1);
 }
 
 test('completes standard and relaxed six-week Sessions through canvas and keyboard controls', async ({ page }) => {
@@ -109,6 +118,7 @@ test('completes standard and relaxed six-week Sessions through canvas and keyboa
   await expect(page.getByTestId('session-district').locator('option')).toHaveCount(6);
   await start(page, 'standard');
   await makeCoalitionChoice(page, 'accept', false);
+  await expect(page.getByTestId('week-one-agenda').locator('[data-observed="true"]')).toHaveCount(2);
   await page.getByTestId('sourcebook-toggle').click();
   await expect(page.getByLabel('Sourcebook')).toContainText('Official public source');
   await expect(page.getByLabel('Sourcebook')).toContainText('Simulated for play');
@@ -117,17 +127,27 @@ test('completes standard and relaxed six-week Sessions through canvas and keyboa
   expect((await state(page)).week).toBe(6);
   expect((await state(page)).runStatus).toBe('complete');
   const frozenRecord = JSON.stringify((await state(page)).sessionRecord);
+  const storyHistoryA = [...(await state(page)).storyHistory];
+  const bytesA = await page.evaluate(() => window.localStorage.getItem('congress-game.save.current'));
+  if (!bytesA) throw new Error('Run A has no current checkpoint');
 
   await page.reload();
+  expect(await exportedBytes(page, 'export-current-save')).toBe(bytesA);
+  await expect(page.getByTestId('export-preserved-save')).toHaveCount(0);
   await page.getByTestId('session-resume').click();
   await expect(page.getByTestId('session-record')).toBeVisible();
   expect(JSON.stringify((await state(page)).sessionRecord)).toBe(frozenRecord);
+  expect((await state(page)).storyHistory).toEqual(storyHistoryA);
   await page.getByTestId('session-restart').click();
   await page.getByLabel('Pace').selectOption('relaxed');
+  await page.getByLabel('Seed').focus();
+  await page.keyboard.press('Meta+A');
+  await page.keyboard.type('20260906');
   await page.getByTestId('session-start-new').focus();
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => Boolean(window.__congressGameTestApi));
-  await resolveStory(page);
+  expect((await state(page)).seed).toBe(20260906);
+  await resolveStory(page, true);
   await page.getByTestId('hud-reduced-motion').focus();
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('hud-reduced-motion')).toHaveAttribute('aria-pressed', 'true');
@@ -137,6 +157,19 @@ test('completes standard and relaxed six-week Sessions through canvas and keyboa
   expect((await state(page)).settings.reducedMotion).toBe(true);
   expect((await state(page)).runStatus).toBe('complete');
   await expect(page.getByTestId('session-record-export')).toHaveAttribute('download', /paper-majority/);
+  const bytesB = await page.evaluate(() => window.localStorage.getItem('congress-game.save.current'));
+  if (!bytesB) throw new Error('Run B has no current checkpoint');
+  expect(bytesB).not.toBe(bytesA);
+  expect(await exportedBytes(page, 'session-prior-save-export')).toBe(bytesA);
+  expect(await exportedBytes(page, 'session-current-save-export')).toBe(bytesB);
+
+  await page.reload();
+  expect(await exportedBytes(page, 'export-preserved-save')).toBe(bytesA);
+  expect(await exportedBytes(page, 'export-current-save')).toBe(bytesB);
+  await page.getByTestId('session-resume').click();
+  await expect(page.getByTestId('session-record')).toBeVisible();
+  expect((await state(page)).seed).toBe(20260906);
+  expect(await exportedBytes(page, 'session-prior-save-export')).toBe(bytesA);
 });
 
 test('keeps the legacy interaction fixture separate from normal setup', async ({ page }) => {

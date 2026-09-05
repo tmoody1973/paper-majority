@@ -89,7 +89,7 @@ describe('AccessibleCardControls', () => {
     expect(screen.getByTestId('controls-study-note')).toHaveTextContent(/already working/i);
   });
 
-  it('states the six-slot cabinet and keeps a filed source obligation accessible', async () => {
+  it('states the six-slot cabinet and returns a filed card to the desk', async () => {
     const base = createRun({ ...sessionSetup, mode: 'session' });
     const source = base.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
     const state = {
@@ -102,7 +102,6 @@ describe('AccessibleCardControls', () => {
 
     expect(screen.getByText(/Six filing slots/)).toBeInTheDocument();
     expect(screen.getByTestId('filing-count')).toHaveTextContent('1 of 6');
-    expect(screen.getByRole('list', { name: 'Mandatory filing obligations' })).toHaveTextContent('Answer renter concern');
     await userEvent.click(screen.getByRole('button', { name: 'Return to desk' }));
     expect(session.getState().cards.find((card) => card.id === source.id)?.location).toBe('desk');
   });

@@ -300,10 +300,34 @@ a:focus-visible {
 }
 
 .week-summary__obligations,
+.week-summary__agenda ol,
+.week-summary__all ul,
 .week-summary__preview ul,
 .filing-cabinet ul {
   margin: 8px 0;
   padding-left: 20px;
+}
+
+.week-summary__agenda,
+.week-summary__all {
+  margin: 8px 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.week-summary__agenda h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.week-summary__agenda li[data-observed='true'] span {
+  color: var(--family-constituency);
+  font-weight: 700;
+}
+
+.week-summary__all span {
+  display: block;
 }
 
 .week-summary__obligations li {

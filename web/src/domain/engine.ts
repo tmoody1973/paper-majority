@@ -1030,6 +1030,39 @@ function appendEvents(state: TermState, events: GameEvent[]): TermState {
   return events.length === 0 ? state : { ...state, eventLog: [...state.eventLog, ...events] };
 }
 
+function applyReadinessMilestone(before: TermState, next: TermState): EngineResult {
+  if (
+    before.mode !== 'session'
+    || sessionReadiness(before).ready
+    || !sessionReadiness(next).ready
+    || next.rewardedOccurrenceIds.includes(SESSION_READINESS_MILESTONE_ID)
+  ) return { state: next, events: [] };
+
+  const reward = applyResourceDelta(next.resources, { politicalCapital: 1 });
+  const milestoneEvent: GameEvent = {
+    type: 'READINESS_MILESTONE_REWARDED',
+    rewardId: SESSION_READINESS_MILESTONE_ID,
+    appliedCapital: reward.applied.politicalCapital ?? 0,
+  };
+  const events: GameEvent[] = [milestoneEvent];
+  if ((reward.applied.politicalCapital ?? 0) !== 0) {
+    events.push({
+      type: 'RESOURCE_CHANGED',
+      changes: reward.applied,
+      reason: SESSION_READINESS_MILESTONE_ID,
+    });
+  }
+  return {
+    state: {
+      ...next,
+      resources: reward.resources,
+      rewardedOccurrenceIds: [...next.rewardedOccurrenceIds, SESSION_READINESS_MILESTONE_ID].sort(),
+      eventLog: [...next.eventLog, ...events],
+    },
+    events,
+  };
+}
+
 /**
  * Move Session time through canonical stops. Work at a timestamp is completed as
  * one deterministic batch before obligations at that same timestamp are settled.
@@ -1045,6 +1078,7 @@ function advanceSessionTimeline(
   let remaining = Math.max(0, Math.trunc(requestedMs));
 
   while (remaining > 0 && next.weekPhase === 'active' && next.runStatus === 'active') {
+    const beforeStop = next;
     const step = Math.min(remaining, nextStopDelta(next, services.scenario));
     if (step > 0) {
       next = {
@@ -1079,6 +1113,14 @@ function advanceSessionTimeline(
       allEvents.push(...expired.events);
       expiredEventCount = expired.events.length;
     }
+
+    // Readiness is observed only after the whole canonical stop: every
+    // simultaneous completion, fulfillment, and same-time deadline consequence.
+    // Longer commands therefore award exactly as the equivalent Fast-forward
+    // sequence does, even if a later stop makes the run not-ready again.
+    const readiness = applyReadinessMilestone(beforeStop, next);
+    next = readiness.state;
+    allEvents.push(...readiness.events);
 
     if (
       next.pendingDecisions.some((decision) => decision.status === 'pending')
@@ -2100,37 +2142,15 @@ export function executeCommand(
   command: GameCommand,
   services: EngineServices,
 ): EngineResult {
-  const before = sessionReadiness(state);
   const result = executeCommandCore(state, command, services);
   if (
     state.mode !== 'session'
     || !READINESS_MUTATIONS.has(command.type)
-    || before.ready
-    || !sessionReadiness(result.state).ready
-    || result.state.rewardedOccurrenceIds.includes(SESSION_READINESS_MILESTONE_ID)
     || result.events.some((event) => event.type === 'COMMAND_REJECTED')
   ) return result;
 
-  const reward = applyResourceDelta(result.state.resources, { politicalCapital: 1 });
-  const resourceEvent: GameEvent | undefined = (reward.applied.politicalCapital ?? 0) !== 0
-    ? {
-        type: 'RESOURCE_CHANGED',
-        changes: reward.applied,
-        reason: SESSION_READINESS_MILESTONE_ID,
-      }
-    : undefined;
-  const milestoneEvent: GameEvent = {
-    type: 'READINESS_MILESTONE_REWARDED',
-    rewardId: SESSION_READINESS_MILESTONE_ID,
-    appliedCapital: reward.applied.politicalCapital ?? 0,
-  };
-  const rewardEvents = resourceEvent ? [milestoneEvent, resourceEvent] : [milestoneEvent];
-  let rewardedState: TermState = {
-    ...result.state,
-    resources: reward.resources,
-    rewardedOccurrenceIds: [...result.state.rewardedOccurrenceIds, SESSION_READINESS_MILESTONE_ID].sort(),
-    eventLog: [...result.state.eventLog, ...rewardEvents],
-  };
+  const rewarded = applyReadinessMilestone(state, result.state);
+  let rewardedState = rewarded.state;
   if (rewardedState.runStatus === 'complete') {
     rewardedState = {
       ...rewardedState,
@@ -2139,6 +2159,6 @@ export function executeCommand(
   }
   return {
     state: rewardedState,
-    events: [...result.events, ...rewardEvents],
+    events: [...result.events, ...rewarded.events],
   };
 }

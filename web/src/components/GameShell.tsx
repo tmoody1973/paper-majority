@@ -245,6 +245,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
           record={state.sessionRecord}
           onRestart={onRestart}
           preservedSaveBytes={session.getPreservedSaveBytes()}
+          currentSaveBytes={session.getCurrentSaveBytes()}
         />
       ) : (
 

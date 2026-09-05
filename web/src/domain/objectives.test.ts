@@ -74,4 +74,65 @@ describe('sessionReadiness', () => {
     const replay = executeCommand(regained, { type: 'SET_PAUSED', paused: false }, { scenario: sessionScenario });
     expect(replay.state.rewardedOccurrenceIds.filter((id) => id === SESSION_READINESS_MILESTONE_ID)).toHaveLength(1);
   });
+
+  it('awards at the first settled timeline stop even when a later stop misses a mandatory deadline', () => {
+    const scenario = structuredClone(sessionScenario);
+    scenario.patterns = scenario.patterns.map((pattern) => pattern.id === 'pattern-summarize-evidence'
+      ? { ...pattern, durationMs: 1_000 }
+      : pattern);
+    const nearlyReady = readyState();
+    const aide = nearlyReady.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
+    const evidence = nearlyReady.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    const started = executeCommand(nearlyReady, {
+      type: 'SUBMIT_WORK', cardIds: [aide.id, evidence.id],
+    }, { scenario }).state;
+    const beforeTimeline: TermState = {
+      ...started,
+      weekLengthMs: 4_000,
+      relationships: started.relationships.map((relationship, index) => index === 1
+        ? {
+            ...relationship,
+            support: 'conditional' as const,
+            conditions: [{ kind: 'governing-value' as const, value: started.player.values[0] }],
+          }
+        : relationship),
+      obligations: [{
+        id: 'mandatory:later-miss',
+        sourceId: 'obligation-answer-renters',
+        due: { week: 1, offsetMs: 2_000 },
+        mandatory: true,
+        status: 'open' as const,
+        rewardCapital: 1,
+        trustPenalty: 5,
+      }],
+    };
+    expect(sessionReadiness(beforeTimeline).ready).toBe(false);
+
+    const oneCommand = executeCommand(beforeTimeline, {
+      type: 'ADVANCE_WEEK', confirmEarly: true, expectedWeek: 1,
+    }, { scenario });
+    expect(sessionReadiness(oneCommand.state).ready).toBe(false);
+    expect(oneCommand.state.obligations[0].status).toBe('missed');
+    expect(oneCommand.state.rewardedOccurrenceIds).toContain(SESSION_READINESS_MILESTONE_ID);
+    expect(oneCommand.events.filter((event) => event.type === 'READINESS_MILESTONE_REWARDED')).toHaveLength(1);
+
+    const firstStop = executeCommand(beforeTimeline, { type: 'FAST_FORWARD' }, { scenario });
+    expect(sessionReadiness(firstStop.state).ready).toBe(true);
+    expect(firstStop.events.filter((event) => event.type === 'READINESS_MILESTONE_REWARDED')).toHaveLength(1);
+    const secondStop = executeCommand(firstStop.state, { type: 'FAST_FORWARD' }, { scenario });
+    expect(sessionReadiness(secondStop.state).ready).toBe(false);
+    const equivalent = executeCommand(secondStop.state, {
+      type: 'ADVANCE_WEEK', confirmEarly: true, expectedWeek: 1,
+    }, { scenario });
+    expect(equivalent.state.resources.politicalCapital).toBe(oneCommand.state.resources.politicalCapital);
+    expect(equivalent.state.rewardedOccurrenceIds).toEqual(oneCommand.state.rewardedOccurrenceIds);
+    expect(equivalent.state.eventLog.filter((event) => event.type === 'READINESS_MILESTONE_REWARDED'))
+      .toEqual(oneCommand.state.eventLog.filter((event) => event.type === 'READINESS_MILESTONE_REWARDED'));
+
+    const concluded = executeCommand(beforeTimeline, { type: 'CONCLUDE_SESSION' }, { scenario });
+    expect(concluded.state.runStatus).toBe('complete');
+    expect(concluded.state.sessionRecord?.outcome).toBe('not-ready');
+    expect(concluded.state.rewardedOccurrenceIds).toContain(SESSION_READINESS_MILESTONE_ID);
+    expect(concluded.events.filter((event) => event.type === 'READINESS_MILESTONE_REWARDED')).toHaveLength(1);
+  });
 });

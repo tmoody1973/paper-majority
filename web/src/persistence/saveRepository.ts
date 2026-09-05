@@ -19,7 +19,7 @@ export interface SaveStorage {
 }
 
 export type SaveResult =
-  | { kind: 'saved'; state: TermState; message: string }
+  | { kind: 'saved'; state: TermState; bytes: string; message: string }
   | { kind: 'corrupt'; message: string }
   | { kind: 'storage-unavailable'; state: TermState; message: string };
 
@@ -127,7 +127,7 @@ export function saveCheckpoint(
     };
   }
 
-  return { kind: 'saved', state, message: 'Session checkpoint saved.' };
+  return { kind: 'saved', state, bytes: serialized, message: 'Session checkpoint saved.' };
 }
 
 function read(storage: SaveStorage, key: string, description: string): { raw: string | null } | { error: string } {

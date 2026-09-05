@@ -26,6 +26,7 @@ export interface GameSession {
   recover(storage: SaveStorage): LoadResult;
   startNew(nextState: TermState, storage: SaveStorage): { kind: 'started' | 'storage-unavailable'; message: string };
   getPreservedSaveBytes(): string | undefined;
+  getCurrentSaveBytes(): string | undefined;
   /**
    * Reduced motion is presentation, not a rule: it changes no outcome and draws no
    * randomness. It lives on the session so React and Phaser read one value.
@@ -50,6 +51,7 @@ export function createGameSession(
   let profile = emptyPlayerProfile();
   let persistenceNotice: string | undefined;
   let preservedSaveBytes: string | undefined;
+  let currentSaveBytes: string | undefined;
 
   const publish = (result: EngineResult) => {
     for (const listener of [...listeners]) listener(result);
@@ -81,13 +83,35 @@ export function createGameSession(
     return loadedProfile;
   };
 
+  const inspectStoredBytes = (nextStorage: SaveStorage):
+    | { current: string | undefined; replaced: string | undefined }
+    | { error: string } => {
+    try {
+      return {
+        current: nextStorage.getItem(SAVE_KEYS.current) ?? undefined,
+        replaced: nextStorage.getItem(SAVE_KEYS.replaced) ?? undefined,
+      };
+    } catch (error) {
+      const detail = error instanceof Error && error.message ? ` (${error.message})` : '';
+      return { error: `Browser storage failed while reading Session checkpoints${detail}. The in-memory Session was left unchanged.` };
+    }
+  };
+
   const resume = (nextStorage: SaveStorage): LoadResult => {
     storage = undefined;
+    const inspected = inspectStoredBytes(nextStorage);
+    if ('error' in inspected) {
+      persistenceNotice = inspected.error;
+      publish({ state: { ...state }, events: [] });
+      return { kind: 'storage-unavailable', message: inspected.error };
+    }
     const loaded = loadCheckpoint(nextStorage, scenario);
     if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous' || loaded.kind === 'empty') {
       storage = nextStorage;
     }
     if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous') state = loaded.state;
+    currentSaveBytes = inspected.current;
+    preservedSaveBytes = inspected.replaced;
     persistenceNotice = loaded.kind === 'recovered-previous'
       || loaded.kind === 'storage-unavailable'
       || loaded.kind === 'incompatible-version'
@@ -121,6 +145,7 @@ export function createGameSession(
         if (checkpointWorthy(result)) {
           const saved = saveCheckpoint(storage, state, scenario);
           persistenceNotice = saved.kind === 'saved' ? undefined : saved.message;
+          if (saved.kind === 'saved') currentSaveBytes = saved.bytes;
         }
         const discoveries = result.events.flatMap((event) => event.type === 'PATTERN_DISCOVERED' ? [event.patternId] : []);
         if (discoveries.length > 0) {
@@ -137,12 +162,19 @@ export function createGameSession(
       return () => listeners.delete(listener);
     },
     probe(nextStorage) {
-      const result = loadCheckpoint(nextStorage, scenario);
-      try {
-        preservedSaveBytes = nextStorage.getItem(SAVE_KEYS.current) ?? undefined;
-      } catch {
-        preservedSaveBytes = undefined;
+      storage = undefined;
+      const inspected = inspectStoredBytes(nextStorage);
+      if ('error' in inspected) {
+        persistenceNotice = inspected.error;
+        publish({ state: { ...state }, events: [] });
+        return { kind: 'storage-unavailable', message: inspected.error };
       }
+      const result = loadCheckpoint(nextStorage, scenario);
+      currentSaveBytes = inspected.current;
+      preservedSaveBytes = inspected.replaced;
+      persistenceNotice = ['recovered-previous', 'storage-unavailable', 'incompatible-version', 'wrong-snapshot', 'corrupt'].includes(result.kind)
+        ? result.message
+        : undefined;
       return result;
     },
     resume,
@@ -151,7 +183,12 @@ export function createGameSession(
     },
     startNew(nextState, nextStorage) {
       storage = undefined;
-      state = nextState;
+      const opening = nextState.mode === 'session'
+        && nextState.runStatus === 'active'
+        && nextState.storyHistory.length === 0
+        ? executeCommand(nextState, { type: 'DRAW_STORY_EVENT' }, services)
+        : { state: nextState, events: [] };
+      state = opening.state;
       persistenceNotice = undefined;
       loadProfile(nextStorage);
       try {
@@ -160,27 +197,35 @@ export function createGameSession(
           preservedSaveBytes = current;
           nextStorage.setItem(SAVE_KEYS.replaced, current);
         }
+        nextStorage.removeItem(SAVE_KEYS.previousWeek);
+        if (nextStorage.getItem(SAVE_KEYS.previousWeek) !== null) {
+          throw new Error('the prior-run fallback could not be cleared');
+        }
       } catch (error) {
         const detail = error instanceof Error && error.message ? ` (${error.message})` : '';
-        persistenceNotice = `The new Session is active, but the prior checkpoint could not be preserved${detail}. It was not overwritten; keep this tab open.`;
-        publish({ state, events: [] });
+        persistenceNotice = `The new Session is active, but the prior checkpoint and its recovery fallback could not be safely separated${detail}. The current checkpoint was not overwritten; keep this tab open.`;
+        publish({ state, events: opening.events });
         return { kind: 'storage-unavailable', message: persistenceNotice };
       }
       const saved = saveCheckpoint(nextStorage, state, scenario);
       if (saved.kind === 'saved') {
         storage = nextStorage;
+        currentSaveBytes = saved.bytes;
         persistenceNotice = preservedSaveBytes
           ? 'New Session started. The prior checkpoint remains available for local export.'
           : undefined;
-        publish({ state, events: [] });
+        publish({ state, events: opening.events });
         return { kind: 'started', message: 'New Session started.' };
       }
       persistenceNotice = saved.message;
-      publish({ state, events: [] });
+      publish({ state, events: opening.events });
       return { kind: 'storage-unavailable', message: saved.message };
     },
     getPreservedSaveBytes() {
       return preservedSaveBytes;
+    },
+    getCurrentSaveBytes() {
+      return currentSaveBytes;
     },
     setReducedMotion(value) {
       if (state.settings.reducedMotion === value) return;
