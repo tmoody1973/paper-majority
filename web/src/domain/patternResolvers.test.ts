@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { DERIVED_RESOLVERS, resolvePatternOutput } from '@/domain/patternResolvers';
+import { DERIVED_RESOLVERS, matchesPatternOutputReceipt, resolvePatternOutput } from '@/domain/patternResolvers';
+import { getCandidateScenario } from '@/content/loadScenario';
 import { computeEffectiveTags, matchPattern } from '@/domain/recipes';
 import type { MatchInput } from '@/domain/recipes';
 import type { DerivedResolverId, Party, RecipePattern } from '@/domain/types';
@@ -66,6 +67,29 @@ describe('DERIVED_RESOLVERS', () => {
     expect(serialized).not.toContain('function');
     expect(serialized).not.toContain('=>');
     expect(JSON.parse(serialized)).toEqual(JSON.parse(JSON.stringify(testScenario.patterns)));
+  });
+});
+
+describe('producer receipts', () => {
+  it('authenticates the exact preserved output slot and card family', () => {
+    const scenario = getCandidateScenario();
+    const pattern = scenario.patterns.find((candidate) => candidate.id === 'pattern-tactic-early-preparation')!;
+    const common = {
+      form: 'prepared' as const,
+      explanationKey: 'result.institution.committee-packet-prepared',
+      outputSlotIndex: 2,
+      outputSourceForm: 'raw' as const,
+    };
+    expect(matchesPatternOutputReceipt(pattern, scenario, {
+      ...common,
+      definitionId: 'institution-committee-hearing',
+      outputSourceDefinitionId: 'institution-committee-hearing',
+    })).toBe(true);
+    expect(matchesPatternOutputReceipt(pattern, scenario, {
+      ...common,
+      definitionId: 'evidence-rent-burden-report',
+      outputSourceDefinitionId: 'evidence-rent-burden-report',
+    })).toBe(false);
   });
 });
 

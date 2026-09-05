@@ -85,6 +85,10 @@ export type GameEvent =
       outputDefinitionId: string;
       outputForm?: InstanceForm;
       producerPatternId?: string;
+      outputSlotIndex?: number;
+      outputSourceCardId?: string;
+      outputSourceDefinitionId?: string;
+      outputSourceForm?: InstanceForm;
       inputDefinitionIds?: string[];
       consumedDefinitionIds?: string[];
       authoredConcernId?: string;

@@ -120,10 +120,14 @@ function validCard(value: unknown, scenario: ScenarioDefinition): value is TermS
     'sourceDefinitionIds', 'policyDefinitionId', 'staffTraitId', 'origin',
   ])) return false;
   if (typeof value.id !== 'string' || typeof value.definitionId !== 'string' || typeof value.stackId !== 'string') return false;
-  if (!scenario.cards.some((card) => card.id === value.definitionId)) return false;
+  const definition = scenario.cards.find((card) => card.id === value.definitionId);
+  if (!definition) return false;
   if (!isFiniteNumber(value.x) || !isFiniteNumber(value.y) || !isFiniteNumber(value.remainingMs) || value.remainingMs < 0) return false;
   if (!['idle', 'working', 'resolved', 'expired'].includes(value.status as string)) return false;
   if (!['raw', 'summary', 'drafted', 'prepared'].includes(value.form as string)) return false;
+  if (value.form === 'summary' && definition.kind !== 'evidence') return false;
+  if (value.form === 'drafted' && definition.kind !== 'policy') return false;
+  if (value.form === 'prepared' && !['evidence', 'constituency', 'institution', 'political'].includes(definition.kind)) return false;
   if (!['desk', 'filed', 'archived'].includes(value.location as string)) return false;
   if (!strings(value.sourceDefinitionIds) || !value.sourceDefinitionIds.every((id) => scenario.cards.some((card) => card.id === id))) return false;
   if (value.policyDefinitionId !== undefined && (typeof value.policyDefinitionId !== 'string' || !scenario.cards.some((card) => card.id === value.policyDefinitionId && card.kind === 'policy'))) return false;
@@ -144,7 +148,8 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
   CARD_MOVED: ['type', 'cardId', 'x', 'y'],
   ACTION_STARTED: ['type', 'stackId', 'durationMs', 'patternId', 'assignmentKind'],
   CARD_TRANSFORMED: ['type', 'stackId', 'consumedCardIds', 'producedCardIds', 'returnedCardIds', 'outputDefinitionId',
-    'outputForm', 'producerPatternId', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId',
+    'outputForm', 'producerPatternId', 'outputSlotIndex', 'outputSourceCardId', 'outputSourceDefinitionId',
+    'outputSourceForm', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId',
     'authoredConcernOfficeDefinitionId', 'explanationKey'],
   PATTERN_DISCOVERED: ['type', 'patternId'],
   TACTIC_EXPANSION_ACTIVATED: ['type', 'expansionId', 'tacticDefinitionId', 'targetPatternId'],
@@ -177,14 +182,15 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
 const OPTIONAL_EVENT_FIELDS = new Set([
   'patternId', 'assignmentKind', 'targetStackId', 'sourceCardInstanceId', 'inputCardIds',
   'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId', 'outputForm', 'producerPatternId',
-  'authoredConcernOfficeDefinitionId',
+  'authoredConcernOfficeDefinitionId', 'outputSlotIndex', 'outputSourceCardId', 'outputSourceDefinitionId',
+  'outputSourceForm',
 ]);
 const EVENT_STRING_ARRAY_FIELDS = new Set([
   'cardIds', 'definitionIds', 'consumedCardIds', 'producedCardIds', 'returnedCardIds',
   'whyRules', 'summary', 'choiceIds', 'cardDefinitionIds', 'inputCardIds', 'inputDefinitionIds',
   'consumedDefinitionIds',
 ]);
-const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision']);
+const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision', 'outputSlotIndex']);
 const EVENT_OBJECT_FIELDS = new Set(['changes', 'effect', 'forecast', 'tally', 'result']);
 
 function validElectionEffect(value: unknown): boolean {
@@ -237,11 +243,13 @@ const REJECTION_REASONS = [
 function validTransformProducerClaim(value: RecordValue, scenario: ScenarioDefinition): boolean {
   const pattern = scenario.patterns.find((candidate) => candidate.id === value.producerPatternId);
   if (!pattern) return false;
-  return matchesPatternOutputReceipt(pattern, {
+  return matchesPatternOutputReceipt(pattern, scenario, {
     definitionId: value.outputDefinitionId as string,
     form: value.outputForm as TermState['cards'][number]['form'],
     explanationKey: value.explanationKey as string,
-    inputDefinitionIds: value.inputDefinitionIds as string[],
+    outputSlotIndex: value.outputSlotIndex as number | undefined,
+    outputSourceDefinitionId: value.outputSourceDefinitionId as string | undefined,
+    outputSourceForm: value.outputSourceForm as TermState['cards'][number]['form'] | undefined,
   });
 }
 
@@ -282,6 +290,15 @@ function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
         || !strings(value.inputDefinitionIds) || !strings(value.consumedDefinitionIds)) return false;
       if (!(value.inputDefinitionIds as string[]).every((id) => scenario.cards.some((card) => card.id === id))
         || !(value.consumedDefinitionIds as string[]).every((id) => scenario.cards.some((card) => card.id === id))) return false;
+      const sourceFields = [value.outputSlotIndex, value.outputSourceCardId, value.outputSourceDefinitionId, value.outputSourceForm];
+      if (sourceFields.some((field) => field !== undefined)) {
+        if (!isInteger(value.outputSlotIndex, 0)
+          || typeof value.outputSourceCardId !== 'string'
+          || typeof value.outputSourceDefinitionId !== 'string'
+          || !['raw', 'summary', 'drafted', 'prepared'].includes(value.outputSourceForm as string)
+          || ![...(value.consumedCardIds as string[]), ...(value.returnedCardIds as string[])].includes(value.outputSourceCardId)
+          || !(value.inputDefinitionIds as string[]).includes(value.outputSourceDefinitionId)) return false;
+      }
       if ((value.authoredConcernId === undefined) !== (value.authoredConcernOfficeDefinitionId === undefined)) return false;
       const authoredConcernId = value.authoredConcernId;
       if (authoredConcernId !== undefined && !scenario.cards.some((card) => card.kind === 'constituency'

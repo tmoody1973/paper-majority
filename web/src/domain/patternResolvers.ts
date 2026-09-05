@@ -1,43 +1,76 @@
 import type { MatchInput, PatternMatch } from '@/domain/recipes';
-import type { DerivedResolverId, InstanceForm, Resources } from '@/domain/types';
+import type { DerivedResolverId, InstanceForm, Resources, ScenarioDefinition } from '@/domain/types';
 
 export interface ResolvedPatternOutput {
   definitionId: string;
   form?: InstanceForm;
   effects: Partial<Resources>;
   explanationKey: string;
+  /** Exact matched slot whose instance identity is preserved by this output. */
+  outputSlotIndex?: number;
 }
 
-const RESOLVER_RECEIPTS: Record<DerivedResolverId, { forms: InstanceForm[]; explanations: string[] }> = {
-  'summarize-evidence-v1': { forms: ['summary'], explanations: ['result.summary.committee-credibility', 'result.summary.district-relevance'] },
-  'draft-provision-v1': { forms: ['drafted'], explanations: ['result.provision.drafted'] },
-  'answer-office-concern-v1': { forms: ['prepared'], explanations: ['result.evidence.office-concern-answered'] },
-  'prepare-evidence-packet-v1': { forms: ['prepared'], explanations: ['result.evidence.district-packet-prepared'] },
-  'resolve-outreach-v1': { forms: ['raw'], explanations: ['result.outreach.counteroffer', 'result.outreach.support'] },
-  'strengthen-provision-v1': { forms: ['raw'], explanations: ['result.provision.strengthened'] },
-  'prepare-district-response-v1': { forms: ['prepared'], explanations: ['result.constituency.response-prepared'] },
-  'prepare-committee-packet-v1': { forms: ['prepared'], explanations: ['result.institution.committee-packet-prepared'] },
-  'prepare-district-endorsement-v1': { forms: ['prepared'], explanations: ['result.constituency.endorsement-earned'] },
-  'prepare-political-asset-v1': { forms: ['prepared'], explanations: ['result.political.asset-prepared'] },
-  'review-provision-v1': { forms: ['drafted'], explanations: ['result.provision.reviewed'] },
+const RESOLVER_RECEIPTS: Record<DerivedResolverId, { form: InstanceForm; explanations: string[]; defaultOutputSlot?: number }> = {
+  'summarize-evidence-v1': { form: 'summary', explanations: ['result.summary.committee-credibility', 'result.summary.district-relevance'], defaultOutputSlot: 1 },
+  'draft-provision-v1': { form: 'drafted', explanations: ['result.provision.drafted'], defaultOutputSlot: 2 },
+  'answer-office-concern-v1': { form: 'prepared', explanations: ['result.evidence.office-concern-answered'], defaultOutputSlot: 1 },
+  'prepare-evidence-packet-v1': { form: 'prepared', explanations: ['result.evidence.district-packet-prepared'], defaultOutputSlot: 1 },
+  'resolve-outreach-v1': { form: 'raw', explanations: ['result.outreach.counteroffer', 'result.outreach.support'] },
+  'strengthen-provision-v1': { form: 'raw', explanations: ['result.provision.strengthened'] },
+  'prepare-district-response-v1': { form: 'prepared', explanations: ['result.constituency.response-prepared'], defaultOutputSlot: 1 },
+  'prepare-committee-packet-v1': { form: 'prepared', explanations: ['result.institution.committee-packet-prepared'], defaultOutputSlot: 1 },
+  'prepare-district-endorsement-v1': { form: 'prepared', explanations: ['result.constituency.endorsement-earned'], defaultOutputSlot: 1 },
+  'prepare-political-asset-v1': { form: 'prepared', explanations: ['result.political.asset-prepared'], defaultOutputSlot: 1 },
+  'review-provision-v1': { form: 'drafted', explanations: ['result.provision.reviewed'], defaultOutputSlot: 1 },
 };
 
 /** Authenticate a persisted producer claim against the authored resolver contract. */
 export function matchesPatternOutputReceipt(
   pattern: PatternMatch['pattern'],
-  claim: { definitionId: string; form: InstanceForm; explanationKey: string; inputDefinitionIds: string[] },
+  scenario: ScenarioDefinition,
+  claim: {
+    definitionId: string;
+    form: InstanceForm;
+    explanationKey: string;
+    outputSlotIndex?: number;
+    outputSourceDefinitionId?: string;
+    outputSourceForm?: InstanceForm;
+  },
 ): boolean {
   if (pattern.output.mode === 'fixed') {
     return claim.definitionId === pattern.output.definitionId
       && claim.form === 'raw'
-      && claim.explanationKey === `result.fixed.${pattern.output.definitionId}`;
+      && claim.explanationKey === `result.fixed.${pattern.output.definitionId}`
+      && claim.outputSlotIndex === undefined
+      && claim.outputSourceDefinitionId === undefined
+      && claim.outputSourceForm === undefined;
   }
   const receipt = RESOLVER_RECEIPTS[pattern.output.resolverId];
-  if (!receipt.forms.includes(claim.form) || !receipt.explanations.includes(claim.explanationKey)) return false;
+  if (!receipt.explanations.includes(claim.explanationKey)) return false;
+  const preservesInput = pattern.output.parameters?.preserveInputDefinition === true;
+  if (preservesInput) {
+    const authoredSlot = pattern.output.parameters?.outputSlot;
+    const outputSlotIndex = typeof authoredSlot === 'number' ? authoredSlot : receipt.defaultOutputSlot;
+    const slot = outputSlotIndex === undefined ? undefined : pattern.slots[outputSlotIndex];
+    const source = scenario.cards.find((card) => card.id === claim.outputSourceDefinitionId);
+    return claim.form === receipt.form
+      && claim.outputSlotIndex === outputSlotIndex
+      && claim.definitionId === claim.outputSourceDefinitionId
+      && source !== undefined
+      && slot !== undefined
+      && (slot.kind === undefined || source.kind === slot.kind)
+      && (slot.requiredTags === undefined || slot.requiredTags.every((tag) => source.tags.includes(tag)))
+      && (slot.anyTags === undefined || slot.anyTags.some((tag) => source.tags.includes(tag)))
+      && (slot.sourceClasses === undefined || slot.sourceClasses.includes(source.sourceClass))
+      && (slot.forms === undefined || claim.outputSourceForm !== undefined && slot.forms.includes(claim.outputSourceForm));
+  }
   const authoredOutputId = pattern.output.parameters?.outputDefinitionId;
-  if (typeof authoredOutputId === 'string') return claim.definitionId === authoredOutputId;
-  return pattern.output.parameters?.preserveInputDefinition === true
-    && claim.inputDefinitionIds.includes(claim.definitionId);
+  return claim.form === 'raw'
+    && typeof authoredOutputId === 'string'
+    && claim.definitionId === authoredOutputId
+    && claim.outputSlotIndex === undefined
+    && claim.outputSourceDefinitionId === undefined
+    && claim.outputSourceForm === undefined;
 }
 
 export interface ResolverContext {
@@ -115,9 +148,9 @@ function outputForSessionForm(
   context: ResolverContext,
   slotIndex: number,
   form: InstanceForm,
-): Pick<ResolvedPatternOutput, 'definitionId' | 'form'> {
+): Pick<ResolvedPatternOutput, 'definitionId' | 'form' | 'outputSlotIndex'> {
   if (context.parameters.preserveInputDefinition === true) {
-    return { definitionId: inputForSlot(context, slotIndex).definition.id, form };
+    return { definitionId: inputForSlot(context, slotIndex).definition.id, form, outputSlotIndex: slotIndex };
   }
   return { definitionId: requireOutputId(context.parameters) };
 }

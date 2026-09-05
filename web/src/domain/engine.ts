@@ -5,7 +5,7 @@ import { findRequiredDecisionWorkPlan, planDecisionUpfrontResources, previewDeci
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { openPack } from '@/domain/packs';
-import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
+import { buildMatchInputs, matchPattern, type MatchInput, type PatternMatch } from '@/domain/recipes';
 import { applyResourceDelta } from '@/domain/resources';
 import { drawStoryEvent, resolveStoryEvent } from '@/domain/storyDirector';
 import { expireObligations, fulfillObligations } from '@/domain/obligations';
@@ -117,6 +117,24 @@ function authoredConcernFor(
   }).sort((a, b) => a.concernId.localeCompare(b.concernId));
   const first = references[0];
   return first ? { ...first } : undefined;
+}
+
+function outputSourceFor(
+  resolved: ReturnType<typeof resolvePatternOutput>,
+  match: PatternMatch,
+  cards: CardInstance[],
+) {
+  if (resolved.outputSlotIndex === undefined) return {};
+  const assignment = match.assignments.find((candidate) => candidate.slotIndex === resolved.outputSlotIndex);
+  const sourceCardId = assignment?.cardInstanceIds[0];
+  const source = cards.find((card) => card.id === sourceCardId);
+  if (!source) throw new Error(`Resolver output slot ${resolved.outputSlotIndex} has no source card`);
+  return {
+    outputSlotIndex: resolved.outputSlotIndex,
+    outputSourceCardId: source.id,
+    outputSourceDefinitionId: source.definitionId,
+    outputSourceForm: source.form,
+  };
 }
 
 function canAfford(resources: Resources, cost: Partial<Resources>): boolean {
@@ -644,6 +662,7 @@ function completeAction(
   if (!found) return { state, events: [] };
 
   const resolved = resolvePatternOutput(found, inputs);
+  const outputSource = outputSourceFor(resolved, found, memberCards);
   const anchor = memberCards[0];
   const seq = state.cardSeq + 1;
   const producedId = `card-${seq}`;
@@ -738,6 +757,7 @@ function completeAction(
         outputDefinitionId: resolved.definitionId,
         outputForm: resolved.form ?? 'raw',
         producerPatternId: pattern.id,
+        ...outputSource,
         inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
         consumedDefinitionIds: memberCards.filter((card) => consumedIds.includes(card.id))
           .map((card) => card.definitionId).sort(),
@@ -899,6 +919,7 @@ function completeSessionWork(
   if (!found) return { state, events: [] };
 
   const resolved = resolvePatternOutput(found, inputs);
+  const outputSource = outputSourceFor(resolved, found, memberCards);
   const anchor = memberCards[0];
   if (!anchor) return { state, events: [] };
   const seq = state.cardSeq + 1;
@@ -967,6 +988,7 @@ function completeSessionWork(
         outputDefinitionId: resolved.definitionId,
         outputForm: resolved.form ?? 'raw',
         producerPatternId: work.patternId,
+        ...outputSource,
         inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
         consumedDefinitionIds: memberCards.filter((card) => consumed.has(card.id))
           .map((card) => card.definitionId).sort(),

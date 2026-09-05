@@ -156,6 +156,17 @@ describe('candidate producer-to-consumer commands', () => {
         : event),
     };
     expect(validateAndMigrateSave(createSaveEnvelope(forgedOriginAndReceipt, scenario), scenario).kind).toBe('corrupt');
+    const wrongOutputIdentity = {
+      ...state,
+      cards: state.cards.map((card) => card.id === basicId
+        ? { ...card, definitionId: 'staff-policy-aide' }
+        : card),
+      eventLog: state.eventLog.map((event) => event.type === 'CARD_TRANSFORMED'
+        && event.producedCardIds.includes(basicId)
+        ? { ...event, outputDefinitionId: 'staff-policy-aide' }
+        : event),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(wrongOutputIdentity, scenario), scenario).kind).toBe('corrupt');
     const basicAttempt = executeCommand(state, { type: 'SUBMIT_WORK', cardIds: [
       cardId(state, 'staff-district-director'), cardId(state, 'coalition-office-mike-flood'), basicId,
     ] }, { scenario });
@@ -174,14 +185,32 @@ describe('candidate producer-to-consumer commands', () => {
   it('prepares an Institution from the correct slot and accepts it downstream', () => {
     let state = openWeek(run(), 3, 'week-three-evidence');
     state = { ...state, bill: { ...state.bill, stage: 'committee' } };
+    const evidenceInputId = cardId(state, 'evidence-rent-burden-report');
     state = finishWork(state, [
       cardId(state, 'staff-policy-aide'),
-      cardId(state, 'evidence-rent-burden-report'),
+      evidenceInputId,
       cardId(state, 'institution-committee-hearing'),
     ]);
     const packet = state.cards.find((card) => card.definitionId === 'institution-committee-hearing'
       && card.form === 'prepared' && card.origin?.explanationKey === 'result.institution.committee-packet-prepared');
     expect(packet).toBeDefined();
+    expect(validateAndMigrateSave(createSaveEnvelope(state, scenario), scenario).kind).toBe('valid');
+    const wrongSlotOutput = {
+      ...state,
+      cards: state.cards.map((card) => card.id === packet!.id
+        ? { ...card, definitionId: 'evidence-rent-burden-report' }
+        : card),
+      eventLog: state.eventLog.map((event) => event.type === 'CARD_TRANSFORMED'
+        && event.producedCardIds.includes(packet!.id)
+        ? {
+            ...event,
+            outputDefinitionId: 'evidence-rent-burden-report',
+            outputSourceCardId: evidenceInputId,
+            outputSourceDefinitionId: 'evidence-rent-burden-report',
+          }
+        : event),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(wrongSlotOutput, scenario), scenario).kind).toBe('corrupt');
     const downstream = executeCommand(state, { type: 'SUBMIT_WORK', cardIds: [
       cardId(state, 'staff-policy-aide'), cardId(state, 'coalition-office-mike-flood'), packet!.id,
     ] }, { scenario });
