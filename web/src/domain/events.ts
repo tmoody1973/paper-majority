@@ -1,6 +1,7 @@
 import type {
   ElectionEffectEntry,
   ElectionForecast,
+  InstanceForm,
   ProcedureStage,
   ReelectionResult,
   Resources,
@@ -82,6 +83,12 @@ export type GameEvent =
        */
       returnedCardIds: string[];
       outputDefinitionId: string;
+      outputForm?: InstanceForm;
+      producerPatternId?: string;
+      inputDefinitionIds?: string[];
+      consumedDefinitionIds?: string[];
+      authoredConcernId?: string;
+      authoredConcernOfficeDefinitionId?: string;
       explanationKey: string;
     }
   | { type: 'PATTERN_DISCOVERED'; patternId: string }

@@ -613,6 +613,8 @@ export interface DemandDefinition {
   id: string;
   title: string;
   officeDefinitionId: string;
+  /** Same-office authored concern that can substantiate this demand's counteroffer. */
+  evidenceConcernId?: string;
   condition: DemandConditionDefinition;
   choiceIds: string[];
 }

@@ -143,6 +143,14 @@ for (const demand of scenario.demandDefinitions) {
 for (const office of scenario.cards.filter((card) => card.kind === 'coalition')) {
   const pool = scenario.demandDefinitions.filter((demand) => demand.officeDefinitionId === office.id);
   if (pool.length < 2) fail(`Office demand pool lacks seeded alternatives: ${office.id}`);
+  for (const demand of pool) {
+    const evidenceConcernId = demand.evidenceConcernId;
+    if (!evidenceConcernId || !scenario.cards.some((card) => card.kind === 'constituency'
+      && card.authoredConcern?.concernId === evidenceConcernId
+      && card.authoredConcern?.recipientOfficeDefinitionId === office.id)) {
+      fail(`Demand lacks exact same-office evidence concern supply: ${demand.id}`);
+    }
+  }
 }
 for (const obligation of scenario.obligationDefinitions) {
   if (!obligation.dueOptions || obligation.dueOptions.length < 2) {

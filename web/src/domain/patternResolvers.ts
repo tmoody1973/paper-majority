@@ -8,6 +8,38 @@ export interface ResolvedPatternOutput {
   explanationKey: string;
 }
 
+const RESOLVER_RECEIPTS: Record<DerivedResolverId, { forms: InstanceForm[]; explanations: string[] }> = {
+  'summarize-evidence-v1': { forms: ['summary'], explanations: ['result.summary.committee-credibility', 'result.summary.district-relevance'] },
+  'draft-provision-v1': { forms: ['drafted'], explanations: ['result.provision.drafted'] },
+  'answer-office-concern-v1': { forms: ['prepared'], explanations: ['result.evidence.office-concern-answered'] },
+  'prepare-evidence-packet-v1': { forms: ['prepared'], explanations: ['result.evidence.district-packet-prepared'] },
+  'resolve-outreach-v1': { forms: ['raw'], explanations: ['result.outreach.counteroffer', 'result.outreach.support'] },
+  'strengthen-provision-v1': { forms: ['raw'], explanations: ['result.provision.strengthened'] },
+  'prepare-district-response-v1': { forms: ['prepared'], explanations: ['result.constituency.response-prepared'] },
+  'prepare-committee-packet-v1': { forms: ['prepared'], explanations: ['result.institution.committee-packet-prepared'] },
+  'prepare-district-endorsement-v1': { forms: ['prepared'], explanations: ['result.constituency.endorsement-earned'] },
+  'prepare-political-asset-v1': { forms: ['prepared'], explanations: ['result.political.asset-prepared'] },
+  'review-provision-v1': { forms: ['drafted'], explanations: ['result.provision.reviewed'] },
+};
+
+/** Authenticate a persisted producer claim against the authored resolver contract. */
+export function matchesPatternOutputReceipt(
+  pattern: PatternMatch['pattern'],
+  claim: { definitionId: string; form: InstanceForm; explanationKey: string; inputDefinitionIds: string[] },
+): boolean {
+  if (pattern.output.mode === 'fixed') {
+    return claim.definitionId === pattern.output.definitionId
+      && claim.form === 'raw'
+      && claim.explanationKey === `result.fixed.${pattern.output.definitionId}`;
+  }
+  const receipt = RESOLVER_RECEIPTS[pattern.output.resolverId];
+  if (!receipt.forms.includes(claim.form) || !receipt.explanations.includes(claim.explanationKey)) return false;
+  const authoredOutputId = pattern.output.parameters?.outputDefinitionId;
+  if (typeof authoredOutputId === 'string') return claim.definitionId === authoredOutputId;
+  return pattern.output.parameters?.preserveInputDefinition === true
+    && claim.inputDefinitionIds.includes(claim.definitionId);
+}
+
 export interface ResolverContext {
   match: PatternMatch;
   inputs: MatchInput[];

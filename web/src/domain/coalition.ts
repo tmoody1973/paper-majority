@@ -87,7 +87,7 @@ export function evaluateRelationships(
           office.id,
           condition,
           state.bill.provisionIds,
-          existing.demandProvisionId,
+          demand?.evidenceConcernId,
         ),
       );
       return {

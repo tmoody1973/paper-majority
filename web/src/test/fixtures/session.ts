@@ -299,6 +299,7 @@ export const sessionScenario: ScenarioDefinition = {
       id: 'demand-renter-protection',
       title: 'Prioritize a local supply incentive',
       officeDefinitionId: 'coalition-office-hillcrest',
+      evidenceConcernId: 'demand-renter-protection',
       condition: { kind: 'bill-has-tag', tag: 'supply' },
       choiceIds: [
         'choice-accept-renter-protection',

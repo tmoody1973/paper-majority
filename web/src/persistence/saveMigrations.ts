@@ -7,6 +7,7 @@ import {
   tacticExpansionSchema,
 } from '@/content/schema';
 import { canonicalJson, canonicalSha256 } from '@/persistence/canonicalHash';
+import { matchesPatternOutputReceipt } from '@/domain/patternResolvers';
 
 export const CURRENT_SAVE_SCHEMA_VERSION = 2 as const;
 export const CURRENT_RULES_VERSION = 2 as const;
@@ -142,7 +143,9 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
   STACK_REJECTED: ['type', 'cardIds', 'targetStackId', 'reason', 'message'],
   CARD_MOVED: ['type', 'cardId', 'x', 'y'],
   ACTION_STARTED: ['type', 'stackId', 'durationMs', 'patternId', 'assignmentKind'],
-  CARD_TRANSFORMED: ['type', 'stackId', 'consumedCardIds', 'producedCardIds', 'returnedCardIds', 'outputDefinitionId', 'explanationKey'],
+  CARD_TRANSFORMED: ['type', 'stackId', 'consumedCardIds', 'producedCardIds', 'returnedCardIds', 'outputDefinitionId',
+    'outputForm', 'producerPatternId', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId',
+    'authoredConcernOfficeDefinitionId', 'explanationKey'],
   PATTERN_DISCOVERED: ['type', 'patternId'],
   TACTIC_EXPANSION_ACTIVATED: ['type', 'expansionId', 'tacticDefinitionId', 'targetPatternId'],
   RESOURCE_CHANGED: ['type', 'changes', 'reason'],
@@ -173,7 +176,8 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
 
 const OPTIONAL_EVENT_FIELDS = new Set([
   'patternId', 'assignmentKind', 'targetStackId', 'sourceCardInstanceId', 'inputCardIds',
-  'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId',
+  'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId', 'outputForm', 'producerPatternId',
+  'authoredConcernOfficeDefinitionId',
 ]);
 const EVENT_STRING_ARRAY_FIELDS = new Set([
   'cardIds', 'definitionIds', 'consumedCardIds', 'producedCardIds', 'returnedCardIds',
@@ -230,6 +234,17 @@ const REJECTION_REASONS = [
   'duplicate-provision', 'invalid-card-form', 'run-complete', 'unsupported-command',
 ];
 
+function validTransformProducerClaim(value: RecordValue, scenario: ScenarioDefinition): boolean {
+  const pattern = scenario.patterns.find((candidate) => candidate.id === value.producerPatternId);
+  if (!pattern) return false;
+  return matchesPatternOutputReceipt(pattern, {
+    definitionId: value.outputDefinitionId as string,
+    form: value.outputForm as TermState['cards'][number]['form'],
+    explanationKey: value.explanationKey as string,
+    inputDefinitionIds: value.inputDefinitionIds as string[],
+  });
+}
+
 function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
   if (!isRecord(value) || typeof value.type !== 'string') return false;
   const keys = EVENT_KEYS[value.type];
@@ -260,7 +275,19 @@ function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
         && (value.patternId === undefined || scenario.patterns.some((pattern) => pattern.id === value.patternId))
         && (value.assignmentKind === undefined || ['card-work', 'study-tactic'].includes(value.assignmentKind as string));
     case 'CARD_TRANSFORMED':
-      return scenario.cards.some((card) => card.id === value.outputDefinitionId);
+      if (!scenario.cards.some((card) => card.id === value.outputDefinitionId)) return false;
+      if ((value.producedCardIds as string[]).length === 0) return true;
+      if (!['raw', 'summary', 'drafted', 'prepared'].includes(value.outputForm as string)
+        || typeof value.producerPatternId !== 'string'
+        || !strings(value.inputDefinitionIds) || !strings(value.consumedDefinitionIds)) return false;
+      if (!(value.inputDefinitionIds as string[]).every((id) => scenario.cards.some((card) => card.id === id))
+        || !(value.consumedDefinitionIds as string[]).every((id) => scenario.cards.some((card) => card.id === id))) return false;
+      if ((value.authoredConcernId === undefined) !== (value.authoredConcernOfficeDefinitionId === undefined)) return false;
+      const authoredConcernId = value.authoredConcernId;
+      if (authoredConcernId !== undefined && !scenario.cards.some((card) => card.kind === 'constituency'
+        && card.authoredConcern?.concernId === authoredConcernId
+        && card.authoredConcern?.recipientOfficeDefinitionId === value.authoredConcernOfficeDefinitionId)) return false;
+      return validTransformProducerClaim(value, scenario);
     case 'PATTERN_DISCOVERED':
     case 'PATTERN_COMPLETED':
       return scenario.patterns.some((pattern) => pattern.id === value.patternId)
@@ -707,25 +734,52 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   if (!unique((input.electionEffects as TermState['electionEffects']).map((effect) => effect.id))) return false;
   if (!Array.isArray(input.eventLog) || !input.eventLog.every((event) => validEvent(event, scenario))) return false;
   const eventLog = input.eventLog as TermState['eventLog'];
+  const transforms = eventLog.filter((event) => event.type === 'CARD_TRANSFORMED');
+  const producedIds = transforms.flatMap((event) => event.producedCardIds);
+  if (!unique(producedIds)) return false;
+  for (const [eventIndex, transform] of transforms.entries()) {
+    for (const producedId of transform.producedCardIds) {
+      const live = (input.cards as TermState['cards']).filter((card) => card.id === producedId);
+      const laterConsumption = transforms.slice(eventIndex + 1)
+        .filter((candidate) => candidate.consumedCardIds.includes(producedId));
+      if (live.length + laterConsumption.length !== 1) return false;
+      if (live.length === 1 && !live[0]?.origin) return false;
+    }
+  }
+  for (const card of input.cards as TermState['cards']) {
+    if (!card.origin) continue;
+    const matches = transforms.filter((event) => event.producedCardIds.includes(card.id)
+      && event.outputDefinitionId === card.definitionId
+      && event.outputForm === card.form
+      && event.explanationKey === card.origin?.explanationKey
+      && canonicalJson(event.inputDefinitionIds) === canonicalJson(card.origin?.inputDefinitionIds)
+      && canonicalJson(event.consumedDefinitionIds) === canonicalJson(card.origin?.consumedDefinitionIds)
+      && event.authoredConcernId === card.origin?.authoredConcern?.concernId
+      && event.authoredConcernOfficeDefinitionId === card.origin?.authoredConcern?.recipientOfficeDefinitionId);
+    if (matches.length !== 1) return false;
+  }
   const presentedStories = eventLog.filter((event) => event.type === 'STORY_DECISION_PRESENTED');
   const resolvedStories = eventLog.filter((event) => event.type === 'STORY_DECISION_RESOLVED');
   const triggeredStories = eventLog.filter((event) => event.type === 'EVENT_TRIGGERED');
-  if (presentedStories.length !== storyDecisions.length || resolvedStories.length !== storyDecisions.filter((d) => d.status === 'resolved').length
-    || triggeredStories.length !== (input.storyHistory as string[]).length) return false;
-  for (const decision of storyDecisions) {
+  const storyHistory = input.storyHistory as string[];
+  if (presentedStories.length !== storyDecisions.length
+    || resolvedStories.length !== storyDecisions.filter((d) => d.status === 'resolved').length
+    || triggeredStories.length !== storyDecisions.length
+    || storyHistory.length !== storyDecisions.length) return false;
+  for (const [index, decision] of storyDecisions.entries()) {
+    const trigger = triggeredStories[index];
     if (decision.id !== `story-decision:${decision.occurrenceId}`
       || decision.occurrenceId !== `${decision.storyEventId}:${decision.occurrenceId.slice(decision.storyEventId.length + 1)}`
-      || !/^.+:week:[1-6]:draw:[1-9][0-9]*$/.test(decision.occurrenceId)) return false;
+      || !new RegExp(`^${decision.storyEventId}:week:[1-6]:draw:${index + 1}$`).test(decision.occurrenceId)
+      || storyHistory[index] !== decision.occurrenceId
+      || trigger?.storyEventId !== decision.storyEventId
+      || trigger.occurrenceId !== decision.occurrenceId) return false;
     const presented = presentedStories.filter((event) => event.decisionId === decision.id
       && event.storyEventId === decision.storyEventId && event.occurrenceId === decision.occurrenceId
       && canonicalJson(event.choiceIds) === canonicalJson(decision.choiceIds));
     const resolved = resolvedStories.filter((event) => event.decisionId === decision.id
       && event.storyEventId === decision.storyEventId && event.occurrenceId === decision.occurrenceId);
     if (presented.length !== 1 || resolved.length !== (decision.status === 'resolved' ? 1 : 0)) return false;
-  }
-  for (const occurrenceId of input.storyHistory as string[]) {
-    if (triggeredStories.filter((event) => event.occurrenceId === occurrenceId).length !== 1
-      || !storyDecisions.some((decision) => decision.occurrenceId === occurrenceId)) return false;
   }
   const packEvents = eventLog.filter((event) => event.type === 'PACK_OPENED');
   if (packEvents.length !== packs.length) return false;

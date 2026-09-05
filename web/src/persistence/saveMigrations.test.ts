@@ -117,6 +117,12 @@ describe('save migrations', () => {
       pendingStoryDecisions: resolved.pendingStoryDecisions.map((decision) => ({ ...decision, occurrenceId: 'story:bad' })),
     };
     expect(validateAndMigrateSave(createSaveEnvelope(malformed, scenario), scenario).kind).toBe('corrupt');
+    const withoutDirectorHistory = {
+      ...drawn,
+      storyHistory: [],
+      eventLog: drawn.eventLog.filter((event) => event.type !== 'EVENT_TRIGGERED'),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(withoutDirectorHistory, scenario), scenario).kind).toBe('corrupt');
   });
 
   it('rejects missing or duplicate pack receipts and invalid variation selections', () => {

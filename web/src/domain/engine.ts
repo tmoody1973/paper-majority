@@ -666,6 +666,7 @@ function completeAction(
   const consumedIds = memberCards
     .map((card) => card.id)
     .filter((id) => !survivingIds.has(id));
+  const authoredConcern = authoredConcernFor(memberCards, services.scenario);
 
   const survivors = memberCards
     .filter((card) => survivingIds.has(card.id))
@@ -735,6 +736,13 @@ function completeAction(
         producedCardIds: [producedId],
         returnedCardIds: survivors.map((card) => card.id),
         outputDefinitionId: resolved.definitionId,
+        outputForm: resolved.form ?? 'raw',
+        producerPatternId: pattern.id,
+        inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
+        consumedDefinitionIds: memberCards.filter((card) => consumedIds.includes(card.id))
+          .map((card) => card.definitionId).sort(),
+        authoredConcernId: authoredConcern?.concernId,
+        authoredConcernOfficeDefinitionId: authoredConcern?.recipientOfficeDefinitionId,
         explanationKey: resolved.explanationKey,
       },
       {
@@ -957,6 +965,13 @@ function completeSessionWork(
         producedCardIds: [producedId],
         returnedCardIds: [...work.returnedCardIds],
         outputDefinitionId: resolved.definitionId,
+        outputForm: resolved.form ?? 'raw',
+        producerPatternId: work.patternId,
+        inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
+        consumedDefinitionIds: memberCards.filter((card) => consumed.has(card.id))
+          .map((card) => card.definitionId).sort(),
+        authoredConcernId: authoredConcernFor(memberCards, services.scenario)?.concernId,
+        authoredConcernOfficeDefinitionId: authoredConcernFor(memberCards, services.scenario)?.recipientOfficeDefinitionId,
         explanationKey: resolved.explanationKey,
       },
       {

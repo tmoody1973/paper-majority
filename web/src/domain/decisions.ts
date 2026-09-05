@@ -8,6 +8,7 @@ import {
 import { applyResourceDelta } from '@/domain/resources';
 import { obligationOccurrence } from '@/domain/obligations';
 import { planWork, type WorkPlan } from '@/domain/work';
+import { demandForOffice } from '@/domain/variation';
 import type {
   DecisionChoiceDefinition,
   Obligation,
@@ -76,6 +77,14 @@ function requiredWorkPlan(
   for (let size = 2; size <= 4; size += 1) {
     for (const cards of combinations(available, size)) {
       if (!cards.some((card) => card.definitionId === officeDefinitionId)) continue;
+      const exactConcern = cards.some((card) => {
+        const definition = scenario.cards.find((candidate) => candidate.id === card.definitionId);
+        const authored = card.origin?.authoredConcern
+          ?? (definition?.kind === 'constituency' ? definition.authoredConcern : undefined);
+        return authored?.recipientOfficeDefinitionId === officeDefinitionId
+          && authored.concernId === concernId;
+      });
+      if (!exactConcern) continue;
       const prepared = cards.filter((card) => card.form === 'prepared');
       if (prepared.some((card) =>
         card.origin?.authoredConcern?.recipientOfficeDefinitionId !== officeDefinitionId
@@ -100,7 +109,10 @@ export function findRequiredDecisionWorkPlan(
   const pending = state.pendingDecisions.find((decision) => decision.id === decisionId && decision.status === 'pending');
   const choice = scenario.decisionChoices.find((candidate) => candidate.id === choiceId);
   if (!pending || !choice?.requiredWorkPatternId) return undefined;
-  return requiredWorkPlan(state, scenario, pending.officeDefinitionId, pending.sourceId, choice.requiredWorkPatternId);
+  const demand = demandForOffice(state, scenario, pending.officeDefinitionId);
+  if (!demand || demand.id !== pending.sourceId) return undefined;
+  if (!demand.evidenceConcernId) return undefined;
+  return requiredWorkPlan(state, scenario, pending.officeDefinitionId, demand.evidenceConcernId, choice.requiredWorkPatternId);
 }
 
 function negativeDecisionResourceCosts(choice: DecisionChoiceDefinition): Partial<Resources> {
@@ -294,8 +306,14 @@ export function previewDecision(
     return { accepted: false, reason: 'missing-prerequisites', message: 'The required evidence or bill condition is not ready.' };
   }
 
+  const demand = demandForOffice(state, scenario, pending.officeDefinitionId);
+  if (!demand || demand.id !== pending.sourceId) {
+    return { accepted: false, reason: 'missing-prerequisites', message: 'The authored office demand is unavailable.' };
+  }
   const required = choice.requiredWorkPatternId
-    ? requiredWorkPlan(state, scenario, pending.officeDefinitionId, pending.sourceId, choice.requiredWorkPatternId)
+    ? demand.evidenceConcernId
+      ? requiredWorkPlan(state, scenario, pending.officeDefinitionId, demand.evidenceConcernId, choice.requiredWorkPatternId)
+      : undefined
     : undefined;
   if (choice.requiredWorkPatternId && !required) {
     return { accepted: false, reason: 'missing-prerequisites', message: 'No eligible staff and evidence are ready for this counteroffer.' };

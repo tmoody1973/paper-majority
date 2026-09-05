@@ -407,6 +407,7 @@ const rawScenarioSchema = z.strictObject({
     id: idSchema,
     title: z.string().min(1),
     officeDefinitionId: idSchema,
+    evidenceConcernId: idSchema.optional(),
     condition: relationshipConditionSchema,
     choiceIds: z.array(idSchema).min(1),
   })),
@@ -595,6 +596,13 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
     }
     for (const [index, demand] of scenario.demandDefinitions.entries()) {
       if (cards.get(demand.officeDefinitionId)?.kind !== 'coalition') addReferenceIssue(ctx, `Unknown demand office: ${demand.officeDefinitionId}`, ['demandDefinitions', index]);
+      const hasRequiredWorkChoice = scenario.decisionChoices.some((choice) => demand.choiceIds.includes(choice.id)
+        && choice.requiredWorkPatternId);
+      const evidenceConcernId = demand.evidenceConcernId;
+      const evidenceConcern = evidenceConcernId && Array.from(cards.values()).find((card) => card.kind === 'constituency'
+        && card.authoredConcern?.concernId === evidenceConcernId
+        && card.authoredConcern?.recipientOfficeDefinitionId === demand.officeDefinitionId);
+      if (hasRequiredWorkChoice && !evidenceConcern) addReferenceIssue(ctx, `Demand evidence concern has no same-office Constituency supply: ${demand.evidenceConcernId ?? 'missing'}`, ['demandDefinitions', index, 'evidenceConcernId']);
       if ('tag' in demand.condition && !tags.has(demand.condition.tag)) addReferenceIssue(ctx, `Unknown demand tag: ${demand.condition.tag}`, ['demandDefinitions', index, 'condition']);
       for (const choiceId of demand.choiceIds) if (!choices.has(choiceId)) addReferenceIssue(ctx, `Unknown decision choice: ${choiceId}`, ['demandDefinitions', index, 'choiceIds']);
     }
