@@ -6,12 +6,26 @@ import type {
   RecipeSlot,
   ScenarioDefinition,
   TacticExpansionDefinition,
+  InstanceForm,
+  SourceClass,
+  Citation,
 } from '@/domain/types';
+import { effectiveCard } from '@/domain/instanceForms';
 
 export interface MatchInput {
   instanceId: string;
   definition: CardDefinition;
   effectiveTags: string[];
+  effectiveSourceClass: SourceClass;
+  form: InstanceForm;
+  provenance: {
+    label: string;
+    sourceClass: SourceClass;
+    sourceDefinitionIds: string[];
+    policyDefinitionId?: string;
+    precedentIds: string[];
+    citations: Citation[];
+  };
 }
 
 export interface PatternSlotAssignment {
@@ -39,8 +53,9 @@ export interface PatternMatch {
  * party, and so no published card ever stores a claim about a relationship.
  */
 export function computeEffectiveTags(definition: CardDefinition, playerParty: Party): string[] {
-  if (!definition.officeParty) return [...definition.tags];
-  const relation = definition.officeParty === playerParty ? 'same-party' : 'opposing-party';
+  if (definition.kind !== 'coalition') return [...definition.tags];
+  if (!definition.officialRecord.party) return [...definition.tags];
+  const relation = definition.officialRecord.party === playerParty ? 'same-party' : 'opposing-party';
   return [...definition.tags, relation];
 }
 
@@ -49,18 +64,14 @@ export function buildMatchInputs(
   scenario: ScenarioDefinition,
   playerParty: Party,
 ): MatchInput[] {
-  const byId = new Map(scenario.cards.map((card) => [card.id, card]));
-
   return instances
     .map((instance) => {
-      const definition = byId.get(instance.definitionId);
-      if (!definition) {
-        throw new Error(`Scenario has no card definition "${instance.definitionId}"`);
-      }
+      const input = effectiveCard(instance, scenario);
       return {
-        instanceId: instance.id,
-        definition,
-        effectiveTags: computeEffectiveTags(definition, playerParty),
+        ...input,
+        effectiveTags: Array.from(
+          new Set([...input.effectiveTags, ...computeEffectiveTags(input.definition, playerParty)]),
+        ),
       };
     })
     // Stable instance-id ordering keeps assignment (and therefore replay) deterministic.
@@ -71,7 +82,8 @@ function slotAccepts(slot: RecipeSlot, input: MatchInput): boolean {
   if (slot.kind && input.definition.kind !== slot.kind) return false;
   if (slot.requiredTags?.some((tag) => !input.effectiveTags.includes(tag))) return false;
   if (slot.anyTags && !slot.anyTags.some((tag) => input.effectiveTags.includes(tag))) return false;
-  if (slot.sourceClasses && !slot.sourceClasses.includes(input.definition.sourceClass)) return false;
+  if (slot.sourceClasses && !slot.sourceClasses.includes(input.effectiveSourceClass)) return false;
+  if (slot.forms && !slot.forms.includes(input.form)) return false;
   return true;
 }
 

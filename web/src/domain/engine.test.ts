@@ -26,6 +26,10 @@ function makeState(definitionIds: string[], overrides: Partial<TermState> = {}):
     y: 300,
     remainingMs: 0,
     status: 'idle' as const,
+    form: 'raw' as const,
+    location: 'desk' as const,
+    sourceDefinitionIds: definitionId.startsWith('evidence-') ? [definitionId] : [],
+    policyDefinitionId: definitionId.startsWith('policy-') ? definitionId : undefined,
   }));
 
   return {

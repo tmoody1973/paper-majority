@@ -28,6 +28,12 @@ export type RejectionReason =
   | 'malformed-command'
   | 'invalid-stage'
   | 'clock-not-expired'
+  | 'stale-decision'
+  | 'unknown-decision'
+  | 'unknown-choice'
+  | 'duplicate-provision'
+  | 'invalid-card-form'
+  | 'run-complete'
   /** A real command that this build does not serve yet. Never a content or player error. */
   | 'unsupported-command';
 
@@ -94,6 +100,15 @@ export type GameEvent =
   | { type: 'PAUSE_CHANGED'; paused: boolean }
   | { type: 'EVENT_TRIGGERED'; storyEventId: string; whyRules: string[] }
   | { type: 'WEEK_RESOLVED'; week: number; summary: string[] }
+  | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
+  | { type: 'PROVISION_DOCKETED'; cardId: string; provisionId: string; revision: number }
+  | { type: 'DECISION_PRESENTED'; decisionId: string; sourceId: string; choiceIds: string[] }
+  | { type: 'DECISION_RESOLVED'; decisionId: string; choiceId: string; occurrenceId: string }
+  | { type: 'PROMISE_CHANGED'; promiseOccurrenceId: string; status: 'open' | 'fulfilled' | 'broken' }
+  | { type: 'OPPORTUNITY_DECLINED'; occurrenceId: string; sourceId: string }
+  | { type: 'PACK_OPENED'; packOccurrenceId: string; categoryId: string; cardDefinitionIds: string[] }
+  | { type: 'CARD_LOCATION_CHANGED'; cardId: string; location: 'desk' | 'filed' | 'archived' }
+  | { type: 'SESSION_CONCLUDED'; outcome: 'ready' | 'not-ready' }
   | { type: 'VOTE_RESOLVED'; stage: ProcedureStage; passed: boolean; tally: VoteTally }
   | { type: 'REELECTION_RESOLVED'; result: ReelectionResult }
   | {

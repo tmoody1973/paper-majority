@@ -81,6 +81,11 @@ const cards: CardDefinition[] = [
     citations: [CITATION],
     workload: 1,
     contextualSubtitle: 'Renter policy',
+    plainLanguage: 'Rental assistance policy used by the engine fixture.',
+    valueEffects: { 'Tenant Stability': 1, 'Fair Access': 1 },
+    committeeJurisdiction: 'Financial Services',
+    precedentIds: [],
+    editorialReviewDate: '2026-08-23',
   },
   {
     id: 'policy-working-bill',
@@ -91,6 +96,11 @@ const cards: CardDefinition[] = [
     citations: [],
     workload: 0,
     contextualSubtitle: 'Your bill',
+    plainLanguage: 'Legacy working-bill anchor used by interaction tests.',
+    valueEffects: {},
+    committeeJurisdiction: 'Legacy interaction fixture',
+    precedentIds: [],
+    editorialReviewDate: '2026-08-23',
   },
   {
     id: 'coalition-office-fifth-district',
@@ -100,7 +110,16 @@ const cards: CardDefinition[] = [
     sourceClass: 'official',
     citations: [CITATION],
     workload: 1,
-    officeParty: 'democratic',
+    officialRecord: {
+      provenance: 'official',
+      officeTitle: 'Member Office — Fifth District',
+      memberName: 'Fixture Member Five',
+      party: 'democratic',
+      stateCode: 'GA',
+      district: '05',
+      congress: 119,
+      profileUrl: 'https://example.invalid/fifth-district',
+    },
     contextualSubtitle: 'Member office',
   },
   {
@@ -111,7 +130,16 @@ const cards: CardDefinition[] = [
     sourceClass: 'official',
     citations: [CITATION],
     workload: 1,
-    officeParty: 'republican',
+    officialRecord: {
+      provenance: 'official',
+      officeTitle: 'Member Office — Fourth District',
+      memberName: 'Fixture Member Four',
+      party: 'republican',
+      stateCode: 'IA',
+      district: '04',
+      congress: 119,
+      profileUrl: 'https://example.invalid/fourth-district',
+    },
     contextualSubtitle: 'Member office',
   },
   {
@@ -154,6 +182,11 @@ const cards: CardDefinition[] = [
     citations: [],
     workload: 0,
     contextualSubtitle: 'Bill provision',
+    plainLanguage: 'Simulated drafted language used by the engine fixture.',
+    valueEffects: {},
+    committeeJurisdiction: 'Legacy interaction fixture',
+    precedentIds: ['policy-housing-choice-voucher'],
+    editorialReviewDate: '2026-08-23',
   },
   {
     id: 'coalition-outreach-result',
@@ -164,6 +197,16 @@ const cards: CardDefinition[] = [
     citations: [],
     workload: 0,
     contextualSubtitle: 'Member response',
+    officialRecord: {
+      provenance: 'simulated-fixture',
+      officeTitle: 'Outreach Result',
+      memberName: 'Simulated response',
+      party: 'democratic',
+      stateCode: 'XX',
+      district: '00',
+      congress: 119,
+      profileUrl: 'https://example.invalid/outreach-result',
+    },
   },
   {
     id: 'evidence-staff-review-note',
@@ -260,9 +303,10 @@ const tacticExpansions: TacticExpansionDefinition[] = [
 ];
 
 export const testScenario: ScenarioDefinition = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   snapshotId: 'test-fixture-2026-08-23',
   frozenAt: '2026-08-23T00:00:00.000Z',
+  supportedModes: ['interaction-spike'],
   issue: { id: 'housing-affordability', title: 'Housing Affordability' },
   districts: [
     {
@@ -318,6 +362,11 @@ export const testScenario: ScenarioDefinition = {
     baseline: { committed: 90, conditional: 60, undecided: 120, opposed: 165 },
   },
   weeklyPacks: [],
+  obligationDefinitions: [],
+  demandDefinitions: [],
+  decisionChoices: [],
+  modeObjectives: [],
+  staffTraits: [],
 };
 
 export function findCardDefinition(id: string): CardDefinition {

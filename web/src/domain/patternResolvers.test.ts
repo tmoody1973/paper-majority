@@ -17,7 +17,21 @@ const ALL_RESOLVER_IDS: DerivedResolverId[] = [
 
 function input(definitionId: string, instanceId: string, party: Party = 'democratic'): MatchInput {
   const definition = findCardDefinition(definitionId);
-  return { instanceId, definition, effectiveTags: computeEffectiveTags(definition, party) };
+  return {
+    instanceId,
+    definition,
+    effectiveTags: computeEffectiveTags(definition, party),
+    effectiveSourceClass: definition.sourceClass,
+    form: 'raw',
+    provenance: {
+      label: 'Test input',
+      sourceClass: definition.sourceClass,
+      sourceDefinitionIds: definition.kind === 'evidence' ? [definition.id] : [],
+      policyDefinitionId: definition.kind === 'policy' ? definition.id : undefined,
+      precedentIds: definition.kind === 'policy' ? definition.precedentIds : [],
+      citations: definition.citations,
+    },
+  };
 }
 
 function resolve(definitionIds: string[], activeExpansionIds: string[] = []) {

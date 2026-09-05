@@ -34,8 +34,9 @@ export function AccessibleCardControls({
     const definition = definitionOf(definitionId);
     if (!definition) return definitionId;
     // Party is part of a member office's identity, so it belongs in the spoken name.
-    const party = definition.officeParty
-      ? ` (${definition.officeParty === 'democratic' ? 'Democratic' : 'Republican'})`
+    const officeParty = definition.kind === 'coalition' ? definition.officialRecord.party : undefined;
+    const party = officeParty
+      ? ` (${officeParty === 'democratic' ? 'Democratic' : 'Republican'})`
       : '';
     return `${definition.title}${party}`;
   };

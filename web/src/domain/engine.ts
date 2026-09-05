@@ -363,6 +363,23 @@ function completeAction(
         y: anchor.y,
         remainingMs: 0,
         status: 'idle',
+        form: 'raw',
+        location: 'desk',
+        sourceDefinitionIds: memberCards
+          .filter((card) =>
+            services.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind ===
+            'evidence',
+          )
+          .flatMap((card) =>
+            card.sourceDefinitionIds.length > 0 ? card.sourceDefinitionIds : [card.definitionId],
+          )
+          .filter((id, index, all) => all.indexOf(id) === index)
+          .sort(),
+        policyDefinitionId:
+          services.scenario.cards.find((definition) => definition.id === resolved.definitionId)?.kind ===
+          'policy'
+            ? resolved.definitionId
+            : memberCards.find((card) => card.policyDefinitionId)?.policyDefinitionId,
         // The transformation knows exactly what went in; keep it, sorted, so two
         // outputs of the same definition from different sources stay tellable
         // apart and replay stays deterministic.

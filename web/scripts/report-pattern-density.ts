@@ -35,6 +35,16 @@ function toInput(definition: CardDefinition, index: number): MatchInput {
     instanceId: `probe-${String(index).padStart(3, '0')}`,
     definition,
     effectiveTags: computeEffectiveTags(definition, PLAYER_PARTY),
+    effectiveSourceClass: definition.sourceClass,
+    form: 'raw',
+    provenance: {
+      label: 'Pattern-density probe',
+      sourceClass: definition.sourceClass,
+      sourceDefinitionIds: definition.kind === 'evidence' ? [definition.id] : [],
+      policyDefinitionId: definition.kind === 'policy' ? definition.id : undefined,
+      precedentIds: definition.kind === 'policy' ? definition.precedentIds : [],
+      citations: definition.citations,
+    },
   };
 }
 

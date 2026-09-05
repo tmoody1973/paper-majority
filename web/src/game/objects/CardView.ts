@@ -141,9 +141,11 @@ export class CardView extends Phaser.GameObjects.Container {
     // only visible reason one office accepts your bill and another refuses it.
     // Deliberately ink-coloured rather than red/blue: the letter carries the meaning,
     // so party never becomes a dominant colour area or a second family system.
-    if (options.definition.officeParty) {
-      const letter = options.definition.officeParty === 'democratic' ? 'D' : 'R';
-      const word = options.definition.officeParty === 'democratic' ? 'Democratic' : 'Republican';
+    const officeParty =
+      options.definition.kind === 'coalition' ? options.definition.officialRecord.party : undefined;
+    if (officeParty) {
+      const letter = officeParty === 'democratic' ? 'D' : 'R';
+      const word = officeParty === 'democratic' ? 'Democratic' : 'Republican';
 
       const badge = scene.add.graphics();
       badge.fillStyle(PAPER, 1);

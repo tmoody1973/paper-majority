@@ -10,6 +10,9 @@ export type CardKind =
   | 'political'
   | 'tactic';
 export type SourceClass = 'official' | 'derived' | 'simulated';
+export type RunMode = 'interaction-spike' | 'session' | 'term';
+export type InstanceForm = 'raw' | 'summary' | 'drafted' | 'prepared';
+export type CardLocation = 'desk' | 'filed' | 'archived';
 export type Party = 'democratic' | 'republican';
 export type GoverningValue =
   | 'Fiscal Stewardship'
@@ -28,7 +31,7 @@ export type ProcedureStage =
   | 'resolution'
   | 'election'
   | 'complete';
-export type SupportState = 'interested' | 'conditional' | 'committed';
+export type SupportState = 'unavailable' | 'interested' | 'conditional' | 'committed' | 'refused';
 export type LegislativeOutcome =
   | 'active'
   | 'enacted'
@@ -99,7 +102,7 @@ export interface Citation {
   publishedAt?: string;
 }
 
-export interface CardDefinition {
+export interface CardDefinitionBase {
   id: string;
   title: string;
   kind: CardKind;
@@ -116,12 +119,54 @@ export interface CardDefinition {
    * state and belongs to the Staff Handbook.
    */
   plainLanguage?: string;
-  /**
-   * Official public-record party of a real member office. Only Coalition cards carry it,
-   * and the engine reads it solely to compute the `same-party` / `opposing-party` tags.
-   */
-  officeParty?: Party;
 }
+
+export interface StaffCardDefinition extends CardDefinitionBase {
+  kind: 'staff';
+}
+
+export interface PolicyCardDefinition extends CardDefinitionBase {
+  kind: 'policy';
+  plainLanguage: string;
+  valueEffects: Partial<Record<GoverningValue, -1 | 0 | 1>>;
+  committeeJurisdiction: string;
+  precedentIds: string[];
+  editorialReviewDate: string;
+}
+
+export interface EvidenceCardDefinition extends CardDefinitionBase {
+  kind: 'evidence';
+}
+
+interface CoalitionRecordBase {
+  officeTitle: string;
+  memberName: string;
+  stateCode: string;
+  district: string;
+  congress: number;
+  profileUrl: string;
+}
+
+export type CoalitionOfficialRecord =
+  | (CoalitionRecordBase & { provenance: 'official'; party: Party })
+  | (CoalitionRecordBase & { provenance: 'simulated-fixture'; party?: Party });
+
+export interface CoalitionCardDefinition extends CardDefinitionBase {
+  kind: 'coalition';
+  /** Immutable public facts only. Simulated support and demands live in run state/content. */
+  officialRecord: CoalitionOfficialRecord;
+}
+
+export interface OtherCardDefinition extends CardDefinitionBase {
+  kind: Exclude<CardKind, 'staff' | 'policy' | 'evidence' | 'coalition'>;
+}
+
+export type CardDefinition =
+  | StaffCardDefinition
+  | PolicyCardDefinition
+  | EvidenceCardDefinition
+  | CoalitionCardDefinition
+  | OtherCardDefinition;
 
 export interface CardInstance {
   id: string;
@@ -131,6 +176,12 @@ export interface CardInstance {
   y: number;
   remainingMs: number;
   status: 'idle' | 'working' | 'resolved' | 'expired';
+  form: InstanceForm;
+  location: CardLocation;
+  /** Definition IDs of the evidence records retained through derived forms. */
+  sourceDefinitionIds: string[];
+  /** The underlying authored policy retained through drafted/prepared forms. */
+  policyDefinitionId?: string;
   /**
    * Where a card produced in play came from: the resolver's explanation and the
    * definition IDs of every input, with the consumed ones singled out. Authored
@@ -168,21 +219,93 @@ export interface BillState {
   provisionIds: string[];
   stage: ProcedureStage;
   outcome: LegislativeOutcome;
+  revision: number;
 }
+
+export type RelationshipCondition =
+  | { kind: 'bill-has-tag'; tag: string }
+  | { kind: 'prepared-evidence-tag'; tag: string }
+  | { kind: 'governing-value'; value: GoverningValue };
 
 export interface RelationshipState {
   memberId: string;
   support: SupportState;
   demandProvisionId?: string;
+  demandOccurrenceId?: string;
+  promiseOccurrenceIds: string[];
+  conditions: RelationshipCondition[];
+  evaluatedRevision: number;
+}
+
+export interface DueTime {
+  week: number;
+  offsetMs: number;
+}
+
+export interface WorkReservation {
+  id: string;
+  cardIds: string[];
+  staffCardIds: string[];
+  paidCost: Partial<Resources>;
+  completesAtSimulationMs: number;
+  billRevision?: number;
+  effectiveRuleVersion: string;
+  consumedCardIds: string[];
+  returnedCardIds: string[];
+}
+
+export type ActiveWork = WorkReservation &
+  (
+    | { kind: 'pattern'; patternId: string; effectivePattern: RecipePattern }
+    | {
+        kind: 'study';
+        expansionIds: string[];
+        effectiveExpansions: TacticExpansionDefinition[];
+      }
+  );
+
+export interface Obligation {
+  id: string;
+  sourceId: string;
+  due: DueTime;
+  mandatory: boolean;
+  status: 'open' | 'fulfilled' | 'missed' | 'declined';
+  rewardCapital: number;
+  trustPenalty: number;
+}
+
+export interface PendingDecision {
+  id: string;
+  sourceId: string;
+  expectedBillRevision: number;
+  choiceIds: string[];
+  status: 'pending' | 'resolved';
+}
+
+export interface SessionRecord {
+  readonly id: string;
+  readonly outcome: 'ready' | 'not-ready';
+  readonly completedAtSimulationMs: number;
+  readonly gaps: Readonly<{
+    provisionGap: number;
+    supportGap: number;
+    overdueMandatoryIds: readonly string[];
+  }>;
+  readonly causeEventIds: readonly string[];
 }
 
 export interface TermState {
-  schemaVersion: 1;
+  /** `createRun` emits 2; 1 remains only for the explicit spike compatibility entry point. */
+  schemaVersion: 1 | 2;
+  mode: RunMode;
   snapshotId: string;
   seed: number;
   rngCursor: number;
   week: number;
+  /** Monotonic run time; unlike elapsedMs it never resets at a week boundary. */
+  simulationMs: number;
   elapsedMs: number;
+  weekPhase: 'active' | 'boundary';
   weekLengthMs: number;
   paused: boolean;
   settings: RunSettings;
@@ -199,6 +322,14 @@ export interface TermState {
   resources: Resources;
   bill: BillState;
   relationships: RelationshipState[];
+  staffCapacity: number;
+  activeWork: ActiveWork[];
+  obligations: Obligation[];
+  pendingDecisions: PendingDecision[];
+  rewardedOccurrenceIds: string[];
+  resolvedWeekIds: string[];
+  runStatus: 'active' | 'complete';
+  sessionRecord?: SessionRecord;
   discoveredPatternIds: string[];
   unlockedSlotExpansions: Record<string, string[]>;
   electionEffects: ElectionEffectEntry[];
@@ -212,6 +343,7 @@ export interface RecipeSlot {
   requiredTags?: string[];
   anyTags?: string[];
   sourceClasses?: SourceClass[];
+  forms?: InstanceForm[];
   quantity: 1 | 2 | 3;
   /**
    * Whether this slot's cards are used up. Defaults to true.
@@ -253,6 +385,9 @@ export type TacticExpansionEffect =
   | { kind: 'duration-multiplier'; multiplier: number }
   | { kind: 'output-strength'; delta: number }
   | { kind: 'procedure-eligibility'; stage: ProcedureStage };
+
+/** Effects accepted by version-2 Session content. Output strength has no Session resolver yet. */
+export type SessionTacticExpansionEffect = Exclude<TacticExpansionEffect, { kind: 'output-strength' }>;
 
 export interface TacticExpansionDefinition {
   id: string;
@@ -321,21 +456,104 @@ export interface HouseModelDefinition {
 
 export interface WeeklyPackDefinition {
   week: number;
-  cardDefinitionIds: string[];
+  guaranteedDefinitionIds: string[];
+  pools: PackPoolDefinition[];
+}
+
+export interface WeightedPackOption {
+  definitionId: string;
+  weight: number;
+}
+
+export interface PackPoolDefinition {
+  id: string;
+  title: string;
+  drawCount: 1 | 2 | 3;
+  options: WeightedPackOption[];
+  fallbackDefinitionIds: string[];
+}
+
+export type ObligationFulfillmentDefinition =
+  | { kind: 'docketed-policy-tag'; tag: string }
+  | { kind: 'prepared-evidence-tag'; tag: string }
+  | { kind: 'completed-pattern'; patternId: string };
+
+export interface ObligationDefinition {
+  id: string;
+  title: string;
+  sourceDefinitionId: string;
+  due: DueTime;
+  mandatory: boolean;
+  rewardCapital: number;
+  trustPenalty: number;
+  fulfillment: ObligationFulfillmentDefinition;
+}
+
+export type DemandConditionDefinition =
+  | { kind: 'bill-has-tag'; tag: string }
+  | { kind: 'prepared-evidence-tag'; tag: string }
+  | { kind: 'governing-value'; value: GoverningValue };
+
+export interface DemandDefinition {
+  id: string;
+  title: string;
+  officeDefinitionId: string;
+  condition: DemandConditionDefinition;
+  choiceIds: string[];
+}
+
+export type DecisionChoiceEffect =
+  | { kind: 'resource'; resource: keyof Resources; delta: number }
+  | { kind: 'create-obligation'; obligationDefinitionId: string }
+  | { kind: 'relationship-support'; support: SupportState };
+
+export interface DecisionChoiceDefinition {
+  id: string;
+  label: string;
+  action: 'accept' | 'reject' | 'counter';
+  requirements: DemandConditionDefinition[];
+  effects: DecisionChoiceEffect[];
+}
+
+export interface ModeObjectiveDefinition {
+  id: string;
+  mode: 'session' | 'term';
+  kind: 'readiness';
+  minProvisionCount: number;
+  minCommittedOfficeCount: number;
+  requireNoOverdueMandatory: boolean;
+}
+
+export interface StaffTraitDefinition {
+  id: string;
+  title: string;
+  eligibleStaffDefinitionIds: string[];
+  effect: {
+    kind: 'duration-multiplier';
+    taskTag: string;
+    multiplier: number;
+  };
 }
 
 export interface ScenarioDefinition {
-  schemaVersion: 1;
+  schemaVersion: 2;
   snapshotId: string;
   frozenAt: string;
+  supportedModes: RunMode[];
   issue: { id: 'housing-affordability'; title: string };
   districts: DistrictDefinition[];
   cards: CardDefinition[];
-  startingCardDefinitionIds: [string, string, string];
+  /** Runtime schema guarantees at least one entry. */
+  startingCardDefinitionIds: string[];
   tagTaxonomy: string[];
   patterns: RecipePattern[];
   tacticExpansions: TacticExpansionDefinition[];
   storyEvents: StoryEventDefinition[];
   houseModel: HouseModelDefinition;
   weeklyPacks: WeeklyPackDefinition[];
+  obligationDefinitions: ObligationDefinition[];
+  demandDefinitions: DemandDefinition[];
+  decisionChoices: DecisionChoiceDefinition[];
+  modeObjectives: ModeObjectiveDefinition[];
+  staffTraits: StaffTraitDefinition[];
 }
