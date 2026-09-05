@@ -1,5 +1,7 @@
 # 016 — Staff cards have a name and one trait
 
+**2026-09-04 execution disposition:** Adopted for Session implementation through Tarik’s instruction to execute the replayable Session plan; see that addendum for exact rules. Outcome evidence remains pending.
+
 **Status:** Proposed by Claude on 2026-09-01. Decision pending Tarik.
 
 - **Decision (proposed)** — Every Staff card in the Phase 2 catalog is a named, fictional person with exactly one authored trait. The trait is a tag, and the existing derived-output resolvers may read it, so which staffer does a job can change the result the same way which evidence does.

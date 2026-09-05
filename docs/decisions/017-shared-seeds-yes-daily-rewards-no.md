@@ -1,5 +1,7 @@
 # 017 — Shared seeds are allowed; rewards for showing up are not
 
+**2026-09-04 execution disposition:** Adopted for Session implementation through Tarik’s instruction to execute the replayable Session plan; see that addendum for exact rules. Outcome evidence remains pending.
+
 **Status:** Proposed by Claude on 2026-09-01. Decision pending Tarik.
 
 - **Decision (proposed)** — A run's seed may be shared and replayed by anyone, so two people can play the identical term and compare ledgers. The game never rewards a player for logging in, never tracks streaks, and never prompts a return. Spec section 9's ban on daily-login mechanics is kept, and this record draws the line it did not draw.

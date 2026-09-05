@@ -1,5 +1,7 @@
 # Paper Majority: Approved Design Specification
 
+> **Execution update — 2026-09-04:** Tarik authorized execution of the replayable Session plan. For the six-week implementation, apply `docs/superpowers/specs/2026-09-04-replayable-session-design.md` and its paired plan where they explicitly revise this document. Human playtest, factual-content and art acceptance remain pending; no historical result is asserted.
+
 **Date:** August 23, 2026  
 **Status:** Approved for implementation  
 **Initial platform:** Desktop-first web  

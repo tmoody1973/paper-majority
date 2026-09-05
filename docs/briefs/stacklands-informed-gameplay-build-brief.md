@@ -1,5 +1,7 @@
 # 	Stacklands-Informed Gameplay Build Brief
 
+> **Execution update — 2026-09-04:** Tarik authorized execution of the replayable Session plan. For the six-week implementation, apply `docs/superpowers/specs/2026-09-04-replayable-session-design.md` and its paired plan where they explicitly revise this document. Human playtest, factual-content and art acceptance remain pending; no historical result is asserted.
+
 **Audience:** Claude Code and implementation agents  
 **Status:** Proposed Phase 2 build brief; new Linear issues are drafts until Tarik approves their creation  
 **Linear project:** [Paper Majority — Phase 1 Vertical Slice](https://linear.app/moodyco/project/paper-majority-phase-1-vertical-slice-e3496904d175)  
