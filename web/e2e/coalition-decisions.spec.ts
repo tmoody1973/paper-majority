@@ -80,6 +80,39 @@ test('same-party refusal is an explicit accepted decision', async ({ page }) => 
   await expect(page.getByTestId('coalition-status-coalition-office-hillcrest')).toContainText('refused');
 });
 
+test('Escape returns to the shell trigger and a pending offer blocks bill edits until explicit resolution', async ({ page }) => {
+  await openWorkbench(page);
+
+  await begin(page, [
+    await idFor(page, 'staff-policy-aide'),
+    await idFor(page, 'evidence-rent-burden-report'),
+  ]);
+  await page.getByTestId('hud-pause').click();
+  await waitForForm(page, 'evidence-rent-burden-report', 'summary');
+  await begin(page, [
+    await idFor(page, 'staff-legislative-counsel'),
+    await idFor(page, 'evidence-rent-burden-report', 'summary'),
+    await idFor(page, 'policy-housing-choice-voucher'),
+  ]);
+  await waitForForm(page, 'policy-housing-choice-voucher', 'drafted');
+
+  await runOutreach(page, 'coalition-office-hillcrest');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('decision-trigger')).toBeFocused();
+  const draftedId = await idFor(page, 'policy-housing-choice-voucher', 'drafted');
+  await page.getByTestId('bill-docket-picker').selectOption(draftedId);
+  await expect(page.getByTestId('bill-docket-candidate-preview')).toContainText('Resolve all pending coalition offers');
+  await page.getByTestId('bill-docket-add').click();
+  await expect(page.getByTestId('bill-docket-feedback')).toContainText('Resolve all pending coalition offers');
+  expect((await state(page)).bill.revision).toBe(0);
+
+  await page.getByTestId('decision-trigger').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByTestId('decision-resolve-reject').click();
+  expect((await state(page)).pendingDecisions.find((decision) => decision.status === 'pending')).toBeUndefined();
+  await expect(page.getByTestId('decision-trigger')).toBeFocused();
+});
+
 test('counteroffer reserves visible evidence and staff, then fulfills the exact promise', async ({ page }) => {
   await openWorkbench(page);
 
@@ -103,6 +136,7 @@ test('counteroffer reserves visible evidence and staff, then fulfills the exact 
   await expect(counter).toContainText('District Director');
   await expect(counter).toContainText('Rent Burden Report');
   await expect(counter).toContainText('Consumes Rent Burden Report');
+  await expect(counter).toContainText('cannot be cancelled');
   await page.getByTestId('decision-resolve-counter').click();
 
   const working = await state(page);
@@ -112,12 +146,15 @@ test('counteroffer reserves visible evidence and staff, then fulfills the exact 
     officeDefinitionId: 'coalition-office-hillcrest',
   });
   expect(working.resources.staffAttention).toBe(2);
+  expect(working.rewardedOccurrenceIds).not.toContain('demand-renter-protection:revision:0');
   expect(working.eventLog.filter((event) => event.type === 'WORK_SUBMITTED')).toHaveLength(4);
   expect(working.eventLog.filter((event) => event.type === 'DECISION_RESOLVED')).toHaveLength(1);
+  await expect(page.getByRole('button', { name: 'Confirmed — cannot cancel' })).toBeDisabled();
   await page.getByTestId('hud-pause').click();
   await expect.poll(async () => (await state(page)).activeWork.length, { timeout: 10_000 }).toBe(0);
   const completed = await state(page);
   expect(completed.resources.staffAttention).toBe(3);
   expect(completed.relationships.find((entry) => entry.memberId === 'coalition-office-hillcrest')?.support).toBe('committed');
+  expect(completed.rewardedOccurrenceIds).toContain('demand-renter-protection:revision:0');
   expect(completed.eventLog.filter((event) => event.type === 'PROMISE_CHANGED' && event.status === 'fulfilled')).toHaveLength(1);
 });

@@ -1,4 +1,5 @@
 import type { GameEvent } from '@/domain/events';
+import { applyResourceDelta } from '@/domain/resources';
 import type {
   DemandConditionDefinition,
   RelationshipState,
@@ -18,6 +19,7 @@ export function relationshipConditionSatisfied(
   memberId: string,
   condition: DemandConditionDefinition,
   provisionIds = state.bill.provisionIds,
+  expectedConcernId?: string,
 ): boolean {
   if (condition.kind === 'governing-value') return state.player.values.includes(condition.value);
   if (condition.kind === 'bill-has-tag') {
@@ -27,7 +29,8 @@ export function relationshipConditionSatisfied(
     if (card.location === 'archived' || card.status !== 'idle' || card.form !== 'prepared') return false;
     const definition = scenario.cards.find((candidate) => candidate.id === card.definitionId);
     if (!definition?.tags.includes(condition.tag)) return false;
-    return card.origin?.authoredConcern?.recipientOfficeDefinitionId === memberId;
+    return card.origin?.authoredConcern?.recipientOfficeDefinitionId === memberId
+      && (!expectedConcernId || card.origin.authoredConcern.concernId === expectedConcernId);
   });
 }
 
@@ -64,7 +67,14 @@ export function evaluateRelationships(
         };
       }
       const fulfilled = existing.conditions.every((condition) =>
-        relationshipConditionSatisfied(state, scenario, office.id, condition),
+        relationshipConditionSatisfied(
+          state,
+          scenario,
+          office.id,
+          condition,
+          state.bill.provisionIds,
+          existing.demandProvisionId,
+        ),
       );
       return {
         ...existing,
@@ -77,9 +87,9 @@ export function evaluateRelationships(
 export function promiseChangeEvents(
   before: RelationshipState[],
   after: RelationshipState[],
-): GameEvent[] {
+): Extract<GameEvent, { type: 'PROMISE_CHANGED' }>[] {
   const prior = new Map(before.map((relationship) => [relationship.memberId, relationship]));
-  const events: GameEvent[] = [];
+  const events: Extract<GameEvent, { type: 'PROMISE_CHANGED' }>[] = [];
   for (const relationship of after) {
     const previous = prior.get(relationship.memberId);
     for (const occurrenceId of relationship.promiseOccurrenceIds) {
@@ -100,4 +110,63 @@ export function promiseChangeEvents(
     }
   }
   return events;
+}
+
+/**
+ * The single promise-evaluation boundary used by decisions, work completion, bill
+ * edits and (in Task 6) time transitions. A fulfillment occurrence enters the
+ * reward ledger once, at the same transition that emits `fulfilled`.
+ */
+export function applyRelationshipEvaluation(
+  state: TermState,
+  scenario: ScenarioDefinition,
+  before: RelationshipState[] = state.relationships,
+  contextEvents: GameEvent[] = [],
+): { state: TermState; events: GameEvent[] } {
+  const relationships = evaluateRelationships(state, scenario);
+  const promiseEvents = promiseChangeEvents(before, relationships);
+  const rewarded = new Set(state.rewardedOccurrenceIds);
+  let resources = state.resources;
+  const events: GameEvent[] = [];
+  const decisionEvents = [...state.eventLog, ...contextEvents].filter(
+    (event) => event.type === 'DECISION_RESOLVED',
+  );
+
+  for (const event of promiseEvents) {
+    events.push(event);
+    if (event.status !== 'fulfilled' || rewarded.has(event.promiseOccurrenceId)) continue;
+    rewarded.add(event.promiseOccurrenceId);
+    const resolution = decisionEvents.find(
+      (candidate) => candidate.type === 'DECISION_RESOLVED'
+        && candidate.occurrenceId === event.promiseOccurrenceId,
+    );
+    const choice = resolution?.type === 'DECISION_RESOLVED'
+      ? scenario.decisionChoices.find((candidate) => candidate.id === resolution.choiceId)
+      : undefined;
+    const requested = choice?.effects.reduce((deltas, effect) => {
+      if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity' && effect.delta > 0) {
+        deltas[effect.resource] = (deltas[effect.resource] ?? 0) + effect.delta;
+      }
+      return deltas;
+    }, {} as Partial<typeof state.resources>) ?? {};
+    const reward = applyResourceDelta(resources, requested);
+    resources = reward.resources;
+    if (Object.values(reward.applied).some((amount) => amount !== 0)) {
+      events.push({
+        type: 'RESOURCE_CHANGED',
+        changes: reward.applied,
+        reason: `promise-fulfilled:${event.promiseOccurrenceId}`,
+      });
+    }
+  }
+
+  return {
+    state: {
+      ...state,
+      relationships,
+      resources,
+      rewardedOccurrenceIds: [...rewarded].sort(),
+    },
+    events,
+  };
 }

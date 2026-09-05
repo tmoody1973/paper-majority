@@ -66,6 +66,27 @@ describe('previewDecision', () => {
       reason: 'missing-prerequisites',
     });
   });
+
+  it('keeps bill-changing choices behind earlier pending offers while allowing explicit refusal', () => {
+    const hillcrest = withPending('demand-renter-protection');
+    const ruralDemand = sessionScenario.demandDefinitions.find((demand) => demand.id === 'demand-rural-supply')!;
+    const rural: PendingDecision = {
+      id: 'decision:demand-rural-supply:revision:0',
+      sourceId: ruralDemand.id,
+      occurrenceId: 'demand-rural-supply:revision:0',
+      officeDefinitionId: ruralDemand.officeDefinitionId,
+      approachedBillRevision: 0,
+      expectedBillRevision: 0,
+      choiceIds: ruralDemand.choiceIds,
+      status: 'pending',
+    };
+    const state = { ...hillcrest, pendingDecisions: [...hillcrest.pendingDecisions, rural] };
+
+    expect(previewDecision(state, sessionScenario, hillcrest.pendingDecisions[0].id, 'choice-accept-renter-protection'))
+      .toMatchObject({ accepted: false, reason: 'pending-decision' });
+    expect(previewDecision(state, sessionScenario, hillcrest.pendingDecisions[0].id, 'choice-refuse-renter-protection'))
+      .toMatchObject({ accepted: true });
+  });
 });
 
 describe('RESOLVE_DECISION', () => {
@@ -160,12 +181,17 @@ describe('RESOLVE_DECISION', () => {
       cards: [...base.cards, prepared],
       stacks: [...base.stacks, { id: prepared.stackId, cardIds: [prepared.id] }],
     };
+    const scenario = structuredClone(sessionScenario);
+    scenario.decisionChoices = scenario.decisionChoices.map((choice) => choice.id === 'choice-counter-renter-protection'
+      ? { ...choice, effects: [...choice.effects, { kind: 'resource' as const, resource: 'politicalCapital' as const, delta: 2 }] }
+      : choice);
+    const initialCapital = state.resources.politicalCapital;
     const result = executeCommand(state, {
       type: 'RESOLVE_DECISION',
       decisionId: state.pendingDecisions[0].id,
       choiceId: 'choice-counter-renter-protection',
       expectedBillRevision: 0,
-    }, services);
+    }, { scenario });
 
     expect(result.state.activeWork).toHaveLength(1);
     expect(result.state.activeWork[0]).toMatchObject({
@@ -178,22 +204,66 @@ describe('RESOLVE_DECISION', () => {
       },
     });
     expect(result.state.resources.staffAttention).toBe(2);
+    expect(result.state.resources.politicalCapital).toBe(initialCapital);
+    expect(result.state.rewardedOccurrenceIds).not.toContain(state.pendingDecisions[0].occurrenceId);
     expect(result.state.relationships.find((entry) => entry.memberId === 'coalition-office-hillcrest')?.support).toBe('conditional');
     for (const type of ['WORK_SUBMITTED', 'DECISION_RESOLVED', 'PROMISE_CHANGED'] as const) {
       expect(result.events.filter((event) => event.type === type)).toHaveLength(1);
       expect(result.state.eventLog.filter((event) => event.type === type)).toHaveLength(1);
     }
 
-    const running = executeCommand(result.state, { type: 'SET_PAUSED', paused: false }, services);
+    const attemptedCancel = executeCommand(result.state, {
+      type: 'SEPARATE_STACK',
+      stackId: result.state.cards.find((card) => card.id === result.state.activeWork[0].cardIds[0])!.stackId,
+      cardId: result.state.activeWork[0].cardIds[0],
+      x: 100,
+      y: 100,
+    }, { scenario });
+    expect(attemptedCancel.state).toBe(result.state);
+    expect(attemptedCancel.events).toEqual([
+      expect.objectContaining({ type: 'COMMAND_REJECTED', reason: 'pending-decision' }),
+    ]);
+
+    const running = executeCommand(result.state, { type: 'SET_PAUSED', paused: false }, { scenario });
     let finished = running;
     for (let index = 0; index < 30; index += 1) {
-      finished = executeCommand(finished.state, { type: 'TICK', deltaMs: 1_000 }, services);
+      finished = executeCommand(finished.state, { type: 'TICK', deltaMs: 1_000 }, { scenario });
     }
     expect(finished.state.resources.staffAttention).toBe(3);
     expect(finished.state.relationships.find((entry) => entry.memberId === 'coalition-office-hillcrest')?.support).toBe('committed');
+    expect(finished.state.resources.politicalCapital).toBe(initialCapital + 2);
+    expect(finished.state.rewardedOccurrenceIds).toContain(state.pendingDecisions[0].occurrenceId);
     expect(finished.state.eventLog.filter((event) =>
       event.type === 'PROMISE_CHANGED' && event.status === 'fulfilled',
     )).toHaveLength(1);
+    expect(finished.state.eventLog.filter((event) =>
+      event.type === 'RESOURCE_CHANGED' && event.reason === `promise-fulfilled:${state.pendingDecisions[0].occurrenceId}`,
+    )).toHaveLength(1);
+  });
+
+  it('blocks a drafted bill edit during a pending offer and leaves the offer explicitly resolvable', () => {
+    const pending = withPending('demand-renter-protection');
+    const policy = pending.cards.find((card) => card.definitionId === 'policy-housing-choice-voucher')!;
+    const state: TermState = {
+      ...pending,
+      cards: pending.cards.map((card) => card.id === policy.id
+        ? { ...card, form: 'drafted' as const, policyDefinitionId: card.definitionId }
+        : card),
+    };
+    const docketed = executeCommand(state, { type: 'DOCKET_PROVISION', cardId: policy.id }, services);
+
+    expect(docketed.state).toBe(state);
+    expect(docketed.events).toEqual([
+      expect.objectContaining({ type: 'COMMAND_REJECTED', reason: 'pending-decision' }),
+    ]);
+    const resolved = executeCommand(docketed.state, {
+      type: 'RESOLVE_DECISION',
+      decisionId: state.pendingDecisions[0].id,
+      choiceId: 'choice-refuse-renter-protection',
+      expectedBillRevision: 0,
+    }, services);
+    expect(resolved.state.pendingDecisions[0].status).toBe('resolved');
+    expect(resolved.events).toContainEqual(expect.objectContaining({ type: 'OPPORTUNITY_DECLINED' }));
   });
 
   it('requires counter work and negative choice costs to be jointly affordable before applying rewards', () => {

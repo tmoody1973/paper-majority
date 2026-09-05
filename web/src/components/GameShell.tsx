@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AccessibleCardControls } from '@/components/AccessibleCardControls';
 import { BillDocket } from '@/components/BillDocket';
@@ -14,7 +14,7 @@ import { StaffHandbook } from '@/components/StaffHandbook';
 import { WorkMat } from '@/components/WorkMat';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
 import { describeCard } from '@/domain/cardDetail';
-import { buildHandbook } from '@/domain/selectors';
+import { buildHandbook, nextPendingDecision } from '@/domain/selectors';
 import type { ScenarioDefinition, TermState } from '@/domain/types';
 import { createGameSession, type GameSession } from '@/game/session';
 
@@ -55,6 +55,8 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>();
   const [hoveredCardId, setHoveredCardId] = useState<string | undefined>();
   const [workMatCardIds, setWorkMatCardIds] = useState<string[]>([]);
+  const [dismissedDecisionId, setDismissedDecisionId] = useState<string | undefined>();
+  const decisionTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => session.subscribe((result) => setState(result.state)), [session]);
 
@@ -102,7 +104,8 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const detail = shownCardId ? describeCard(state, scenario, shownCardId) : undefined;
 
   const handbook = useMemo(() => buildHandbook(state, scenario), [state, scenario]);
-  const pendingDecisionId = state.pendingDecisions.find((decision) => decision.status === 'pending')?.id;
+  const pendingDecision = nextPendingDecision(state);
+  const decisionOpen = Boolean(pendingDecision && dismissedDecisionId !== pendingDecision.id);
 
   return (
     <main className="shell">
@@ -114,8 +117,30 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
         onToggleHandbook={() => setHandbookOpen((open) => !open)}
         onToggleReducedMotion={() => session.setReducedMotion(!state.settings.reducedMotion)}
       />
-      {pendingDecisionId && (
-        <DecisionModal key={pendingDecisionId} session={session} state={state} onResult={onResult} />
+      <div className="shell__actions">
+        <button
+          ref={decisionTriggerRef}
+          type="button"
+          data-testid="decision-trigger"
+          aria-haspopup="dialog"
+          aria-disabled={!pendingDecision}
+          onClick={() => {
+            if (pendingDecision) setDismissedDecisionId(undefined);
+          }}
+        >
+          {pendingDecision ? 'Review pending coalition decision' : 'No pending coalition decisions'}
+        </button>
+      </div>
+      {pendingDecision && (
+        <DecisionModal
+          key={pendingDecision.id}
+          session={session}
+          state={state}
+          open={decisionOpen}
+          onOpenChange={(open) => setDismissedDecisionId(open ? undefined : pendingDecision.id)}
+          returnFocusRef={decisionTriggerRef}
+          onResult={onResult}
+        />
       )}
 
       <div className="shell__body">

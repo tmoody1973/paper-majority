@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 import { previewDecision } from '@/domain/decisions';
 import { nextPendingDecision } from '@/domain/selectors';
@@ -10,6 +10,9 @@ import type { GameSession } from '@/game/session';
 export interface DecisionModalProps {
   session: GameSession;
   state: TermState;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  returnFocusRef: RefObject<HTMLElement | null>;
   onResult?: (message: string) => void;
 }
 
@@ -21,17 +24,15 @@ function resourceName(resource: keyof Resources): string {
   return resource.replace(/([A-Z])/g, ' $1').toLowerCase();
 }
 
-export function DecisionModal({ session, state, onResult }: DecisionModalProps) {
+export function DecisionModal({ session, state, open, onOpenChange, returnFocusRef, onResult }: DecisionModalProps) {
   const pending = nextPendingDecision(state);
   const scenario = session.getScenario();
-  const [inspectionOpen, setInspectionOpen] = useState(Boolean(pending));
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog || !pending || !inspectionOpen) return;
-    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!dialog || !pending || !open) return;
+    const returnFocusTarget = returnFocusRef.current;
     if (!dialog.open) {
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
@@ -42,21 +43,13 @@ export function DecisionModal({ session, state, onResult }: DecisionModalProps) 
         if (typeof dialog.close === 'function') dialog.close();
         else dialog.removeAttribute('open');
       }
-      returnFocusRef.current?.focus();
+      returnFocusTarget?.focus();
     };
-  }, [inspectionOpen, pending]);
+  }, [open, pending, returnFocusRef]);
 
-  if (!pending) return null;
+  if (!pending || !open) return null;
   const demand = scenario.demandDefinitions.find((candidate) => candidate.id === pending.sourceId);
   const office = scenario.cards.find((candidate) => candidate.id === pending.officeDefinitionId);
-
-  if (!inspectionOpen) {
-    return (
-      <button type="button" data-testid="decision-review" onClick={() => setInspectionOpen(true)}>
-        Review pending coalition decision
-      </button>
-    );
-  }
 
   return (
     <dialog
@@ -67,7 +60,7 @@ export function DecisionModal({ session, state, onResult }: DecisionModalProps) 
       aria-describedby="decision-modal-description"
       onCancel={(event) => {
         event.preventDefault();
-        setInspectionOpen(false);
+        onOpenChange(false);
       }}
     >
       <div className="decision-modal__paper">
@@ -76,7 +69,7 @@ export function DecisionModal({ session, state, onResult }: DecisionModalProps) 
             <span className="decision-modal__badge">Simulated negotiation</span>
             <h2 id="decision-modal-title">{office?.title ?? pending.officeDefinitionId}</h2>
           </div>
-          <button type="button" aria-label="Close decision inspection" onClick={() => setInspectionOpen(false)}>Close</button>
+          <button type="button" aria-label="Close decision inspection" onClick={() => onOpenChange(false)}>Close</button>
         </header>
         <p id="decision-modal-description">{demand?.title ?? pending.sourceId}</p>
         {office?.kind === 'coalition' && (
@@ -119,15 +112,26 @@ export function DecisionModal({ session, state, onResult }: DecisionModalProps) 
                       .join(', ') || 'no change'}</li>
                     <li>Support gained: {preview.gainedSupport.map((id) => titleOf(session, id)).join(', ') || 'none'}</li>
                     <li>Support lost: {preview.lostSupport.map((id) => titleOf(session, id)).join(', ') || 'none'}</li>
-                    <li>Incompatible promises or values: {preview.incompatiblePromises.join(', ') || 'none'}</li>
+                    <li>Incompatible promises or values: {preview.incompatiblePromises.map((id) => {
+                      const incompatibleDemand = scenario.demandDefinitions.find((candidate) =>
+                        id === candidate.id || id.startsWith(`${candidate.id}:`),
+                      );
+                      if (!incompatibleDemand) return id;
+                      return `${incompatibleDemand.title} (${titleOf(session, incompatibleDemand.officeDefinitionId)})`;
+                    }).join(', ') || 'none'}</li>
                     {preview.requiredWork && (
                       <li>
                         Required work: {Math.ceil(preview.requiredWork.durationMs / 1000)}s with{' '}
                         {preview.requiredWork.cardIds.map((id) => titleOf(session, state.cards.find((card) => card.id === id)?.definitionId ?? id)).join(', ')}.
                         {' '}Consumes {preview.requiredWork.consumedCardIds.map((id) => titleOf(session, state.cards.find((card) => card.id === id)?.definitionId ?? id)).join(', ') || 'nothing'}.
+                        {' '}Confirmation commits these resources and the work cannot be cancelled.
                       </li>
                     )}
-                    {preview.newObligations.map((obligation) => <li key={obligation.id}>New obligation: {obligation.sourceId}</li>)}
+                    {preview.newObligations.map((obligation) => (
+                      <li key={obligation.id}>
+                        New obligation: {scenario.obligationDefinitions.find((definition) => definition.id === obligation.sourceId)?.title ?? obligation.sourceId}
+                      </li>
+                    ))}
                   </ul>
                 ) : (
                   <p role="status">Unavailable: {preview.message}</p>
@@ -149,7 +153,7 @@ export function DecisionModal({ session, state, onResult }: DecisionModalProps) 
                       onResult?.(rejection.message);
                       return;
                     }
-                    setInspectionOpen(false);
+                    onOpenChange(false);
                     onResult?.(`${choice.label} recorded.`);
                   }}
                 >

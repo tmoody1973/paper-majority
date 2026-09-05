@@ -24,7 +24,7 @@ export interface RequiredDecisionWork {
 export type DecisionPreview =
   | {
       accepted: false;
-      reason: 'unknown-decision' | 'unknown-choice' | 'stale-decision' | 'missing-prerequisites' | 'insufficient-resources';
+      reason: 'unknown-decision' | 'unknown-choice' | 'stale-decision' | 'missing-prerequisites' | 'insufficient-resources' | 'pending-decision';
       message: string;
       expectedBillRevision?: number;
     }
@@ -59,6 +59,7 @@ function requiredWorkPlan(
   state: TermState,
   scenario: ScenarioDefinition,
   officeDefinitionId: string,
+  concernId: string,
   patternId: string,
 ): { plan: WorkPlan; cardIds: string[] } | undefined {
   const available = state.cards
@@ -69,7 +70,8 @@ function requiredWorkPlan(
       if (!cards.some((card) => card.definitionId === officeDefinitionId)) continue;
       const prepared = cards.filter((card) => card.form === 'prepared');
       if (prepared.some((card) =>
-        card.origin?.authoredConcern?.recipientOfficeDefinitionId !== officeDefinitionId,
+        card.origin?.authoredConcern?.recipientOfficeDefinitionId !== officeDefinitionId
+          || card.origin.authoredConcern.concernId !== concernId,
       )) continue;
       const cardIds = cards.map((card) => card.id);
       const planned = planWork(state, scenario, cardIds);
@@ -90,7 +92,7 @@ export function findRequiredDecisionWorkPlan(
   const pending = state.pendingDecisions.find((decision) => decision.id === decisionId && decision.status === 'pending');
   const choice = scenario.decisionChoices.find((candidate) => candidate.id === choiceId);
   if (!pending || !choice?.requiredWorkPatternId) return undefined;
-  return requiredWorkPlan(state, scenario, pending.officeDefinitionId, choice.requiredWorkPatternId);
+  return requiredWorkPlan(state, scenario, pending.officeDefinitionId, pending.sourceId, choice.requiredWorkPatternId);
 }
 
 function resourceEffects(choice: DecisionChoiceDefinition): Partial<Resources> {
@@ -198,24 +200,40 @@ export function previewDecision(
   }
   const choice = scenario.decisionChoices.find((candidate) => candidate.id === choiceId);
   if (!choice) return { accepted: false, reason: 'unknown-choice', message: 'That response is not authored in this scenario.' };
+  const changesBill = choice.effects.some((effect) =>
+    effect.kind === 'bill-add-provision' || effect.kind === 'bill-remove-provision',
+  );
+  if (
+    changesBill
+    && state.pendingDecisions.some((decision) => decision.status === 'pending' && decision.id !== decisionId)
+  ) {
+    return {
+      accepted: false,
+      reason: 'pending-decision',
+      message: 'Resolve the other pending coalition offers before changing the bill.',
+    };
+  }
   if (choice.requirements.some((requirement) =>
-    !relationshipConditionSatisfied(state, scenario, pending.officeDefinitionId, requirement),
+    !relationshipConditionSatisfied(
+      state,
+      scenario,
+      pending.officeDefinitionId,
+      requirement,
+      state.bill.provisionIds,
+      pending.sourceId,
+    ),
   )) {
     return { accepted: false, reason: 'missing-prerequisites', message: 'The required evidence or bill condition is not ready.' };
   }
 
   const required = choice.requiredWorkPatternId
-    ? requiredWorkPlan(state, scenario, pending.officeDefinitionId, choice.requiredWorkPatternId)
+    ? requiredWorkPlan(state, scenario, pending.officeDefinitionId, pending.sourceId, choice.requiredWorkPatternId)
     : undefined;
   if (choice.requiredWorkPatternId && !required) {
     return { accepted: false, reason: 'missing-prerequisites', message: 'No eligible staff and evidence are ready for this counteroffer.' };
   }
 
   const choiceResources = resourceEffects(choice);
-  const jointCosts: Partial<Resources> = { ...choiceResources };
-  for (const [resource, amount] of Object.entries(required?.plan.preview.cost ?? {}) as [keyof Resources, number][]) {
-    jointCosts[resource] = (jointCosts[resource] ?? 0) - amount;
-  }
   const requiredNow: Partial<Resources> = { ...required?.plan.preview.cost };
   for (const [resource, delta] of Object.entries(choiceResources) as [keyof Resources, number][]) {
     if (delta < 0) requiredNow[resource] = (requiredNow[resource] ?? 0) + -delta;
@@ -229,12 +247,18 @@ export function previewDecision(
 
   const nextProvisionIds = provisionEffects(state, choice);
   const billPreview = previewBillChange(state, scenario, nextProvisionIds);
-  const integrityDelta = billPreview.integrity - state.resources.policyIntegrity;
-  const requestedResources = { ...jointCosts, policyIntegrity: integrityDelta };
-  const applied = applyResourceDelta(state.resources, requestedResources).applied;
   const beforeRelationships = evaluateRelationships(state, scenario);
+  const relationshipInput = required
+    ? {
+        ...state,
+        cards: state.cards.map((card) => required.cardIds.includes(card.id)
+          ? { ...card, status: 'working' as const }
+          : card),
+        relationships: beforeRelationships,
+      }
+    : { ...state, relationships: beforeRelationships };
   const nextRelationships = proposedRelationships(
-    { ...state, relationships: beforeRelationships },
+    relationshipInput,
     scenario,
     choice,
     pending.occurrenceId,
@@ -242,6 +266,19 @@ export function previewDecision(
     nextProvisionIds,
   );
   const changes = supportChanges(beforeRelationships, nextRelationships);
+  const fulfilledNow = nextRelationships.some((relationship) =>
+    relationship.demandOccurrenceId === pending.occurrenceId && relationship.support === 'committed',
+  );
+  const jointDeltas: Partial<Resources> = {};
+  for (const [resource, delta] of Object.entries(choiceResources) as [keyof Resources, number][]) {
+    if (delta < 0 || fulfilledNow) jointDeltas[resource] = (jointDeltas[resource] ?? 0) + delta;
+  }
+  for (const [resource, amount] of Object.entries(required?.plan.preview.cost ?? {}) as [keyof Resources, number][]) {
+    jointDeltas[resource] = (jointDeltas[resource] ?? 0) - amount;
+  }
+  const integrityDelta = billPreview.integrity - state.resources.policyIntegrity;
+  const requestedResources = { ...jointDeltas, policyIntegrity: integrityDelta };
+  const applied = applyResourceDelta(state.resources, requestedResources).applied;
   const negativeValues = nextProvisionIds
     .filter((id) => !state.bill.provisionIds.includes(id))
     .flatMap((id) => {

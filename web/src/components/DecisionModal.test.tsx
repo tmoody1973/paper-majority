@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DecisionModal } from '@/components/DecisionModal';
@@ -34,12 +34,26 @@ function pendingState(): TermState {
 
 function Harness({ session, onResult = vi.fn() }: { session: GameSession; onResult?: (message: string) => void }) {
   const [state, setState] = useState(session.getState());
+  const [open, setOpen] = useState(true);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   useEffect(() => session.subscribe((result) => setState(result.state)), [session]);
   const pendingId = state.pendingDecisions.find((decision) => decision.status === 'pending')?.id;
   return (
     <>
-      <button type="button" autoFocus data-testid="decision-trigger">Outreach status</button>
-      {pendingId && <DecisionModal key={pendingId} session={session} state={state} onResult={onResult} />}
+      <button ref={triggerRef} type="button" autoFocus data-testid="decision-trigger" onClick={() => setOpen(true)}>
+        Outreach status
+      </button>
+      {pendingId && (
+        <DecisionModal
+          key={pendingId}
+          session={session}
+          state={state}
+          open={open}
+          onOpenChange={setOpen}
+          returnFocusRef={triggerRef}
+          onResult={onResult}
+        />
+      )}
     </>
   );
 }
@@ -68,7 +82,7 @@ describe('DecisionModal', () => {
 
     fireEvent(dialog, new Event('cancel', { bubbles: false, cancelable: true }));
 
-    expect(await screen.findByTestId('decision-review')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(session.getState().pendingDecisions[0]?.status).toBe('pending');
     expect(session.getState().eventLog.filter((event) => event.type === 'DECISION_RESOLVED')).toHaveLength(0);
     await waitFor(() => expect(screen.getByTestId('decision-trigger')).toHaveFocus());
@@ -120,6 +134,7 @@ describe('DecisionModal', () => {
     const counter = screen.getByTestId('decision-choice-counter');
     expect(counter).toHaveTextContent('District Director');
     expect(counter).toHaveTextContent('Rent Burden Report');
+    expect(counter).toHaveTextContent('work cannot be cancelled');
     await userEvent.setup().click(screen.getByTestId('decision-resolve-counter'));
 
     expect(session.getState().activeWork[0]?.decisionOrigin?.choiceId).toBe('choice-counter-renter-protection');

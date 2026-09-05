@@ -1,6 +1,6 @@
 import type { GameCommand, GameCommandType } from '@/domain/commands';
 import { previewBillChange, previewDocketProvision } from '@/domain/bill';
-import { evaluateRelationships, promiseChangeEvents } from '@/domain/coalition';
+import { applyRelationshipEvaluation } from '@/domain/coalition';
 import { findRequiredDecisionWorkPlan, previewDecision } from '@/domain/decisions';
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
@@ -301,6 +301,14 @@ function cancelSessionWork(
   x: number,
   y: number,
 ): EngineResult {
+  if (work.decisionOrigin) {
+    return rejectCommand(
+      state,
+      'SEPARATE_STACK',
+      'pending-decision',
+      'Confirmed counteroffer work cannot be cancelled.',
+    );
+  }
   const attention = work.paidCost.staffAttention ?? 0;
   const released = attention > 0
     ? applyResourceDelta(state.resources, { staffAttention: attention })
@@ -826,7 +834,8 @@ function completeSessionWork(
       activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
       pendingDecisions: pending ? [...state.pendingDecisions, pending] : state.pendingDecisions,
     };
-    return { state: { ...next, relationships: evaluateRelationships(next, services.scenario) }, events };
+    const evaluated = applyRelationshipEvaluation(next, services.scenario, state.relationships, events);
+    return { state: evaluated.state, events: [...events, ...evaluated.events] };
   }
 
   const memberCards = work.cardIds
@@ -895,7 +904,6 @@ function completeSessionWork(
       stacks,
       activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
   };
-  const relationships = evaluateRelationships(completedState, services.scenario);
   const events: GameEvent[] = [
       {
         type: 'CARD_TRANSFORMED',
@@ -908,8 +916,8 @@ function completeSessionWork(
       },
       { type: 'RESOURCE_CHANGED', changes: change.applied, reason: `pattern-complete:${work.patternId}` },
   ];
-  events.push(...promiseChangeEvents(state.relationships, relationships));
-  return { state: { ...completedState, relationships }, events };
+  const evaluated = applyRelationshipEvaluation(completedState, services.scenario, state.relationships, events);
+  return { state: evaluated.state, events: [...events, ...evaluated.events] };
 }
 
 /**
@@ -1380,9 +1388,8 @@ export function executeCommand(
         provisionId: preview.provisionId,
         revision: preview.nextRevision,
       });
-      const relationships = evaluateRelationships(next, services.scenario);
-      events.push(...promiseChangeEvents(state.relationships, relationships));
-      return accept(state, { ...next, relationships }, events);
+      const evaluated = applyRelationshipEvaluation(next, services.scenario, state.relationships, events);
+      return accept(state, evaluated.state, [...events, ...evaluated.events]);
     }
 
     case 'RESOLVE_DECISION': {
@@ -1471,7 +1478,7 @@ export function executeCommand(
         policyIntegrity: billPreview.integrity - next.resources.policyIntegrity,
       };
       for (const effect of choice.effects) {
-        if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity') {
+        if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity' && effect.delta < 0) {
           resourceRequest[effect.resource] = (resourceRequest[effect.resource] ?? 0) + effect.delta;
         }
       }
@@ -1495,12 +1502,8 @@ export function executeCommand(
         pendingDecisions: next.pendingDecisions.map((decision) =>
           decision.id === command.decisionId ? { ...decision, status: 'resolved' as const } : decision,
         ),
-        rewardedOccurrenceIds: choice.action === 'reject'
-          ? next.rewardedOccurrenceIds
-          : Array.from(new Set([...next.rewardedOccurrenceIds, pending.occurrenceId])).sort(),
         relationships: preview.nextRelationships,
       };
-      const relationships = evaluateRelationships(withResolution, services.scenario);
       const decisionEvents: GameEvent[] = [{
         type: 'DECISION_RESOLVED',
         decisionId: command.decisionId,
@@ -1529,12 +1532,17 @@ export function executeCommand(
           decisionEvents.push({ type: 'PROVISION_NEGOTIATED', decisionId: command.decisionId, occurrenceId: pending.occurrenceId, provisionId, change: 'added', revision: nextRevision });
         }
       }
-      decisionEvents.push(...promiseChangeEvents(state.relationships, relationships));
-      const resolvedState = { ...withResolution, relationships };
-      if (workEvents.length === 0) return accept(state, resolvedState, decisionEvents);
+      const evaluated = applyRelationshipEvaluation(
+        withResolution,
+        services.scenario,
+        state.relationships,
+        decisionEvents,
+      );
+      const allDecisionEvents = [...decisionEvents, ...evaluated.events];
+      if (workEvents.length === 0) return accept(state, evaluated.state, allDecisionEvents);
       return {
-        state: { ...resolvedState, eventLog: [...resolvedState.eventLog, ...decisionEvents] },
-        events: [...workEvents, ...decisionEvents],
+        state: { ...evaluated.state, eventLog: [...evaluated.state.eventLog, ...allDecisionEvents] },
+        events: [...workEvents, ...allDecisionEvents],
       };
     }
 

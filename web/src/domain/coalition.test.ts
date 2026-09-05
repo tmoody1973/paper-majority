@@ -97,4 +97,35 @@ describe('evaluateRelationships', () => {
     expect(evaluateRelationships({ ...base, cards: [...base.cards, preparedForHillcrest] }, sessionScenario)
       .find((entry) => entry.memberId === 'coalition-office-ridgeline')?.support).toBe('conditional');
   });
+
+  it('does not let the same office use evidence prepared for a different authored concern', () => {
+    const occurrenceId = 'demand-renter-protection:revision:0';
+    const base = stateWithRelationship({
+      memberId: 'coalition-office-hillcrest',
+      support: 'conditional',
+      demandProvisionId: 'demand-renter-protection',
+      demandOccurrenceId: occurrenceId,
+      promiseOccurrenceIds: [occurrenceId],
+      conditions: [{ kind: 'prepared-evidence-tag', tag: 'committee-relevant' }],
+      evaluatedRevision: 0,
+    });
+    const source = base.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    const wrongConcern: CardInstance = {
+      ...source,
+      id: 'card-prepared-wrong-concern',
+      form: 'prepared',
+      origin: {
+        explanationKey: 'result.evidence.office-concern-answered',
+        inputDefinitionIds: [source.definitionId],
+        consumedDefinitionIds: [],
+        authoredConcern: {
+          concernId: 'demand-rural-supply',
+          recipientOfficeDefinitionId: 'coalition-office-hillcrest',
+        },
+      },
+    };
+
+    expect(evaluateRelationships({ ...base, cards: [...base.cards, wrongConcern] }, sessionScenario)[0]?.support)
+      .toBe('conditional');
+  });
 });

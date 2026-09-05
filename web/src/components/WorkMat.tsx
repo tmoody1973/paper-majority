@@ -151,7 +151,9 @@ export function WorkMat({
               <button
                 type="button"
                 data-testid={`work-mat-cancel-${work.id}`}
+                disabled={Boolean(work.decisionOrigin)}
                 onClick={() => {
+                  if (work.decisionOrigin) return;
                   const card = state.cards.find((candidate) => candidate.id === work.cardIds[0]);
                   if (!card) return;
                   const result = session.dispatch({ type: 'SEPARATE_STACK', stackId: card.stackId, cardId: card.id, x: card.x, y: card.y });
@@ -161,7 +163,7 @@ export function WorkMat({
                     : 'Work cancelled. Staff attention returned.');
                 }}
               >
-                Cancel
+                {work.decisionOrigin ? 'Confirmed — cannot cancel' : 'Cancel'}
               </button>
             </li>
           ))}

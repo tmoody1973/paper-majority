@@ -107,6 +107,25 @@ describe('Session work reservations', () => {
       paidCost: { staffAttention: 1 },
     });
     expect(previewWork(started.state, sessionScenario, ids)).toMatchObject({ accepted: false });
+    const confirmedCounterState: TermState = {
+      ...started.state,
+      activeWork: started.state.activeWork.map((work) => ({
+        ...work,
+        decisionOrigin: {
+          decisionId: 'decision:test',
+          choiceId: 'choice:test',
+          occurrenceId: 'demand:test:revision:0',
+          officeDefinitionId: 'coalition-office-hillcrest',
+        },
+      })),
+    };
+    const locked = executeCommand(confirmedCounterState, {
+      type: 'SEPARATE_STACK', stackId: counsel.stackId, cardId: counsel.id, x: counsel.x, y: counsel.y,
+    }, { scenario: sessionScenario });
+    expect(locked.state).toBe(confirmedCounterState);
+    expect(locked.events).toEqual([
+      expect.objectContaining({ type: 'COMMAND_REJECTED', reason: 'pending-decision' }),
+    ]);
     const alternateSummary = {
       ...summary, id: 'card-summary-alternate', stackId: 'stack-summary-alternate', status: 'idle' as const,
     };

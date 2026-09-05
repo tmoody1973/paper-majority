@@ -28,7 +28,7 @@ export type DocketPreview =
       sourceClass: 'simulated';
       bill: BillPreview;
     }
-  | { accepted: false; reason: 'unknown-card' | 'invalid-card-form' | 'duplicate-provision'; message: string };
+  | { accepted: false; reason: 'unknown-card' | 'invalid-card-form' | 'duplicate-provision' | 'pending-decision'; message: string };
 
 function policyFor(
   scenario: ScenarioDefinition,
@@ -87,6 +87,13 @@ export function previewDocketProvision(
   scenario: ScenarioDefinition,
   cardId: string,
 ): DocketPreview {
+  if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
+    return {
+      accepted: false,
+      reason: 'pending-decision',
+      message: 'Resolve all pending coalition offers before changing the bill.',
+    };
+  }
   const card = state.cards.find((candidate) => candidate.id === cardId);
   if (!card || card.location !== 'desk') {
     return { accepted: false, reason: 'unknown-card', message: 'That drafted provision is no longer on the desk.' };
