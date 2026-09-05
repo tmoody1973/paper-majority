@@ -102,21 +102,51 @@ describe('save checkpoint round trips', () => {
 
   it('round trips a non-cancellable decision-origin counter reservation', () => {
     const storage = new MemoryStorage();
-    const before = richState();
-    const pending = before.pendingDecisions[0];
-    const counter = {
-      ...before,
-      pendingDecisions: [{ ...pending, status: 'resolved' as const }],
-      activeWork: before.activeWork.map((work, index) => index === 0 ? {
-        ...work,
-        decisionOrigin: {
-          decisionId: pending.id,
-          choiceId: 'choice-counter-renter-protection',
-          occurrenceId: pending.occurrenceId,
-          officeDefinitionId: pending.officeDefinitionId,
-        },
-      } : work),
+    const base = createRun({ ...sessionSetup, mode: 'session' });
+    const demand = sessionScenario.demandDefinitions[0];
+    const occurrenceId = `${demand.id}:revision:0`;
+    const pending: PendingDecision = {
+      id: `decision:${occurrenceId}`,
+      sourceId: demand.id,
+      occurrenceId,
+      officeDefinitionId: demand.officeDefinitionId,
+      approachedBillRevision: 0,
+      expectedBillRevision: 0,
+      choiceIds: [...demand.choiceIds],
+      status: 'pending',
     };
+    const evidence = base.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    const prepared = {
+      ...evidence,
+      id: 'card-prepared-counter-save',
+      stackId: 'stack-card-prepared-counter-save',
+      form: 'prepared' as const,
+      origin: {
+        explanationKey: 'result.evidence.office-concern-answered',
+        inputDefinitionIds: [evidence.definitionId, demand.officeDefinitionId],
+        consumedDefinitionIds: [evidence.definitionId],
+        authoredConcern: { concernId: demand.id, recipientOfficeDefinitionId: demand.officeDefinitionId },
+      },
+    };
+    const ready = {
+      ...base,
+      cards: [...base.cards, prepared],
+      stacks: [...base.stacks, { id: prepared.stackId, cardIds: [prepared.id] }],
+      pendingDecisions: [pending],
+      eventLog: [{
+        type: 'DECISION_PRESENTED' as const,
+        decisionId: pending.id,
+        sourceId: pending.sourceId,
+        occurrenceId: pending.occurrenceId,
+        choiceIds: pending.choiceIds,
+      }],
+    };
+    const counter = executeCommand(ready, {
+      type: 'RESOLVE_DECISION',
+      decisionId: pending.id,
+      choiceId: 'choice-counter-renter-protection',
+      expectedBillRevision: 0,
+    }, { scenario: sessionScenario }).state;
     expect(saveCheckpoint(storage, counter, sessionScenario).kind).toBe('saved');
     const loaded = loadCheckpoint(storage, sessionScenario);
     expect(loaded.kind).toBe('loaded');
@@ -129,7 +159,16 @@ describe('save checkpoint round trips', () => {
     const first = richState();
     expect(saveCheckpoint(storage, first, sessionScenario).kind).toBe('saved');
     const firstRaw = storage.values.get(SAVE_KEYS.current);
-    expect(saveCheckpoint(storage, { ...first, bill: { ...first.bill, revision: 1 } }, sessionScenario).kind).toBe('saved');
+    const revised = {
+      ...first,
+      bill: { ...first.bill, revision: 1 },
+      pendingDecisions: first.pendingDecisions.map((decision) => ({
+        ...decision,
+        approachedBillRevision: 1,
+        expectedBillRevision: 1,
+      })),
+    };
+    expect(saveCheckpoint(storage, revised, sessionScenario).kind).toBe('saved');
     expect(storage.values.has(SAVE_KEYS.previousWeek)).toBe(false);
     const completed = { ...first, resolvedWeekIds: [...first.resolvedWeekIds, 'week:1'], week: 2 };
     expect(saveCheckpoint(storage, completed, sessionScenario).kind).toBe('saved');
@@ -186,6 +225,7 @@ describe('storage interruption safety', () => {
     const previous = storage.values.get(SAVE_KEYS.previousWeek);
     expect([current, previous]).toContain(oldRaw);
     if (operation === `remove:${SAVE_KEYS.candidate}`) {
+      expect(result.message).toMatch(/checkpoint was saved.*staging copy/i);
       expect(loadCheckpoint(Object.assign(storage, { failAt: undefined }), sessionScenario).kind).toBe('loaded');
     }
   });

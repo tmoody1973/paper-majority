@@ -92,10 +92,13 @@ export function createGameSession(
       return () => listeners.delete(listener);
     },
     recover(nextStorage) {
+      // A failed probe must revoke any earlier writer binding. Otherwise a paid
+      // command could overwrite a checkpoint this session was unable to read.
+      storage = undefined;
       const loaded = loadCheckpoint(nextStorage, scenario);
       // An unknown or mismatched save stays untouched until the player explicitly
       // resolves it in a future save-management flow.
-      if (!['incompatible-version', 'wrong-snapshot', 'corrupt'].includes(loaded.kind)) {
+      if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous' || loaded.kind === 'empty') {
         storage = nextStorage;
       }
       if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous') {

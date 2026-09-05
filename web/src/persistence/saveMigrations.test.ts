@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createRun } from '@/domain/initialState';
+import { executeCommand } from '@/domain/engine';
 import { canonicalJson, canonicalSha256, sha256Hex } from '@/persistence/canonicalHash';
 import {
   createSaveEnvelope,
@@ -19,6 +20,13 @@ describe('canonical scenario identity', () => {
 });
 
 describe('save migrations', () => {
+  const activeState = () => {
+    const state = createRun({ ...sessionSetup, mode: 'session' });
+    const aide = state.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
+    const evidence = state.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    return executeCommand(state, { type: 'SUBMIT_WORK', cardIds: [aide.id, evidence.id] }, { scenario: sessionScenario }).state;
+  };
+
   it('rejects unknown save and rules versions without guessing', () => {
     const state = createRun({ ...sessionSetup, mode: 'session' });
     const envelope = createSaveEnvelope(state, sessionScenario);
@@ -43,6 +51,53 @@ describe('save migrations', () => {
       ...envelope,
       state: { ...state, activeWork: [{ id: 'work-broken', kind: 'pattern', cardIds: ['missing'] }] },
     }, sessionScenario)).toMatchObject({ kind: 'corrupt' });
+  });
+
+  it.each([
+    ['null provision receipt', (state: ReturnType<typeof createRun>) => ({ ...state, bill: { ...state.bill, provisionReceipts: [null] } })],
+    ['null relationship condition', (state: ReturnType<typeof createRun>) => ({
+      ...state,
+      relationships: state.relationships.map((relationship, index) => index === 0 ? { ...relationship, conditions: [null] } : relationship),
+    })],
+    ['malformed resource event', (state: ReturnType<typeof createRun>) => ({
+      ...state,
+      eventLog: [{ type: 'RESOURCE_CHANGED', changes: { staffAttention: 'free' }, reason: 'tampered' }],
+    })],
+    ['unknown completion pattern', (state: ReturnType<typeof createRun>) => ({
+      ...state,
+      eventLog: [{ type: 'PATTERN_COMPLETED', workId: 'work-1', patternId: 'pattern-foreign' }],
+    })],
+    ['unknown decision choice event', (state: ReturnType<typeof createRun>) => ({
+      ...state,
+      eventLog: [{ type: 'DECISION_RESOLVED', decisionId: 'decision:x', choiceId: 'choice-foreign', occurrenceId: 'x' }],
+    })],
+  ])('rejects exact nested-domain violation: %s', (_label, mutate) => {
+    const state = createRun({ ...sessionSetup, mode: 'session' });
+    const result = validateAndMigrateSave(createSaveEnvelope(mutate(state) as never, sessionScenario), sessionScenario);
+    expect(result.kind).toBe('corrupt');
+  });
+
+  it.each([
+    ['null effective pattern', (state: ReturnType<typeof activeState>) => ({
+      ...state,
+      activeWork: state.activeWork.map((work) => ({ ...work, effectivePattern: null })),
+    })],
+    ['negative held cost', (state: ReturnType<typeof activeState>) => ({
+      ...state,
+      activeWork: state.activeWork.map((work) => ({ ...work, paidCost: { staffAttention: -1 } })),
+    })],
+    ['foreign pattern id', (state: ReturnType<typeof activeState>) => ({
+      ...state,
+      activeWork: state.activeWork.map((work) => ({ ...work, patternId: 'pattern-foreign' })),
+    })],
+    ['overlapping duplicate reservation', (state: ReturnType<typeof activeState>) => ({
+      ...state,
+      activeWork: [...state.activeWork, { ...state.activeWork[0], id: 'work-foreign' }],
+    })],
+  ])('rejects unsafe reservation graph: %s', (_label, mutate) => {
+    const state = activeState();
+    const result = validateAndMigrateSave(createSaveEnvelope(mutate(state) as never, sessionScenario), sessionScenario);
+    expect(result.kind).toBe('corrupt');
   });
 
   it('adapts only safe empty v1 fields into a validated v2 state', () => {
@@ -84,5 +139,25 @@ describe('save migrations', () => {
       state: legacyState,
     }, sessionScenario);
     expect(result).toMatchObject({ kind: 'corrupt' });
+  });
+
+  it.each(['obligations', 'pendingDecisions'] as const)('does not default missing v1 %s when occurrence evidence exists', (missing) => {
+    const state = createRun({ ...sessionSetup, mode: 'session' });
+    const legacyState = {
+      ...state,
+      schemaVersion: 1 as const,
+      relationships: state.relationships.map((relationship, index) => index === 0
+        ? { ...relationship, demandOccurrenceId: 'demand-renter-protection:revision:0' }
+        : relationship),
+    } as Record<string, unknown>;
+    delete legacyState[missing];
+    const result = validateAndMigrateSave({
+      saveSchemaVersion: 1,
+      rulesVersion: 1,
+      snapshotId: sessionScenario.snapshotId,
+      snapshotHash: scenarioSnapshotHash(sessionScenario),
+      state: legacyState,
+    }, sessionScenario);
+    expect(result.kind).toBe('corrupt');
   });
 });

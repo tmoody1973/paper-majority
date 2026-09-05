@@ -138,7 +138,7 @@ const cardSchema = z.discriminatedUnion('kind', [
   ordinaryCardSchema('tactic'),
 ]);
 
-const resourceCostSchema = z.strictObject(
+export const resourceCostSchema = z.strictObject(
   Object.fromEntries(RESOURCE_KEYS.map((key) => [key, finiteNonnegative.optional()])) as {
     [K in (typeof RESOURCE_KEYS)[number]]: z.ZodOptional<typeof finiteNonnegative>;
   },
@@ -170,7 +170,7 @@ const recipeOutputSchema = z.discriminatedUnion('mode', [
   }),
 ]);
 
-const recipePatternSchema = z.strictObject({
+export const recipePatternSchema = z.strictObject({
   id: idSchema,
   slots: z.array(recipeSlotSchema).min(1),
   eligibleStages: z.array(z.enum(STAGES)).min(1).optional(),
@@ -215,7 +215,7 @@ const expansionBaseShape = {
   eligibleStaffTags: z.array(idSchema).min(1),
 };
 
-const tacticExpansionSchema = z.strictObject({
+export const tacticExpansionSchema = z.strictObject({
   ...expansionBaseShape,
   effect: sessionExpansionEffectSchema,
 });
@@ -273,7 +273,7 @@ const dueTimeSchema = z.strictObject({
   offsetMs: z.number().int().min(0).max(75_000),
 });
 
-const relationshipConditionSchema = z.discriminatedUnion('kind', [
+export const relationshipConditionSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('bill-has-tag'), tag: idSchema }),
   z.strictObject({ kind: z.literal('prepared-evidence-tag'), tag: idSchema }),
   z.strictObject({ kind: z.literal('governing-value'), value: z.enum(GOVERNING_VALUES) }),

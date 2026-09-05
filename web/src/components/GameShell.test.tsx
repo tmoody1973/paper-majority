@@ -15,6 +15,7 @@ import { createRun } from '@/domain/initialState';
 import type { CardInstance, PendingDecision, TermState } from '@/domain/types';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 import { saveCheckpoint, SAVE_KEYS } from '@/persistence/saveRepository';
+import { PLAYER_PROFILE_KEY } from '@/persistence/playerProfile';
 
 function pendingDocketState(): TermState {
   const state = createRun({ ...sessionSetup, mode: 'session' });
@@ -155,5 +156,20 @@ describe('GameShell', () => {
     render(<GameShell scenario={sessionScenario} initialState={createRun({ ...sessionSetup, mode: 'session' })} />);
     expect(await screen.findByTestId('session-save-warning')).toHaveTextContent(/invalid document shape|unsupported/i);
     expect(localStorage.getItem(SAVE_KEYS.current)).toBe(raw);
+  });
+
+  it('renders remembered handbook explanations from a profile with no checkpoint', async () => {
+    localStorage.setItem(PLAYER_PROFILE_KEY, JSON.stringify({
+      schemaVersion: 1,
+      lifetimeDiscoveredPatternIds: ['pattern-summarize-evidence'],
+    }));
+    const state = createRun({ ...sessionSetup, mode: 'session' });
+    render(<GameShell scenario={sessionScenario} initialState={state} />);
+    await userEvent.setup().click(screen.getByTestId('hud-handbook'));
+    const entry = await screen.findByTestId('handbook-entry-pattern-summarize-evidence');
+    expect(entry).toHaveTextContent('Remembered');
+    expect(entry).toHaveTextContent(/without changing this run/i);
+    expect(window.__congressGameTestApi?.getState().discoveredPatternIds).toEqual([]);
+    expect(localStorage.getItem(SAVE_KEYS.current)).toBeNull();
   });
 });

@@ -77,10 +77,17 @@ test('a complete first week remains coherent through paid work, decision and rel
   // immediately before the paid/reputational choice.
   await reload(page);
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByTestId('decision-resolve-reject').click();
-  await expect(page.getByTestId('coalition-status-coalition-office-hillcrest')).toContainText('refused');
+  const capitalBeforeChoice = (await state(page)).resources.politicalCapital;
+  await page.getByTestId('decision-resolve-accept').click();
+  await expect(page.getByTestId('bill-docket-revision')).toHaveText('Revision 2');
+  const acceptedChoice = await state(page);
+  expect(acceptedChoice.resources.politicalCapital).toBe(capitalBeforeChoice - 1);
+  expect(acceptedChoice.rewardedOccurrenceIds).toEqual(['demand-renter-protection:revision:1']);
   await reload(page);
-  await expect(page.getByTestId('coalition-status-coalition-office-hillcrest')).toContainText('refused');
+  const recoveredChoice = await state(page);
+  expect(recoveredChoice.resources.politicalCapital).toBe(capitalBeforeChoice - 1);
+  expect(recoveredChoice.rewardedOccurrenceIds).toEqual(acceptedChoice.rewardedOccurrenceIds);
+  await expect(page.getByTestId('bill-docket-provision-policy-zoning-incentive')).toBeVisible();
 
   await page.getByTestId('week-end-early').click();
   await expect(page.getByTestId('week-boundary-preview')).toContainText('District Trust -5');
@@ -90,12 +97,12 @@ test('a complete first week remains coherent through paid work, decision and rel
 
   const recovered = await state(page);
   expect(recovered.week).toBe(2);
-  expect(recovered.bill.revision).toBe(1);
-  expect(recovered.bill.provisionIds).toEqual(['policy-housing-choice-voucher']);
-  expect(recovered.relationships.find((item) => item.memberId === 'coalition-office-hillcrest')?.support).toBe('refused');
-  expect(recovered.resources).toMatchObject({ staffAttention: 3, politicalCapital: 3, districtTrust: 55 });
+  expect(recovered.bill.revision).toBe(2);
+  expect(recovered.bill.provisionIds).toEqual(['policy-zoning-incentive']);
+  expect(recovered.relationships.find((item) => item.memberId === 'coalition-office-hillcrest')?.support).toBe('committed');
+  expect(recovered.resources).toMatchObject({ staffAttention: 3, politicalCapital: 2, districtTrust: 55 });
   expect(recovered.resolvedWeekIds).toContain('week:1');
-  expect(recovered.rewardedOccurrenceIds).toEqual([]);
+  expect(recovered.rewardedOccurrenceIds).toEqual(['demand-renter-protection:revision:1']);
   expect(recovered.obligations[0].status).toBe('missed');
   expect(recovered.eventLog).toEqual(expect.arrayContaining([
     expect.objectContaining({ type: 'PATTERN_COMPLETED', patternId: 'pattern-summarize-evidence' }),

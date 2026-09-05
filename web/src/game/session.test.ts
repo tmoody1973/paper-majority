@@ -2,13 +2,20 @@ import { describe, expect, it } from 'vitest';
 
 import { createRun } from '@/domain/initialState';
 import { createGameSession } from '@/game/session';
-import { loadCheckpoint, SAVE_KEYS, type SaveStorage } from '@/persistence/saveRepository';
+import { loadCheckpoint, SAVE_KEYS, saveCheckpoint, type SaveStorage } from '@/persistence/saveRepository';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 
 class SessionStorage implements SaveStorage {
   values = new Map<string, string>();
   failCurrentWrite = false;
-  getItem(key: string) { return this.values.get(key) ?? null; }
+  failNextCurrentRead = false;
+  getItem(key: string) {
+    if (this.failNextCurrentRead && key === SAVE_KEYS.current) {
+      this.failNextCurrentRead = false;
+      throw new Error('one-shot read failure');
+    }
+    return this.values.get(key) ?? null;
+  }
   setItem(key: string, value: string) {
     if (this.failCurrentWrite && key === SAVE_KEYS.current) throw new Error('quota');
     this.values.set(key, value);
@@ -67,5 +74,22 @@ describe('GameSession persistence owner', () => {
     expect(reader.getState().paused).toBe(true);
     expect(reader.getState().settings.reducedMotion).toBe(true);
     expect(reader.getState().activeWork[0].decisionOrigin).toBeUndefined();
+  });
+
+  it('does not bind a writer after a one-shot unreadable checkpoint', () => {
+    const storage = new SessionStorage();
+    const fresh = createRun({ ...sessionSetup, mode: 'session' });
+    const session = createGameSession(fresh, sessionScenario);
+    expect(session.recover(storage).kind).toBe('empty');
+
+    const saved = createRun({ ...sessionSetup, mode: 'session' });
+    expect(saveCheckpoint(storage, saved, sessionScenario).kind).toBe('saved');
+    const before = new Map(storage.values);
+    storage.failNextCurrentRead = true;
+
+    expect(session.recover(storage).kind).toBe('storage-unavailable');
+    const accepted = session.dispatch({ type: 'SUBMIT_WORK', cardIds: idsForWork(fresh) });
+    expect(accepted.state.activeWork).toHaveLength(1);
+    expect(storage.values).toEqual(before);
   });
 });

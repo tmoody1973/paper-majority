@@ -60,6 +60,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>();
   const [hoveredCardId, setHoveredCardId] = useState<string | undefined>();
   const [workMatCardIds, setWorkMatCardIds] = useState<string[]>([]);
+  const [profilePatternIds, setProfilePatternIds] = useState<string[]>([]);
   const [dismissedDecisionId, setDismissedDecisionId] = useState<string | undefined>();
   const decisionTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -81,6 +82,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
       const denied = () => { throw error; };
       recovery = session.recover({ getItem: denied, setItem: denied, removeItem: denied });
     }
+    setProfilePatternIds([...session.getPlayerProfile().lifetimeDiscoveredPatternIds]);
     if (recovery.kind !== 'empty' || initialState !== undefined || typeof window.matchMedia !== 'function') return;
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     session.setReducedMotion(query.matches);
@@ -123,7 +125,10 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const shownCardId = selectedCardId ?? hoveredCardId;
   const detail = shownCardId ? describeCard(state, scenario, shownCardId) : undefined;
 
-  const handbook = useMemo(() => buildHandbook(state, scenario), [state, scenario]);
+  const handbook = useMemo(
+    () => buildHandbook(state, scenario, profilePatternIds),
+    [profilePatternIds, scenario, state],
+  );
   const validWorkMatCardIds = workMatCardIds.filter((id) =>
     state.cards.some((card) => card.id === id && card.location === 'desk'),
   );

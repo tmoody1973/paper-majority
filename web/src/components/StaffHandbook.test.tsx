@@ -132,6 +132,16 @@ describe('StaffHandbook', () => {
     expect(screen.getByTestId('handbook-progress')).toHaveTextContent('1 of 3 rules found');
   });
 
+  it('labels lifetime knowledge without changing canonical run discovery', () => {
+    const state = createFixtureState('interaction-spike');
+    render(<StaffHandbook view={buildHandbook(state, scenario, ['pattern-evidence-summary'])} />);
+    const entry = entryFor('pattern-evidence-summary');
+    expect(within(entry).getByText('Remembered')).toBeInTheDocument();
+    expect(within(entry).getByText(/without changing this run/i)).toBeInTheDocument();
+    expect(within(entry).getByTestId('handbook-slots')).toBeInTheDocument();
+    expect(state.discoveredPatternIds).toEqual([]);
+  });
+
   it('keeps the base rule and annotates the change when a rule becomes Expanded', () => {
     const base = createFixtureState('interaction-spike');
     const expanded: TermState = {

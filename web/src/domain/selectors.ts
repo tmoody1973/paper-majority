@@ -52,6 +52,8 @@ export interface HandbookExample {
 export interface HandbookEntry {
   patternId: string;
   state: HandbookState;
+  /** Knowledge retained from another run; never copied into canonical rules state. */
+  remembered: boolean;
   hint: string;
   outputDefinitionId?: string;
   outputTitle?: string;
@@ -273,9 +275,15 @@ function successfulExamples(
   return examples;
 }
 
-export function buildHandbook(state: TermState, scenario: ScenarioDefinition): HandbookView {
+export function buildHandbook(
+  state: TermState,
+  scenario: ScenarioDefinition,
+  lifetimeDiscoveredPatternIds: readonly string[] = [],
+): HandbookView {
   const entries: HandbookEntry[] = scenario.patterns.map((pattern) => {
-    const discovered = state.discoveredPatternIds.includes(pattern.id);
+    const discoveredThisRun = state.discoveredPatternIds.includes(pattern.id);
+    const remembered = !discoveredThisRun && lifetimeDiscoveredPatternIds.includes(pattern.id);
+    const discovered = discoveredThisRun || remembered;
     const activeIds = state.unlockedSlotExpansions[pattern.id] ?? [];
     const expansions = scenario.tacticExpansions
       .filter((expansion) => activeIds.includes(expansion.id))
@@ -287,6 +295,7 @@ export function buildHandbook(state: TermState, scenario: ScenarioDefinition): H
       return {
         patternId: pattern.id,
         state: 'teased',
+        remembered: false,
         hint: pattern.discoveryHint,
         successfulExamples: [],
         expansions: [],
@@ -304,6 +313,7 @@ export function buildHandbook(state: TermState, scenario: ScenarioDefinition): H
     return {
       patternId: pattern.id,
       state: expansions.length > 0 ? 'expanded' : 'discovered',
+      remembered,
       hint: pattern.discoveryHint,
       outputDefinitionId,
       outputTitle: scenario.cards.find((card) => card.id === outputDefinitionId)?.title,

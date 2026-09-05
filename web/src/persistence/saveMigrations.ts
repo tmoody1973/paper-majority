@@ -1,5 +1,12 @@
-import type { ScenarioDefinition, TermState } from '@/domain/types';
-import { canonicalSha256 } from '@/persistence/canonicalHash';
+import { COMPUTED_TAGS, type ScenarioDefinition, type TermState } from '@/domain/types';
+import { EFFECTIVE_RULE_VERSION } from '@/domain/work';
+import {
+  recipePatternSchema,
+  relationshipConditionSchema,
+  resourceCostSchema,
+  tacticExpansionSchema,
+} from '@/content/schema';
+import { canonicalJson, canonicalSha256 } from '@/persistence/canonicalHash';
 
 export const CURRENT_SAVE_SCHEMA_VERSION = 2 as const;
 export const CURRENT_RULES_VERSION = 2 as const;
@@ -64,10 +71,26 @@ const RESOURCE_KEYS = [
   'policyIntegrity',
   'staffMorale',
 ] as const;
+const GOVERNING_VALUES = [
+  'Fiscal Stewardship', 'Local Control', 'Market Competition', 'Public Investment',
+  'Tenant Stability', 'Housing Supply', 'Environmental Resilience', 'Fair Access',
+] as const;
 
 function validResources(value: unknown, partial = false): boolean {
   if (!isRecord(value) || !hasOnlyKeys(value, RESOURCE_KEYS)) return false;
-  return RESOURCE_KEYS.every((key) => partial ? value[key] === undefined || isFiniteNumber(value[key]) : isFiniteNumber(value[key]));
+  return RESOURCE_KEYS.every((key) => {
+    if (partial && value[key] === undefined) return true;
+    return isFiniteNumber(value[key]);
+  });
+}
+
+function validResourceTotals(value: unknown): boolean {
+  if (!validResources(value)) return false;
+  const resources = value as TermState['resources'];
+  return resources.staffAttention >= 0 && resources.staffAttention <= 9
+    && resources.politicalCapital >= 0 && resources.politicalCapital <= 9
+    && ['districtTrust', 'billMomentum', 'policyIntegrity', 'staffMorale'].every((key) =>
+      resources[key as keyof typeof resources] >= 0 && resources[key as keyof typeof resources] <= 100);
 }
 
 function validSettings(value: unknown): boolean {
@@ -79,6 +102,15 @@ function validSettings(value: unknown): boolean {
     && ['essential', 'advanced'].includes(value.policyComplexity as string)
     && ['en', 'es'].includes(value.locale as string)
     && typeof value.reducedMotion === 'boolean';
+}
+
+function validAuthoredConcern(value: unknown, scenario: ScenarioDefinition): boolean {
+  return isRecord(value)
+    && hasOnlyKeys(value, ['concernId', 'recipientOfficeDefinitionId'])
+    && typeof value.concernId === 'string'
+    && scenario.demandDefinitions.some((demand) => demand.id === value.concernId)
+    && typeof value.recipientOfficeDefinitionId === 'string'
+    && scenario.cards.some((card) => card.id === value.recipientOfficeDefinitionId && card.kind === 'coalition');
 }
 
 function validCard(value: unknown, scenario: ScenarioDefinition): value is TermState['cards'][number] {
@@ -99,8 +131,10 @@ function validCard(value: unknown, scenario: ScenarioDefinition): value is TermS
     && hasOnlyKeys(value.origin, ['explanationKey', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcern'])
     && typeof value.origin.explanationKey === 'string'
     && strings(value.origin.inputDefinitionIds)
+    && value.origin.inputDefinitionIds.every((id) => scenario.cards.some((card) => card.id === id))
     && strings(value.origin.consumedDefinitionIds)
-    && (value.origin.authoredConcern === undefined || jsonSafe(value.origin.authoredConcern)));
+    && value.origin.consumedDefinitionIds.every((id) => scenario.cards.some((card) => card.id === id))
+    && (value.origin.authoredConcern === undefined || validAuthoredConcern(value.origin.authoredConcern, scenario)));
 }
 
 const EVENT_KEYS: Record<string, readonly string[]> = {
@@ -142,7 +176,54 @@ const EVENT_STRING_ARRAY_FIELDS = new Set([
 const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision']);
 const EVENT_OBJECT_FIELDS = new Set(['changes', 'effect', 'forecast', 'tally', 'result']);
 
-function validEvent(value: unknown): boolean {
+function validElectionEffect(value: unknown): boolean {
+  return isRecord(value)
+    && hasOnlyKeys(value, ['id', 'week', 'label', 'contribution', 'explanation', 'sourceClass'])
+    && typeof value.id === 'string' && isInteger(value.week, 1, 6)
+    && typeof value.label === 'string' && isFiniteNumber(value.contribution)
+    && typeof value.explanation === 'string' && value.sourceClass === 'simulated';
+}
+
+function validElectionLine(value: unknown): boolean {
+  return isRecord(value)
+    && hasOnlyKeys(value, ['id', 'label', 'contribution', 'runningTotal', 'explanation', 'sourceClass'])
+    && typeof value.id === 'string' && typeof value.label === 'string'
+    && isFiniteNumber(value.contribution) && isFiniteNumber(value.runningTotal)
+    && typeof value.explanation === 'string' && value.sourceClass === 'simulated';
+}
+
+function validForecast(value: unknown): boolean {
+  return isRecord(value)
+    && hasOnlyKeys(value, ['low', 'high', 'status', 'breakdown', 'label'])
+    && isFiniteNumber(value.low) && isFiniteNumber(value.high)
+    && ['favored', 'toss-up', 'trailing'].includes(value.status as string)
+    && Array.isArray(value.breakdown) && value.breakdown.every(validElectionLine)
+    && value.label === 'Simulated outlook — not polling';
+}
+
+function validReelectionResult(value: unknown): boolean {
+  return isRecord(value)
+    && hasOnlyKeys(value, ['simulatedVoteShare', 'outcome', 'breakdown'])
+    && isFiniteNumber(value.simulatedVoteShare)
+    && ['won', 'lost'].includes(value.outcome as string)
+    && Array.isArray(value.breakdown) && value.breakdown.every(validElectionLine);
+}
+
+function validTally(value: unknown): boolean {
+  return isRecord(value)
+    && hasOnlyKeys(value, ['committed', 'conditional', 'undecided', 'opposed'])
+    && ['committed', 'conditional', 'undecided', 'opposed'].every((key) => isInteger(value[key], 0));
+}
+
+const REJECTION_REASONS = [
+  'unknown-card', 'unknown-stack', 'card-expired', 'card-busy', 'no-matching-pattern',
+  'needs-tactic', 'insufficient-resources', 'tactic-already-active', 'unknown-tactic-expansion',
+  'unknown-pattern', 'ineligible-staff', 'malformed-command', 'invalid-stage', 'clock-not-expired',
+  'stale-decision', 'unknown-decision', 'unknown-choice', 'duplicate-outreach', 'pending-decision',
+  'duplicate-provision', 'invalid-card-form', 'run-complete', 'unsupported-command',
+];
+
+function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
   if (!isRecord(value) || typeof value.type !== 'string') return false;
   const keys = EVENT_KEYS[value.type];
   if (!keys || !hasOnlyKeys(value, keys)) return false;
@@ -161,7 +242,146 @@ function validEvent(value: unknown): boolean {
       return false;
     }
   }
-  return true;
+  switch (value.type) {
+    case 'STACK_ACCEPTED':
+      return (value.definitionIds as string[]).every((id) => scenario.cards.some((card) => card.id === id))
+        && (value.patternId === undefined || scenario.patterns.some((pattern) => pattern.id === value.patternId));
+    case 'STACK_REJECTED':
+      return REJECTION_REASONS.includes(value.reason as string);
+    case 'ACTION_STARTED':
+      return (value.durationMs as number) >= 0
+        && (value.patternId === undefined || scenario.patterns.some((pattern) => pattern.id === value.patternId))
+        && (value.assignmentKind === undefined || ['card-work', 'study-tactic'].includes(value.assignmentKind as string));
+    case 'CARD_TRANSFORMED':
+      return scenario.cards.some((card) => card.id === value.outputDefinitionId);
+    case 'PATTERN_DISCOVERED':
+    case 'PATTERN_COMPLETED':
+      return scenario.patterns.some((pattern) => pattern.id === value.patternId);
+    case 'TACTIC_EXPANSION_ACTIVATED':
+      return scenario.tacticExpansions.some((expansion) => expansion.id === value.expansionId
+        && expansion.tacticDefinitionId === value.tacticDefinitionId
+        && expansion.targetPatternId === value.targetPatternId);
+    case 'RESOURCE_CHANGED':
+      return validResources(value.changes, true);
+    case 'ELECTION_EFFECT_ADDED':
+      return validElectionEffect(value.effect);
+    case 'ELECTION_OUTLOOK_UPDATED':
+      return validForecast(value.forecast);
+    case 'WEEK_RESOLVED':
+      return isInteger(value.week, 1, 6);
+    case 'OBLIGATION_STATUS_CHANGED':
+      return ['fulfilled', 'missed', 'declined'].includes(value.status as string);
+    case 'WORK_SUBMITTED':
+      return isInteger(value.completesAtSimulationMs, 0);
+    case 'PROVISION_DOCKETED':
+    case 'PROVISION_NEGOTIATED':
+      return scenario.cards.some((card) => card.id === value.provisionId && card.kind === 'policy')
+        && (value.type !== 'PROVISION_NEGOTIATED' || ['added', 'removed'].includes(value.change as string));
+    case 'DECISION_PRESENTED':
+      return scenario.demandDefinitions.some((demand) => demand.id === value.sourceId)
+        && (value.choiceIds as string[]).every((id) => scenario.decisionChoices.some((choice) => choice.id === id));
+    case 'DECISION_RESOLVED':
+      return scenario.decisionChoices.some((choice) => choice.id === value.choiceId);
+    case 'PROMISE_CHANGED':
+      return ['open', 'fulfilled', 'broken'].includes(value.status as string);
+    case 'PACK_OPENED':
+      return scenario.weeklyPacks.some((pack) => pack.pools.some((pool) => pool.id === value.categoryId))
+        && (value.cardDefinitionIds as string[]).every((id) => scenario.cards.some((card) => card.id === id));
+    case 'CARD_LOCATION_CHANGED':
+      return ['desk', 'filed', 'archived'].includes(value.location as string);
+    case 'SESSION_CONCLUDED':
+      return ['ready', 'not-ready'].includes(value.outcome as string);
+    case 'VOTE_RESOLVED':
+      return ['draft', 'committee', 'house', 'senate', 'resolution', 'election', 'complete'].includes(value.stage as string)
+        && validTally(value.tally);
+    case 'REELECTION_RESOLVED':
+      return validReelectionResult(value.result);
+    case 'COMMAND_REJECTED':
+      return REJECTION_REASONS.includes(value.reason as string);
+    default:
+      return true;
+  }
+}
+
+function validRelationshipCondition(value: unknown, scenario: ScenarioDefinition): boolean {
+  const parsed = relationshipConditionSchema.safeParse(value);
+  if (!parsed.success) return false;
+  const condition = parsed.data;
+  if (condition.kind === 'governing-value') return true;
+  return scenario.tagTaxonomy.includes(condition.tag);
+}
+
+function validProvisionReceipt(value: unknown, scenario: ScenarioDefinition): boolean {
+  if (!isRecord(value) || !['draft', 'decision'].includes(value.origin as string)) return false;
+  const common = ['origin', 'provisionId', 'sourceDefinitionIds', 'docketedAtRevision', 'plainLanguage', 'form', 'sourceClass'];
+  const allowed = value.origin === 'draft'
+    ? [...common, 'draftedCardId']
+    : [...common, 'decisionId', 'sourceId', 'occurrenceId'];
+  if (!hasOnlyKeys(value, allowed)
+    || typeof value.provisionId !== 'string'
+    || !scenario.cards.some((card) => card.id === value.provisionId && card.kind === 'policy')
+    || !strings(value.sourceDefinitionIds)
+    || !value.sourceDefinitionIds.every((id) => scenario.cards.some((card) => card.id === id))
+    || !isInteger(value.docketedAtRevision, 1)
+    || typeof value.plainLanguage !== 'string'
+    || value.form !== 'drafted'
+    || value.sourceClass !== 'simulated') return false;
+  if (value.origin === 'draft') return typeof value.draftedCardId === 'string';
+  return typeof value.decisionId === 'string'
+    && typeof value.sourceId === 'string'
+    && scenario.demandDefinitions.some((demand) => demand.id === value.sourceId)
+    && typeof value.occurrenceId === 'string';
+}
+
+function validDecisionOrigin(value: unknown, scenario: ScenarioDefinition): boolean {
+  return isRecord(value)
+    && hasOnlyKeys(value, ['decisionId', 'choiceId', 'occurrenceId', 'officeDefinitionId'])
+    && typeof value.decisionId === 'string'
+    && typeof value.choiceId === 'string'
+    && scenario.decisionChoices.some((choice) => choice.id === value.choiceId && choice.action === 'counter')
+    && typeof value.occurrenceId === 'string'
+    && typeof value.officeDefinitionId === 'string'
+    && scenario.cards.some((card) => card.id === value.officeDefinitionId && card.kind === 'coalition');
+}
+
+function validEffectivePattern(value: unknown, patternId: string, scenario: ScenarioDefinition): boolean {
+  const parsed = recipePatternSchema.safeParse(value);
+  if (!parsed.success || parsed.data.id !== patternId) return false;
+  const knownTags = new Set([...scenario.tagTaxonomy, ...COMPUTED_TAGS]);
+  if (parsed.data.slots.some((slot) =>
+    [...(slot.requiredTags ?? []), ...(slot.anyTags ?? [])].some((tag) => !knownTags.has(tag)))) return false;
+  if (parsed.data.output.mode === 'fixed') {
+    const definitionId = parsed.data.output.definitionId;
+    return scenario.cards.some((card) => card.id === definitionId);
+  }
+  const outputId = parsed.data.output.parameters?.outputDefinitionId;
+  return outputId === undefined
+    || typeof outputId === 'string' && scenario.cards.some((card) => card.id === outputId);
+}
+
+function validSessionRecord(value: unknown): boolean {
+  if (!isRecord(value) || !hasOnlyKeys(value, ['id', 'outcome', 'completedAtSimulationMs', 'gaps', 'causeEventIds'])
+    || typeof value.id !== 'string' || !['ready', 'not-ready'].includes(value.outcome as string)
+    || !isInteger(value.completedAtSimulationMs, 0) || !strings(value.causeEventIds)
+    || !isRecord(value.gaps) || !hasOnlyKeys(value.gaps, ['provisionGap', 'supportGap', 'overdueMandatoryIds'])) return false;
+  return isInteger(value.gaps.provisionGap, 0)
+    && isInteger(value.gaps.supportGap, 0)
+    && strings(value.gaps.overdueMandatoryIds);
+}
+
+const WORK_COMMON_KEYS = [
+  'id', 'kind', 'cardIds', 'staffCardIds', 'paidCost', 'completesAtSimulationMs',
+  'billRevision', 'effectiveRuleVersion', 'consumedCardIds', 'returnedCardIds', 'decisionOrigin',
+] as const;
+
+function validActiveWorkKeys(value: RecordValue): boolean {
+  if (value.kind === 'pattern') {
+    return hasOnlyKeys(value, [...WORK_COMMON_KEYS, 'patternId', 'effectivePattern']);
+  }
+  if (value.kind === 'study') {
+    return hasOnlyKeys(value, [...WORK_COMMON_KEYS, 'expansionIds', 'effectiveExpansions']);
+  }
+  return false;
 }
 
 function validState(input: unknown, scenario: ScenarioDefinition): input is TermState {
@@ -178,13 +398,14 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   if (!isInteger(input.simulationMs, 0) || !isInteger(input.elapsedMs, 0) || !isInteger(input.weekLengthMs, 1)) return false;
   if ((input.elapsedMs as number) > (input.weekLengthMs as number)) return false;
   if (!['active', 'boundary'].includes(input.weekPhase as string) || typeof input.paused !== 'boolean') return false;
-  if (!validSettings(input.settings) || !isInteger(input.cardSeq, 0) || !validResources(input.resources)) return false;
+  if (!validSettings(input.settings) || !isInteger(input.cardSeq, 0) || !validResourceTotals(input.resources)) return false;
 
   const player = input.player;
   if (!isRecord(player) || !hasOnlyKeys(player, ['districtId', 'party', 'values', 'election'])
     || typeof player.districtId !== 'string' || !scenario.districts.some((district) => district.id === player.districtId)
     || !['democratic', 'republican'].includes(player.party as string)
-    || !Array.isArray(player.values) || player.values.length !== 2 || !player.values.every((value) => typeof value === 'string')
+    || !Array.isArray(player.values) || player.values.length !== 2
+    || !player.values.every((value) => GOVERNING_VALUES.includes(value as (typeof GOVERNING_VALUES)[number]))
     || player.values[0] === player.values[1]
     || !isRecord(player.election) || !['weak', 'moderate', 'strong'].includes(player.election.opponentStrength as string)
     || player.election.revealedWeek !== 1) return false;
@@ -198,7 +419,7 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     && typeof stack.id === 'string' && strings(stack.cardIds) && unique(stack.cardIds)
     && stack.cardIds.every((id) => cardIds.has(id))
     && (stack.activeActionId === undefined || typeof stack.activeActionId === 'string')
-    && (stack.paidCost === undefined || validResources(stack.paidCost, true)))) return false;
+    && (stack.paidCost === undefined || resourceCostSchema.safeParse(stack.paidCost).success))) return false;
   const stacks = input.stacks as TermState['stacks'];
   if (!unique(stacks.map((stack) => stack.id))) return false;
   if (!unique(stacks.flatMap((stack) => stack.cardIds))) return false;
@@ -207,80 +428,174 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
 
   const bill = input.bill;
   if (!isRecord(bill) || !hasOnlyKeys(bill, ['issueId', 'title', 'provisionIds', 'provisionReceipts', 'stage', 'outcome', 'revision'])
-    || bill.issueId !== scenario.issue.id || typeof bill.title !== 'string' || !strings(bill.provisionIds)
+    || bill.issueId !== scenario.issue.id || bill.title !== scenario.issue.title || !strings(bill.provisionIds)
     || !bill.provisionIds.every((id) => scenario.cards.some((card) => card.id === id && card.kind === 'policy'))
-    || !Array.isArray(bill.provisionReceipts) || !bill.provisionReceipts.every(jsonSafe)
+    || !Array.isArray(bill.provisionReceipts) || !bill.provisionReceipts.every((receipt) => validProvisionReceipt(receipt, scenario))
     || !['draft', 'committee', 'house', 'senate', 'resolution', 'election', 'complete'].includes(bill.stage as string)
     || !['active', 'enacted', 'failed-committee', 'failed-house', 'failed-senate', 'absorbed-into-package'].includes(bill.outcome as string)
     || !isInteger(bill.revision, 0)) return false;
+  const provisionIds = bill.provisionIds as string[];
+  const receipts = bill.provisionReceipts as TermState['bill']['provisionReceipts'];
+  if (!unique(provisionIds) || !unique(receipts.map((receipt) => receipt.provisionId))) return false;
+  if (receipts.length !== provisionIds.length || receipts.some((receipt) => !provisionIds.includes(receipt.provisionId))) return false;
+  if (receipts.some((receipt) => receipt.docketedAtRevision > (bill.revision as number))) return false;
 
   if (!Array.isArray(input.relationships) || !input.relationships.every((relationship) => isRecord(relationship)
     && hasOnlyKeys(relationship, ['memberId', 'support', 'demandProvisionId', 'demandOccurrenceId', 'promiseOccurrenceIds', 'conditions', 'evaluatedRevision'])
     && typeof relationship.memberId === 'string' && scenario.cards.some((card) => card.id === relationship.memberId && card.kind === 'coalition')
     && ['unavailable', 'interested', 'conditional', 'committed', 'refused'].includes(relationship.support as string)
-    && (relationship.demandProvisionId === undefined || typeof relationship.demandProvisionId === 'string')
+    && (relationship.demandProvisionId === undefined || (typeof relationship.demandProvisionId === 'string'
+      && scenario.demandDefinitions.some((demand) => demand.id === relationship.demandProvisionId && demand.officeDefinitionId === relationship.memberId)))
     && (relationship.demandOccurrenceId === undefined || typeof relationship.demandOccurrenceId === 'string')
-    && strings(relationship.promiseOccurrenceIds) && Array.isArray(relationship.conditions) && relationship.conditions.every(jsonSafe)
+    && strings(relationship.promiseOccurrenceIds) && unique(relationship.promiseOccurrenceIds)
+    && Array.isArray(relationship.conditions) && relationship.conditions.every((condition) => validRelationshipCondition(condition, scenario))
     && isInteger(relationship.evaluatedRevision, 0))) return false;
+  const relationships = input.relationships as TermState['relationships'];
+  if (!unique(relationships.map((relationship) => relationship.memberId))) return false;
+  if (relationships.some((relationship) => relationship.evaluatedRevision > (bill.revision as number))) return false;
   if (!isInteger(input.staffCapacity, 0)) return false;
 
   if (!Array.isArray(input.activeWork) || !input.activeWork.every((work) => isRecord(work)
-    && hasOnlyKeys(work, ['id', 'kind', 'patternId', 'effectivePattern', 'expansionIds', 'effectiveExpansions', 'cardIds', 'staffCardIds', 'paidCost', 'completesAtSimulationMs', 'billRevision', 'effectiveRuleVersion', 'consumedCardIds', 'returnedCardIds', 'decisionOrigin'])
+    && validActiveWorkKeys(work)
     && typeof work.id === 'string' && ['pattern', 'study'].includes(work.kind as string)
     && strings(work.cardIds) && work.cardIds.every((id) => cardIds.has(id))
     && strings(work.staffCardIds) && work.staffCardIds.every((id) => cardIds.has(id))
-    && validResources(work.paidCost, true) && isInteger(work.completesAtSimulationMs, 0)
+    && resourceCostSchema.safeParse(work.paidCost).success && isInteger(work.completesAtSimulationMs, input.simulationMs as number)
     && (work.billRevision === undefined || isInteger(work.billRevision, 0))
-    && typeof work.effectiveRuleVersion === 'string' && strings(work.consumedCardIds) && strings(work.returnedCardIds)
+    && work.effectiveRuleVersion === EFFECTIVE_RULE_VERSION && strings(work.consumedCardIds) && strings(work.returnedCardIds)
     && (work.kind === 'pattern'
-      ? typeof work.patternId === 'string' && jsonSafe(work.effectivePattern)
-      : strings(work.expansionIds) && Array.isArray(work.effectiveExpansions) && work.effectiveExpansions.every(jsonSafe))
-    && (work.decisionOrigin === undefined || jsonSafe(work.decisionOrigin)))) return false;
+      ? typeof work.patternId === 'string'
+        && scenario.patterns.some((pattern) => pattern.id === work.patternId)
+        && validEffectivePattern(work.effectivePattern, work.patternId, scenario)
+      : strings(work.expansionIds) && unique(work.expansionIds)
+        && work.expansionIds.every((id) => scenario.tacticExpansions.some((expansion) => expansion.id === id))
+        && Array.isArray(work.effectiveExpansions)
+        && work.effectiveExpansions.length === work.expansionIds.length
+        && work.effectiveExpansions.every((expansion) => tacticExpansionSchema.safeParse(expansion).success)
+        && work.effectiveExpansions.every((expansion) => isRecord(expansion)
+          && (work.expansionIds as string[]).includes(expansion.id as string)
+          && scenario.tacticExpansions.some((authored) => authored.id === expansion.id
+            && canonicalJson(authored) === canonicalJson(expansion))))
+    && (work.decisionOrigin === undefined || validDecisionOrigin(work.decisionOrigin, scenario)))) return false;
   const work = input.activeWork as TermState['activeWork'];
   if (!unique(work.map((entry) => entry.id))) return false;
+  if (!unique(work.flatMap((entry) => entry.cardIds))) return false;
+  if (work.some((entry) => !unique(entry.cardIds)
+    || !unique(entry.staffCardIds)
+    || !unique(entry.consumedCardIds)
+    || !unique(entry.returnedCardIds)
+    || entry.staffCardIds.some((id) => !entry.cardIds.includes(id))
+    || entry.consumedCardIds.some((id) => entry.returnedCardIds.includes(id))
+    || new Set([...entry.consumedCardIds, ...entry.returnedCardIds]).size !== entry.cardIds.length)) return false;
   if (work.some((entry) => entry.cardIds.some((id) => cards.find((card) => card.id === id)?.status !== 'working'))) return false;
+  if (cards.some((card) => card.status === 'working' && !work.some((entry) => entry.cardIds.includes(card.id)))) return false;
+  if (work.some((entry) => new Set(entry.cardIds.map((id) => cards.find((card) => card.id === id)?.stackId)).size !== 1)) return false;
   if (work.some((entry) => entry.staffCardIds.some((id) => {
     const card = cards.find((candidate) => candidate.id === id);
     return scenario.cards.find((definition) => definition.id === card?.definitionId)?.kind !== 'staff';
   }))) return false;
+  if (work.some((entry) => entry.billRevision !== undefined && entry.billRevision > (bill.revision as number))) return false;
   if (work.some((entry) => [...entry.consumedCardIds, ...entry.returnedCardIds].some((id) => !entry.cardIds.includes(id)))) return false;
 
   if (!Array.isArray(input.obligations) || !input.obligations.every((obligation) => isRecord(obligation)
     && hasOnlyKeys(obligation, ['id', 'sourceId', 'due', 'mandatory', 'status', 'rewardCapital', 'trustPenalty'])
     && typeof obligation.id === 'string' && typeof obligation.sourceId === 'string'
-    && scenario.obligationDefinitions.some((definition) => definition.id === obligation.sourceId)
+    && scenario.obligationDefinitions.some((definition) => definition.id === obligation.sourceId
+      && definition.due.week === (obligation.due as RecordValue)?.week
+      && definition.due.offsetMs === (obligation.due as RecordValue)?.offsetMs
+      && definition.mandatory === obligation.mandatory
+      && definition.rewardCapital === obligation.rewardCapital
+      && definition.trustPenalty === obligation.trustPenalty)
     && isRecord(obligation.due) && hasOnlyKeys(obligation.due, ['week', 'offsetMs'])
     && isInteger(obligation.due.week, 1, 6) && isInteger(obligation.due.offsetMs, 0)
     && typeof obligation.mandatory === 'boolean' && ['open', 'fulfilled', 'missed', 'declined'].includes(obligation.status as string)
     && isFiniteNumber(obligation.rewardCapital) && isFiniteNumber(obligation.trustPenalty))) return false;
+  if (!unique((input.obligations as TermState['obligations']).map((obligation) => obligation.id))) return false;
 
   if (!Array.isArray(input.pendingDecisions) || !input.pendingDecisions.every((decision) => isRecord(decision)
     && hasOnlyKeys(decision, ['id', 'sourceId', 'occurrenceId', 'officeDefinitionId', 'approachedBillRevision', 'expectedBillRevision', 'choiceIds', 'status'])
     && typeof decision.id === 'string' && typeof decision.sourceId === 'string' && typeof decision.occurrenceId === 'string'
-    && scenario.demandDefinitions.some((demand) => demand.id === decision.sourceId)
+    && scenario.demandDefinitions.some((demand) => demand.id === decision.sourceId
+      && demand.officeDefinitionId === decision.officeDefinitionId
+      && strings(decision.choiceIds)
+      && decision.choiceIds.length === demand.choiceIds.length
+      && decision.choiceIds.every((id, index) => id === demand.choiceIds[index]))
     && typeof decision.officeDefinitionId === 'string' && scenario.cards.some((card) => card.id === decision.officeDefinitionId && card.kind === 'coalition')
     && isInteger(decision.approachedBillRevision, 0) && isInteger(decision.expectedBillRevision, 0)
     && strings(decision.choiceIds) && decision.choiceIds.every((id) => scenario.decisionChoices.some((choice) => choice.id === id))
     && ['pending', 'resolved'].includes(decision.status as string))) return false;
+  const decisions = input.pendingDecisions as TermState['pendingDecisions'];
+  if (!unique(decisions.map((decision) => decision.id)) || !unique(decisions.map((decision) => decision.occurrenceId))) return false;
+  if (decisions.some((decision) => decision.status === 'pending' && decision.expectedBillRevision !== bill.revision)) return false;
+  if (work.some((entry) => entry.decisionOrigin && !decisions.some((decision) =>
+    decision.id === entry.decisionOrigin?.decisionId
+      && decision.occurrenceId === entry.decisionOrigin.occurrenceId
+      && decision.officeDefinitionId === entry.decisionOrigin.officeDefinitionId
+      && decision.status === 'resolved'))) return false;
+  if (work.some((entry) => entry.decisionOrigin && (
+    entry.kind !== 'pattern'
+      || scenario.decisionChoices.find((choice) => choice.id === entry.decisionOrigin?.choiceId)?.requiredWorkPatternId !== entry.patternId
+  ))) return false;
+  if (receipts.some((receipt) => receipt.origin === 'draft'
+    ? !cards.some((card) => card.id === receipt.draftedCardId
+      && card.form === receipt.form
+      && (card.policyDefinitionId ?? card.definitionId) === receipt.provisionId)
+    : !decisions.some((decision) => decision.id === receipt.decisionId
+      && decision.sourceId === receipt.sourceId
+      && decision.occurrenceId === receipt.occurrenceId
+      && decision.status === 'resolved'))) return false;
 
   for (const key of ['rewardedOccurrenceIds', 'resolvedWeekIds', 'discoveredPatternIds', 'storyHistory', 'objectives'] as const) {
     if (!strings(input[key]) || !unique(input[key])) return false;
   }
   if (!(input.discoveredPatternIds as string[]).every((id) => scenario.patterns.some((pattern) => pattern.id === id))) return false;
-  if (!isRecord(input.unlockedSlotExpansions) || !Object.values(input.unlockedSlotExpansions).every(strings)) return false;
-  if (!Array.isArray(input.electionEffects) || !input.electionEffects.every(jsonSafe)) return false;
-  if (!Array.isArray(input.eventLog) || !input.eventLog.every(validEvent)) return false;
+  if (!isRecord(input.unlockedSlotExpansions) || !Object.entries(input.unlockedSlotExpansions).every(([patternId, expansionIds]) =>
+    scenario.patterns.some((pattern) => pattern.id === patternId)
+      && strings(expansionIds)
+      && unique(expansionIds)
+      && expansionIds.every((id) => scenario.tacticExpansions.some((expansion) => expansion.id === id && expansion.targetPatternId === patternId)))) return false;
+  if (!Array.isArray(input.electionEffects) || !input.electionEffects.every(validElectionEffect)) return false;
+  if (!unique((input.electionEffects as TermState['electionEffects']).map((effect) => effect.id))) return false;
+  if (!Array.isArray(input.eventLog) || !input.eventLog.every((event) => validEvent(event, scenario))) return false;
   if (!['active', 'complete'].includes(input.runStatus as string)) return false;
-  if (input.sessionRecord !== undefined && !jsonSafe(input.sessionRecord)) return false;
+  if (input.sessionRecord !== undefined && !validSessionRecord(input.sessionRecord)) return false;
   if (input.weekPhase === 'boundary' && input.paused !== true) return false;
   return true;
 }
 
 function adaptV1State(value: unknown): unknown {
   if (!isRecord(value) || value.schemaVersion !== 1) return value;
-  const noWorkingCards = Array.isArray(value.cards)
-    && value.cards.every((card) => !isRecord(card) || card.status !== 'working');
-  if (!noWorkingCards && value.activeWork === undefined) return value;
+  const events = Array.isArray(value.eventLog) ? value.eventLog.filter(isRecord) : [];
+  const relationships = Array.isArray(value.relationships) ? value.relationships.filter(isRecord) : [];
+  const cards = Array.isArray(value.cards) ? value.cards.filter(isRecord) : [];
+  const stacks = Array.isArray(value.stacks) ? value.stacks.filter(isRecord) : [];
+  const decisionEvidence = events.some((event) => [
+    'DECISION_PRESENTED', 'DECISION_RESOLVED', 'PROMISE_CHANGED', 'OBLIGATION_STATUS_CHANGED',
+  ].includes(event.type as string))
+    || relationships.some((relationship) => relationship.demandOccurrenceId !== undefined
+      || Array.isArray(relationship.promiseOccurrenceIds) && relationship.promiseOccurrenceIds.length > 0)
+    || isRecord(value.bill) && Array.isArray(value.bill.provisionReceipts)
+      && value.bill.provisionReceipts.some((receipt) => isRecord(receipt) && receipt.origin === 'decision');
+  const rewardEvidence = decisionEvidence
+    || Array.isArray(value.obligations) && value.obligations.length > 0
+    || events.some((event) => event.type === 'RESOURCE_CHANGED'
+      && typeof event.reason === 'string'
+      && (event.reason.startsWith('obligation-fulfilled:') || event.reason.startsWith('promise-fulfilled:')));
+  const weekEvidence = value.week !== 1 || value.weekPhase !== 'active'
+    || events.some((event) => event.type === 'WEEK_RESOLVED');
+  const completedEvidence = value.sessionRecord !== undefined
+    || value.runStatus === 'complete'
+    || isRecord(value.bill) && (value.bill.stage === 'complete' || value.bill.outcome !== 'active');
+
+  if (value.activeWork === undefined && (
+    cards.some((card) => card.status === 'working')
+      || stacks.some((stack) => stack.activeActionId !== undefined || stack.paidCost !== undefined)
+  )) return value;
+  if (value.obligations === undefined && decisionEvidence) return value;
+  if (value.pendingDecisions === undefined && decisionEvidence) return value;
+  if (value.rewardedOccurrenceIds === undefined && rewardEvidence) return value;
+  if (value.resolvedWeekIds === undefined && weekEvidence) return value;
+  if (value.runStatus === undefined && completedEvidence) return value;
   return {
     ...value,
     schemaVersion: 2,

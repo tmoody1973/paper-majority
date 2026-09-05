@@ -118,7 +118,12 @@ export function saveCheckpoint(
   try {
     storage.removeItem(SAVE_KEYS.candidate);
   } catch (error) {
-    return { kind: 'storage-unavailable', state, message: storageFailure('cleaning up the staged checkpoint', error) };
+    const detail = error instanceof Error && error.message ? ` (${error.message})` : '';
+    return {
+      kind: 'storage-unavailable',
+      state,
+      message: `The checkpoint was saved, but browser storage failed while cleaning up its staging copy${detail}. You can safely continue.`,
+    };
   }
 
   return { kind: 'saved', state, message: 'Session checkpoint saved.' };
