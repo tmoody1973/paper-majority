@@ -782,6 +782,28 @@ function completeAction(
   };
 }
 
+/** Older valid saves may contain overlapping approaches accepted before reservation protection. */
+function recoverUnavailableOutreach(state: TermState, work: ActiveWork): EngineResult {
+  const refund = applyResourceDelta(state.resources, work.paidCost);
+  const events: GameEvent[] = [{
+    type: 'WORK_RECOVERED', workId: work.id, cardIds: [...work.cardIds],
+    reason: 'office-offer-unavailable', refundedCost: refund.applied,
+  }];
+  if (hasActualResourceChange(refund.applied)) events.push({
+    type: 'RESOURCE_CHANGED', changes: refund.applied, reason: `recover:${work.id}`,
+  });
+  // Return the actual pile unchanged in identity, form, provenance and position.
+  // Timeline appends these events once; this helper must not call accept().
+  return { state: {
+    ...state, resources: refund.resources,
+    activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
+    cards: state.cards.map((card) => work.cardIds.includes(card.id)
+      ? { ...card, status: 'idle', remainingMs: 0 } : card),
+    stacks: state.stacks.map((stack) => work.cardIds.some((id) => stack.cardIds.includes(id))
+      ? { ...stack, activeActionId: undefined, paidCost: undefined } : stack),
+  }, events };
+}
+
 function completeSessionWork(
   state: TermState,
   work: ActiveWork,
@@ -849,7 +871,8 @@ function completeSessionWork(
       state.pendingDecisions.some((decision) => decision.occurrenceId === occurrenceId)
       || state.eventLog.some((event) => event.type === 'DECISION_PRESENTED' && event.occurrenceId === occurrenceId)
     );
-    const pending = demand && office && occurrenceId && !alreadyPresented ? {
+    if (alreadyPresented) return recoverUnavailableOutreach(state, work);
+    const pending = demand && office && occurrenceId ? {
       id: `decision:${occurrenceId}`,
       sourceId: demand.id,
       occurrenceId,

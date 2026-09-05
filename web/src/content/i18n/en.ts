@@ -21,6 +21,9 @@ export const RESULT_PHRASES: Record<string, string> = {
     'The office will help — in this simulation — if you take their amendment.',
 };
 
+export const OUTREACH_RECOVERY_PHRASE =
+  'This office already answered. Reserved cards returned; paid resources refunded within office limits.';
+
 export const REJECTION_PHRASES: Record<string, string> = {
   'no-matching-pattern': 'Those two do not go together. Nothing was spent.',
   'insufficient-resources': 'Nobody in the office is free for that right now.',

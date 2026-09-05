@@ -1,3 +1,9 @@
+import overlapFixture from '@/test/fixtures/outreachOverlap.json';
+import { getCandidateScenario } from '@/content/loadScenario';
+import { createRun as createSessionRun } from '@/domain/runSetup';
+import { executeCommand } from '@/domain/engine';
+import { OUTREACH_RESERVATION_REJECTION } from '@/domain/work';
+import type { GameCommand } from '@/domain/commands';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useState } from 'react';
@@ -124,4 +130,19 @@ describe('WorkMat', () => {
     );
     expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Consumes:.*Renter Concern/i);
   });
+});
+
+
+it('shows the shared office-definition reservation reason before enabling another delivery', () => {
+  const scenario = getCandidateScenario();
+  let state = createSessionRun({ scenario, mode: 'session', seed: 1, party: 'democratic', districtId: 'GA-05', values: ['Tenant Stability', 'Housing Supply'] });
+  for (const command of (overlapFixture.commands as GameCommand[]).slice(0, -4)) {
+    const result = executeCommand(state, command, { scenario });
+    expect(result.events.some((event) => event.type === 'COMMAND_REJECTED')).toBe(false);
+    state = result.state;
+  }
+  const session = createGameSession(state, scenario);
+  render(<WorkMat session={session} state={state} selectedCardIds={['card-2', 'card-7', 'card-17']} onSelectedCardIdsChange={() => {}} />);
+  expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(OUTREACH_RESERVATION_REJECTION);
+  expect(screen.getByTestId('work-mat-begin')).toBeDisabled();
 });

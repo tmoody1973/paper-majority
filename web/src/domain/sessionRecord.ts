@@ -20,7 +20,7 @@ function eventIdentity(event: GameEvent, index: number): string {
 const CAUSE_TYPES = new Set<GameEvent['type']>([
   'PROVISION_DOCKETED', 'PROVISION_NEGOTIATED', 'DECISION_RESOLVED', 'STORY_DECISION_RESOLVED',
   'PROMISE_CHANGED', 'OPPORTUNITY_DECLINED', 'OBLIGATION_STATUS_CHANGED', 'RESOURCE_CHANGED',
-  'WEEK_RESOLVED', 'READINESS_MILESTONE_REWARDED',
+  'WEEK_RESOLVED', 'READINESS_MILESTONE_REWARDED', 'WORK_RECOVERED',
 ]);
 
 /** Suggestions describe a test the player can try; they never promise a different outcome. */

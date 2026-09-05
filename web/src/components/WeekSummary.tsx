@@ -4,7 +4,7 @@ import { previewWeek } from '@/domain/week';
 import { openObligations } from '@/domain/selectors';
 import type { Resources, TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
-import { readinessMilestonePhrase } from '@/content/i18n/en';
+import { OUTREACH_RECOVERY_PHRASE, readinessMilestonePhrase } from '@/content/i18n/en';
 import { dueSimulationMs } from '@/domain/obligations';
 
 const RESOURCE_LABELS: Record<keyof Resources, string> = {
@@ -56,9 +56,12 @@ export function WeekSummary({
     const result = session.dispatch(command);
     const rejection = result.events.find((event) => event.type === 'COMMAND_REJECTED');
     const milestone = result.events.find((event) => event.type === 'READINESS_MILESTONE_REWARDED');
+    const recovered = result.events.some((event) => event.type === 'WORK_RECOVERED');
     onResult?.(rejection?.type === 'COMMAND_REJECTED'
       ? rejection.message
-      : milestone?.type === 'READINESS_MILESTONE_REWARDED'
+      : recovered
+        ? OUTREACH_RECOVERY_PHRASE
+        : milestone?.type === 'READINESS_MILESTONE_REWARDED'
         ? readinessMilestonePhrase(milestone.appliedCapital)
         : 'Office calendar updated.');
   };

@@ -123,6 +123,7 @@ export type GameEvent =
       occurrenceId: string;
       sourceCardInstanceId?: string;
     }
+  | { type: 'WORK_RECOVERED'; workId: string; cardIds: string[]; reason: 'office-offer-unavailable'; refundedCost: Partial<Resources> }
   | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
   | {
       type: 'PATTERN_COMPLETED';

@@ -1,3 +1,4 @@
+import { applyResourceDelta } from '@/domain/resources';
 import { evaluateRelationships } from '@/domain/coalition';
 import { deliveredPreparationSatisfied, isPreparationDelivery, validPreparationDelivery } from '@/domain/preparation';
 import { COMPUTED_TAGS, type ScenarioDefinition, type TermState } from '@/domain/types';
@@ -173,6 +174,7 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
   OBLIGATION_STATUS_CHANGED: ['type', 'obligationId', 'status'],
   OBLIGATION_CREATED: ['type', 'obligationId', 'sourceId', 'occurrenceId', 'sourceCardInstanceId'],
   WORK_SUBMITTED: ['type', 'workId', 'cardIds', 'completesAtSimulationMs'],
+  WORK_RECOVERED: ['type', 'workId', 'cardIds', 'reason', 'refundedCost'],
   PATTERN_COMPLETED: ['delivery', 'type', 'workId', 'patternId', 'inputCardIds', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId'],
   PROVISION_DOCKETED: ['type', 'cardId', 'provisionId', 'revision'],
   PROVISION_NEGOTIATED: ['type', 'decisionId', 'occurrenceId', 'provisionId', 'change', 'revision'],
@@ -201,7 +203,7 @@ const EVENT_STRING_ARRAY_FIELDS = new Set([
   'consumedDefinitionIds',
 ]);
 const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision', 'outputSlotIndex', 'appliedCapital']);
-const EVENT_OBJECT_FIELDS = new Set(['delivery', 'changes', 'effect', 'forecast', 'tally', 'result']);
+const EVENT_OBJECT_FIELDS = new Set(['refundedCost', 'delivery', 'changes', 'effect', 'forecast', 'tally', 'result']);
 
 function validElectionEffect(value: unknown): boolean {
   return isRecord(value)
@@ -350,6 +352,10 @@ function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
     case 'OBLIGATION_CREATED':
       return scenario.obligationDefinitions.some((definition) => definition.id === value.sourceId)
         && value.obligationId === `${value.sourceId}:${value.occurrenceId}`;
+    case 'WORK_RECOVERED':
+      return value.reason === 'office-offer-unavailable' && validResources(value.refundedCost, true)
+        && Object.values(value.refundedCost as RecordValue).every((amount) => isFiniteNumber(amount) && amount >= 0)
+        && new Set(value.cardIds as string[]).size === (value.cardIds as string[]).length;
     case 'WORK_SUBMITTED':
       return isInteger(value.completesAtSimulationMs, 0);
     case 'PROVISION_DOCKETED':
@@ -774,6 +780,47 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
       || !decisions.some((decision) => decision.sourceId === event.delivery!.demandId
         && decision.officeDefinitionId === event.delivery!.officeDefinitionId
         && decision.occurrenceId === `${event.delivery!.demandId}:revision:${event.delivery!.billRevision}`)))) return false;
+
+  if (eventLog.some((event) => event.type === 'RESOURCE_CHANGED' && event.reason.startsWith('recover:')
+    && !eventLog.some((entry) => entry.type === 'WORK_RECOVERED' && event.reason === `recover:${entry.workId}`))) return false;
+  for (const [index, event] of eventLog.entries()) {
+    if (event.type !== 'WORK_RECOVERED') continue;
+    const submittedIndex = eventLog.findIndex((entry) => entry.type === 'WORK_SUBMITTED' && entry.workId === event.workId);
+    const submitted = eventLog[submittedIndex];
+    const accepted = eventLog[submittedIndex - 1];
+    if (submittedIndex < 1 || submittedIndex >= index || submitted.type !== 'WORK_SUBMITTED'
+      || accepted.type !== 'STACK_ACCEPTED' || canonicalJson([...submitted.cardIds].sort()) !== canonicalJson([...event.cardIds].sort())
+      || canonicalJson([...accepted.cardIds].sort()) !== canonicalJson([...event.cardIds].sort())
+      || (input.activeWork as TermState['activeWork']).some((work) => work.id === event.workId)
+      || eventLog.filter((entry) => entry.type === 'WORK_RECOVERED' && entry.workId === event.workId).length !== 1
+      || eventLog.some((entry) => entry.type === 'PATTERN_COMPLETED' && entry.workId === event.workId)) return false;
+    const pattern = scenario.patterns.find((pattern) => pattern.id === accepted.patternId);
+    const office = scenario.cards.find((card) => accepted.definitionIds.includes(card.id) && card.kind === 'coalition');
+    if (pattern?.output.mode !== 'derived' || pattern.output.resolverId !== 'resolve-outreach-v1' || !office) return false;
+    const prior = eventLog.slice(0, index);
+    const revision = prior.reduce((revision, entry) => entry.type === 'PROVISION_DOCKETED' || entry.type === 'PROVISION_NEGOTIATED'
+      ? Math.max(revision, entry.revision) : revision, 0);
+    if (!prior.some((entry) => entry.type === 'DECISION_PRESENTED'
+      && entry.occurrenceId === `${selectedDemandIds[office.id]}:revision:${revision}`)
+      || prior.slice(submittedIndex).some((entry) => entry.type === 'CARD_TRANSFORMED'
+        && entry.consumedCardIds.some((id) => event.cardIds.includes(id)))) return false;
+    const charge = eventLog[submittedIndex + 1];
+    const paid = charge?.type === 'RESOURCE_CHANGED' && charge.reason === `pattern:${pattern.id}`
+      ? Object.fromEntries(Object.entries(charge.changes).filter(([, amount]) => amount < 0).map(([key, amount]) => [key, -amount]))
+      : {};
+    // Reverse subsequent actual deltas to apply the same resource caps at recovery time.
+    const resourcesBefore = { ...(input.resources as TermState['resources']) };
+    for (const later of eventLog.slice(index)) {
+      if (later.type !== 'RESOURCE_CHANGED') continue;
+      for (const [key, amount] of Object.entries(later.changes)) resourcesBefore[key as keyof typeof resourcesBefore] -= amount;
+    }
+    if (canonicalJson(applyResourceDelta(resourcesBefore, paid).applied) !== canonicalJson(event.refundedCost)) return false;
+    const refunds = eventLog.filter((entry) => entry.type === 'RESOURCE_CHANGED' && entry.reason === `recover:${event.workId}`);
+    const changed = Object.values(event.refundedCost).some((amount) => amount !== 0);
+    if (refunds.length !== (changed ? 1 : 0)
+      || changed && (eventLog[index + 1] !== refunds[0]
+        || refunds[0].type !== 'RESOURCE_CHANGED' || canonicalJson(refunds[0].changes) !== canonicalJson(event.refundedCost))) return false;
+  }
 
   for (const [index, event] of eventLog.entries()) {
     if (event.type === 'PATTERN_COMPLETED') {

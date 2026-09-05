@@ -11,6 +11,7 @@ import type {
 } from '@/domain/types';
 
 export const EFFECTIVE_RULE_VERSION = 'session-work-v1';
+export const OUTREACH_RESERVATION_REJECTION = 'Outreach to this office is already working. Finish or cancel it before starting another approach.';
 export const SESSION_COMPLETION_REJECTION = 'This work cannot finish before the Session ends.';
 
 /** Shared preflight for every captured Session reservation, including study and counters. */
@@ -144,6 +145,14 @@ export function planWork(
   const preflightRejection = validatePatternPreflight(match, inputs);
   if (preflightRejection) return reject(preflightRejection);
 
+  const output = resolveWorkOutput(match, inputs, state.mode);
+  if (output.kind === 'office-decision' && state.activeWork.some((work) =>
+    work.kind === 'pattern' && work.effectivePattern.output.mode === 'derived'
+    && work.effectivePattern.output.resolverId === 'resolve-outreach-v1'
+    && work.cardIds.some((id) => state.cards.some((card) => card.id === id && card.definitionId === output.officeDefinitionId)))) {
+    return reject(OUTREACH_RESERVATION_REJECTION);
+  }
+
   const staffCardIds = inputs
     .filter((input) => input.definition.kind === 'staff')
     .map((input) => input.instanceId)
@@ -187,7 +196,7 @@ export function planWork(
   return {
     preview: {
       accepted: true,
-      output: resolveWorkOutput(match, inputs, state.mode),
+      output,
       patternId: match.pattern.id,
       staffCardIds,
       cost: { ...effectivePattern.resourceCost },

@@ -60,7 +60,8 @@ export function createGameSession(
 
   const accepted = (result: EngineResult) => !result.events.some((event) => event.type === 'COMMAND_REJECTED');
   const checkpointWorthy = (result: EngineResult) => result.events.some((event) => {
-    if (event.type === 'DECISION_PRESENTED'
+    if (event.type === 'WORK_RECOVERED'
+      || event.type === 'DECISION_PRESENTED'
       || event.type === 'DECISION_RESOLVED'
       || event.type === 'STORY_DECISION_PRESENTED'
       || event.type === 'STORY_DECISION_RESOLVED'

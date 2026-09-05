@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
+import { OUTREACH_RECOVERY_PHRASE, rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
 import { describeCard } from '@/domain/cardDetail';
 import {
   BILL_DOCKET_TARGET_ID,
@@ -619,6 +619,11 @@ export class DeskScene extends Phaser.Scene {
           resultPhrase(String(event.explanationKey), returned.map((id) => this.titleOf(id))),
         );
         this.flagReturned(returned);
+        return;
+      }
+      if (event.type === 'WORK_RECOVERED') {
+        this.onResult(OUTREACH_RECOVERY_PHRASE);
+        this.flagReturned(event.cardIds as string[]);
         return;
       }
       if (event.type === 'TACTIC_EXPANSION_ACTIVATED') {
