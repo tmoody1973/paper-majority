@@ -512,7 +512,8 @@ function validSessionRecord(value: unknown): boolean {
     && typeof value.id === 'string'
     && ['ready', 'not-ready'].includes(value.outcome as string)
     && isInteger(value.completedAtSimulationMs, 0)
-    && isRecord(value.setup) && isRecord(value.objective) && isRecord(value.gaps)
+    && isRecord(value.setup) && validSettings(value.setup.settings)
+    && isRecord(value.objective) && isRecord(value.gaps)
     && isRecord(value.bill) && isRecord(value.integrity)
     && Array.isArray(value.promises) && Array.isArray(value.obligations)
     && Array.isArray(value.declinedOpportunities) && strings(value.causeEventIds)

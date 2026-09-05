@@ -401,9 +401,41 @@ describe('save migrations', () => {
     if (presentationRoundTrip.kind !== 'valid') throw new Error('expected presentation-only change to remain valid');
     expect(presentationRoundTrip.envelope.state.sessionRecord).toEqual(finished.sessionRecord);
 
+    const values = new Map<string, string>();
+    const storage: SaveStorage = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+      removeItem: (key) => { values.delete(key); },
+    };
+    const savedPresentation = saveCheckpoint(storage, changedPresentation, sessionScenario);
+    expect(savedPresentation.kind).toBe('saved');
+    if (savedPresentation.kind !== 'saved') throw new Error('expected finished presentation checkpoint');
+    expect(JSON.parse(savedPresentation.bytes).state.sessionRecord).toEqual(finished.sessionRecord);
+    const reloadedPresentation = loadCheckpoint(storage, sessionScenario);
+    expect(reloadedPresentation.kind).toBe('loaded');
+    if (reloadedPresentation.kind !== 'loaded') throw new Error('expected finished presentation reload');
+    expect(reloadedPresentation.state.sessionRecord).toEqual(finished.sessionRecord);
+
     const changed = structuredClone(createSaveEnvelope(finished, sessionScenario));
     (changed.state.sessionRecord!.gaps as { provisionGap: number }).provisionGap = 0;
     expect(validateAndMigrateSave(changed, sessionScenario).kind).toBe('corrupt');
+
+    for (const malformedSettings of [
+      { ...finished.sessionRecord!.setup.settings, reducedMotion: 'yes' },
+      null,
+      undefined,
+    ]) {
+      const malformed = structuredClone(createSaveEnvelope(finished, sessionScenario)) as unknown as {
+        state: { sessionRecord: { setup: Record<string, unknown> } };
+      };
+      if (malformedSettings === undefined) {
+        delete malformed.state.sessionRecord.setup.settings;
+      } else {
+        malformed.state.sessionRecord.setup.settings = malformedSettings;
+      }
+      expect(() => validateAndMigrateSave(malformed, sessionScenario)).not.toThrow();
+      expect(validateAndMigrateSave(malformed, sessionScenario).kind).toBe('corrupt');
+    }
   });
 
   it.each([0, 1])('saves and reloads a readiness milestone with actual gain %i', (appliedCapital) => {
