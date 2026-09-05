@@ -50,12 +50,14 @@ export function WorkMat({
       return scenario.cards.find((card) => card.id === output.definitionId)?.title ?? output.definitionId;
     }
     if (output.parameters?.preserveInputDefinition === true) {
-      const kind = output.resolverId === 'summarize-evidence-v1' ? 'evidence' : 'policy';
+      const isDraft = output.resolverId === 'draft-provision-v1';
+      const kind = isDraft ? 'policy' : 'evidence';
       const input = selectedIds
         .map((id) => state.cards.find((card) => card.id === id))
         .find((card) => scenario.cards.find((definition) => definition.id === card?.definitionId)?.kind === kind);
       const title = input ? titleOf(input.id).replace(/ — .+$/, '') : kind;
-      return output.resolverId === 'summarize-evidence-v1' ? `${title} summary` : `Drafted ${title}`;
+      if (output.resolverId === 'summarize-evidence-v1') return `${title} summary`;
+      return isDraft ? `Drafted ${title}` : `Prepared ${title}`;
     }
     const outputId = output.parameters?.outputDefinitionId;
     return typeof outputId === 'string'

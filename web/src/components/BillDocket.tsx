@@ -98,6 +98,8 @@ export function BillDocket({ session, state, onResult }: BillDocketProps) {
             return (
               <li key={provisionId} data-testid={`bill-docket-provision-${provisionId}`}>
                 <strong>{titleOf(scenario, provisionId)}</strong>
+                <span className="bill-docket__provision-class">Drafted · Simulated</span>
+                <span>{receipt?.plainLanguage ?? 'No plain-language provision content recorded'}</span>
                 <span>
                   Source context: {receipt?.sourceDefinitionIds.length
                     ? receipt.sourceDefinitionIds.map((id) => titleOf(scenario, id)).join(', ')

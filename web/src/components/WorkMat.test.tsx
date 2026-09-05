@@ -68,4 +68,60 @@ describe('WorkMat', () => {
     expect(session.getState().activeWork).toHaveLength(1);
     expect(session.getState().resources.staffAttention).toBe(before - 1);
   });
+
+  it('describes the authored office-concern route as prepared evidence', async () => {
+    const user = userEvent.setup();
+    const base = makeSession().getState();
+    const additions: CardInstance[] = [
+      {
+        id: 'card-office',
+        definitionId: 'coalition-office-hillcrest',
+        stackId: 'stack-card-office',
+        x: 900,
+        y: 300,
+        remainingMs: 0,
+        status: 'idle',
+        form: 'raw',
+        location: 'desk',
+        sourceDefinitionIds: [],
+      },
+      {
+        id: 'card-concern',
+        definitionId: 'constituency-renter-concern',
+        stackId: 'stack-card-concern',
+        x: 980,
+        y: 320,
+        remainingMs: 0,
+        status: 'idle',
+        form: 'raw',
+        location: 'desk',
+        sourceDefinitionIds: [],
+      },
+    ];
+    const session = createGameSession({
+      ...base,
+      cards: [...base.cards, ...additions],
+      stacks: [
+        ...base.stacks,
+        ...additions.map((card) => ({ id: card.stackId, cardIds: [card.id] })),
+      ],
+    }, sessionScenario);
+    render(<Harness session={session} />);
+
+    const ids = [
+      base.cards.find((card) => card.definitionId === 'staff-district-director')!.id,
+      base.cards.find((card) => card.definitionId === 'evidence-rent-burden-report' && card.form === 'summary')!.id,
+      'card-office',
+      'card-concern',
+    ];
+    for (const id of ids) {
+      await user.selectOptions(screen.getByTestId('work-mat-picker'), id);
+      await user.click(screen.getByTestId('work-mat-stage'));
+    }
+
+    expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(
+      /Ready: Prepared Rent Burden Report/i,
+    );
+    expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Consumes:.*Renter Concern/i);
+  });
 });

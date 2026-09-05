@@ -127,6 +127,9 @@ describe('DOCKET_PROVISION', () => {
         draftedCardId: drafted!.id,
         sourceDefinitionIds: ['evidence-rent-burden-report'],
         docketedAtRevision: 1,
+        plainLanguage: 'Rental assistance policy used by the unit fixture.',
+        form: 'drafted',
+        sourceClass: 'simulated',
       },
     ]);
     expect(first.state.cards.some((card) => card.id === drafted!.id)).toBe(false);
@@ -179,14 +182,16 @@ describe('competing summary evidence uses', () => {
     {
       patternId: 'pattern-answer-office-concern',
       extraDefinitionId: 'coalition-office-hillcrest',
+      concernDefinitionId: 'constituency-renter-concern',
       expectedReceipt: 'result.evidence.office-concern-answered',
     },
     {
       patternId: 'pattern-prepare-evidence-packet',
       extraDefinitionId: undefined,
+      concernDefinitionId: undefined,
       expectedReceipt: 'result.evidence.district-packet-prepared',
     },
-  ])('reserves, consumes, and records $patternId without changing later-task support', ({ extraDefinitionId, expectedReceipt }) => {
+  ])('reserves, consumes, and records $patternId without changing later-task support', ({ extraDefinitionId, concernDefinitionId, expectedReceipt }) => {
     const scenario = withShortWork();
     let state = summaryState(scenario);
     if (extraDefinitionId) {
@@ -203,12 +208,27 @@ describe('competing summary evidence uses', () => {
         sourceDefinitionIds: [],
       });
     }
+    if (concernDefinitionId) {
+      state = addCard(state, {
+        id: `card-${concernDefinitionId}`,
+        definitionId: concernDefinitionId,
+        stackId: `stack-card-${concernDefinitionId}`,
+        x: 960,
+        y: 340,
+        remainingMs: 0,
+        status: 'idle',
+        form: 'raw',
+        location: 'desk',
+        sourceDefinitionIds: [],
+      });
+    }
     const summary = idOf(state, 'evidence-rent-burden-report');
     const inputs = [idOf(state, 'staff-district-director'), summary];
     if (extraDefinitionId) inputs.push(idOf(state, extraDefinitionId));
+    if (concernDefinitionId) inputs.push(idOf(state, concernDefinitionId));
 
     const started = executeCommand(state, { type: 'SUBMIT_WORK', cardIds: inputs }, { scenario });
-    expect(started.state.activeWork[0]).toEqual(expect.objectContaining({ consumedCardIds: [summary] }));
+    expect(started.state.activeWork[0]?.consumedCardIds).toContain(summary);
     const repeated = executeCommand(started.state, { type: 'SUBMIT_WORK', cardIds: inputs }, { scenario });
     expect(repeated.state).toBe(started.state);
 
@@ -219,6 +239,14 @@ describe('competing summary evidence uses', () => {
     );
     expect(prepared?.sourceDefinitionIds).toEqual(['evidence-rent-burden-report']);
     expect(prepared?.origin?.explanationKey).toBe(expectedReceipt);
+    if (concernDefinitionId) {
+      expect(prepared?.origin?.authoredConcern).toEqual({
+        concernId: 'demand-renter-protection',
+        recipientOfficeDefinitionId: 'coalition-office-hillcrest',
+      });
+      expect(prepared?.origin?.inputDefinitionIds).toContain(concernDefinitionId);
+      expect(finished.state.cards.some((card) => card.definitionId === concernDefinitionId)).toBe(false);
+    }
     expect(finished.state.cards.some((card) => card.id === summary)).toBe(false);
     expect(finished.state.relationships).toEqual(state.relationships);
     expect(finished.state.bill).toEqual(state.bill);

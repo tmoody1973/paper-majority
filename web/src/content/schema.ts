@@ -118,12 +118,21 @@ const coalitionCardSchema = z.strictObject({
   ]),
 });
 
+const constituencyCardSchema = z.strictObject({
+  ...cardBaseShape,
+  kind: z.literal('constituency'),
+  authoredConcern: z.strictObject({
+    concernId: idSchema,
+    recipientOfficeDefinitionId: idSchema,
+  }).optional(),
+});
+
 const cardSchema = z.discriminatedUnion('kind', [
   ordinaryCardSchema('staff'),
   policyCardSchema,
   ordinaryCardSchema('evidence'),
   coalitionCardSchema,
-  ordinaryCardSchema('constituency'),
+  constituencyCardSchema,
   ordinaryCardSchema('institution'),
   ordinaryCardSchema('political'),
   ordinaryCardSchema('tactic'),
@@ -415,6 +424,7 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
     const tags = new Set(scenario.tagTaxonomy);
     const choices = new Set(scenario.decisionChoices.map((choice) => choice.id));
     const obligations = new Set(scenario.obligationDefinitions.map((entry) => entry.id));
+    const demands = new Map(scenario.demandDefinitions.map((demand) => [demand.id, demand]));
 
     if (new Set(scenario.supportedModes).size !== scenario.supportedModes.length) {
       addReferenceIssue(ctx, 'Supported modes must be unique', ['supportedModes']);
@@ -448,6 +458,24 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
           index,
           'officialRecord',
         ]);
+      }
+      if (card.kind === 'constituency' && card.authoredConcern) {
+        const demand = demands.get(card.authoredConcern.concernId);
+        if (!demand) {
+          addReferenceIssue(ctx, `Unknown authored concern: ${card.authoredConcern.concernId}`, [
+            'cards', index, 'authoredConcern', 'concernId',
+          ]);
+        }
+        if (cards.get(card.authoredConcern.recipientOfficeDefinitionId)?.kind !== 'coalition') {
+          addReferenceIssue(ctx, `Unknown concern recipient: ${card.authoredConcern.recipientOfficeDefinitionId}`, [
+            'cards', index, 'authoredConcern', 'recipientOfficeDefinitionId',
+          ]);
+        }
+        if (demand && demand.officeDefinitionId !== card.authoredConcern.recipientOfficeDefinitionId) {
+          addReferenceIssue(ctx, 'Authored concern recipient must match its demand office', [
+            'cards', index, 'authoredConcern',
+          ]);
+        }
       }
     }
 

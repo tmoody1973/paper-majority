@@ -96,6 +96,20 @@ function sourceDefinitionIdsFor(
     .sort();
 }
 
+function authoredConcernFor(
+  cards: CardInstance[],
+  scenario: ScenarioDefinition,
+) {
+  const references = cards.flatMap((card) => {
+    const definition = scenario.cards.find((candidate) => candidate.id === card.definitionId);
+    return definition?.kind === 'constituency' && definition.authoredConcern
+      ? [definition.authoredConcern]
+      : [];
+  }).sort((a, b) => a.concernId.localeCompare(b.concernId));
+  const first = references[0];
+  return first ? { ...first } : undefined;
+}
+
 function canAfford(resources: Resources, cost: Partial<Resources>): boolean {
   return (Object.entries(cost) as [keyof Resources, number][]).every(
     ([key, amount]) => resources[key] >= amount,
@@ -654,6 +668,7 @@ function completeAction(
             .filter((card) => consumedIds.includes(card.id))
             .map((card) => card.definitionId)
             .sort(),
+          authoredConcern: authoredConcernFor(memberCards, services.scenario),
         },
       },
     ],
@@ -779,6 +794,7 @@ function completeSessionWork(
         .filter((card) => consumed.has(card.id))
         .map((card) => card.definitionId)
         .sort(),
+      authoredConcern: authoredConcernFor(memberCards, services.scenario),
     },
   };
   const cards = [
@@ -1252,6 +1268,9 @@ export function executeCommand(
               draftedCardId: command.cardId,
               sourceDefinitionIds: preview.sourceDefinitionIds,
               docketedAtRevision: preview.nextRevision,
+              plainLanguage: preview.plainLanguage,
+              form: preview.form,
+              sourceClass: preview.sourceClass,
             },
           ],
           revision: preview.nextRevision,

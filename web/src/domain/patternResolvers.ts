@@ -82,11 +82,22 @@ const draftProvision: PatternResolver = (context) => ({
   explanationKey: 'result.provision.drafted',
 });
 
-const answerOfficeConcern: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, 1, 'prepared'),
-  effects: { billMomentum: 1 },
-  explanationKey: 'result.evidence.office-concern-answered',
-});
+const answerOfficeConcern: PatternResolver = (context) => {
+  const office = inputForSlot(context, 2);
+  const concern = inputForSlot(context, 3);
+  if (
+    concern.definition.kind !== 'constituency' ||
+    !concern.definition.authoredConcern ||
+    concern.definition.authoredConcern.recipientOfficeDefinitionId !== office.definition.id
+  ) {
+    throw new Error('Office-concern work requires the authored concern for that recipient office');
+  }
+  return {
+    ...outputForSessionForm(context, 1, 'prepared'),
+    effects: { billMomentum: 1 },
+    explanationKey: 'result.evidence.office-concern-answered',
+  };
+};
 
 const prepareEvidencePacket: PatternResolver = (context) => ({
   ...outputForSessionForm(context, 1, 'prepared'),

@@ -112,6 +112,10 @@ export const sessionScenario: ScenarioDefinition = {
       ...base('constituency-renter-concern', 'Renter Concern', 'constituency', [
         'district-concern',
       ]),
+      authoredConcern: {
+        concernId: 'demand-renter-protection',
+        recipientOfficeDefinitionId: 'coalition-office-hillcrest',
+      },
     },
     {
       ...base('tactic-bipartisan-working-group', 'Bipartisan Working Group', 'tactic', [
@@ -183,6 +187,7 @@ export const sessionScenario: ScenarioDefinition = {
         { kind: 'staff', requiredTags: ['district-focused'], quantity: 1, consumed: false },
         { kind: 'evidence', forms: ['summary'], requiredTags: ['committee-relevant'], quantity: 1 },
         { kind: 'coalition', requiredTags: ['housing-interest'], quantity: 1, consumed: false },
+        { kind: 'constituency', requiredTags: ['district-concern'], quantity: 1 },
       ],
       output: {
         mode: 'derived',

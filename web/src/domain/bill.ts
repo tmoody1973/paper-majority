@@ -23,6 +23,9 @@ export type DocketPreview =
       provisionId: string;
       sourceDefinitionIds: string[];
       nextRevision: number;
+      plainLanguage: string;
+      form: 'drafted';
+      sourceClass: 'simulated';
       bill: BillPreview;
     }
   | { accepted: false; reason: 'unknown-card' | 'invalid-card-form' | 'duplicate-provision'; message: string };
@@ -103,6 +106,9 @@ export function previewDocketProvision(
     provisionId,
     sourceDefinitionIds: [...new Set(card.sourceDefinitionIds)].sort(),
     nextRevision: state.bill.revision + 1,
+    plainLanguage: policy.plainLanguage,
+    form: 'drafted',
+    sourceClass: 'simulated',
     bill: previewBillChange(state, scenario, nextProvisionIds),
   };
 }

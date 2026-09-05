@@ -157,8 +157,20 @@ export interface CoalitionCardDefinition extends CardDefinitionBase {
   officialRecord: CoalitionOfficialRecord;
 }
 
+export interface AuthoredConcernReference {
+  /** The authored demand/concern this card represents. */
+  concernId: string;
+  /** The specific office whose authored concern is being answered. */
+  recipientOfficeDefinitionId: string;
+}
+
+export interface ConstituencyCardDefinition extends CardDefinitionBase {
+  kind: 'constituency';
+  authoredConcern?: AuthoredConcernReference;
+}
+
 export interface OtherCardDefinition extends CardDefinitionBase {
-  kind: Exclude<CardKind, 'staff' | 'policy' | 'evidence' | 'coalition'>;
+  kind: Exclude<CardKind, 'staff' | 'policy' | 'evidence' | 'coalition' | 'constituency'>;
 }
 
 export type CardDefinition =
@@ -166,6 +178,7 @@ export type CardDefinition =
   | PolicyCardDefinition
   | EvidenceCardDefinition
   | CoalitionCardDefinition
+  | ConstituencyCardDefinition
   | OtherCardDefinition;
 
 export interface CardInstance {
@@ -195,6 +208,7 @@ export interface CardInstance {
     explanationKey: string;
     inputDefinitionIds: string[];
     consumedDefinitionIds: string[];
+    authoredConcern?: AuthoredConcernReference;
   };
 }
 
@@ -231,6 +245,9 @@ export interface BillProvisionReceipt {
   draftedCardId: string;
   sourceDefinitionIds: string[];
   docketedAtRevision: number;
+  plainLanguage: string;
+  form: 'drafted';
+  sourceClass: 'simulated';
 }
 
 export type RelationshipCondition =

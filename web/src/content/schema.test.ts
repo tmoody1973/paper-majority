@@ -93,6 +93,30 @@ describe('parseScenario', () => {
     expect(() => parseScenario(invalid)).toThrow(/simulated/i);
   });
 
+  it('requires an authored concern to name an existing demand and its exact recipient office', () => {
+    const unknownConcern = copy();
+    const concernCard = (unknownConcern.cards as Array<Record<string, unknown>>).find(
+      (card) => card.id === 'constituency-renter-concern',
+    );
+    if (!concernCard) throw new Error('missing fixture concern');
+    concernCard.authoredConcern = {
+      concernId: 'demand-missing',
+      recipientOfficeDefinitionId: 'coalition-office-hillcrest',
+    };
+    expect(() => parseScenario(unknownConcern)).toThrow(/unknown authored concern/i);
+
+    const wrongRecipient = copy();
+    const wrongCard = (wrongRecipient.cards as Array<Record<string, unknown>>).find(
+      (card) => card.id === 'constituency-renter-concern',
+    );
+    if (!wrongCard) throw new Error('missing fixture concern');
+    wrongCard.authoredConcern = {
+      concernId: 'demand-renter-protection',
+      recipientOfficeDefinitionId: 'coalition-office-ridgeline',
+    };
+    expect(() => parseScenario(wrongRecipient)).toThrow(/recipient must match/i);
+  });
+
   it('rejects patterns outside the two-to-four input boundary', () => {
     const invalid = copy();
     (invalid.patterns as Array<Record<string, unknown>>)[0].slots = [

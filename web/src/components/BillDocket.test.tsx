@@ -60,6 +60,9 @@ describe('BillDocket', () => {
     expect(session.getState().bill.provisionIds).toEqual(['policy-housing-choice-voucher']);
     expect(screen.getByTestId('bill-docket-revision')).toHaveTextContent('Revision 1');
     expect(screen.getByTestId('bill-docket-provision-policy-housing-choice-voucher')).toHaveTextContent('Housing Choice Voucher');
+    expect(screen.getByTestId('bill-docket-provision-policy-housing-choice-voucher')).toHaveTextContent('Rental assistance policy used by the unit fixture.');
+    expect(screen.getByTestId('bill-docket-provision-policy-housing-choice-voucher')).toHaveTextContent('Drafted');
+    expect(screen.getByTestId('bill-docket-provision-policy-housing-choice-voucher')).toHaveTextContent('Simulated');
     expect(screen.getByTestId('bill-docket-provision-policy-housing-choice-voucher')).toHaveTextContent('Rent Burden Report');
     expect(screen.getByTestId('bill-docket-provision-policy-housing-choice-voucher')).toHaveTextContent('Tenant Stability +8');
     expect(screen.getByTestId('bill-docket-integrity')).toHaveTextContent('76');
@@ -80,6 +83,9 @@ describe('BillDocket', () => {
           draftedCardId: 'old-card',
           sourceDefinitionIds: ['evidence-rent-burden-report'],
           docketedAtRevision: 1,
+          plainLanguage: 'Rental assistance policy used by the unit fixture.',
+          form: 'drafted',
+          sourceClass: 'simulated',
         }],
       },
     };
