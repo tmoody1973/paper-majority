@@ -209,6 +209,55 @@ describe('week boundaries', () => {
     expect(result.state.obligations[0].status).toBe('fulfilled');
     expect(result.state.weekPhase).toBe('boundary');
     expect(result.state.resources.staffAttention).toBe(3);
+
+    const blocked = executeCommand(result.state, { type: 'ADVANCE_WEEK' }, { scenario });
+    expect(blocked.state).toBe(result.state);
+    expect(blocked.state.eventLog).toBe(result.state.eventLog);
+    expect(blocked.events).toEqual([expect.objectContaining({ reason: 'pending-decision' })]);
+    expect(resolveWeek(result.state, scenario)).toEqual({ state: result.state, events: [] });
+
+    const pending = result.state.pendingDecisions.find((decision) => decision.status === 'pending')!;
+    const resolved = executeCommand(result.state, {
+      type: 'RESOLVE_DECISION',
+      decisionId: pending.id,
+      choiceId: 'choice-refuse-renter-protection',
+      expectedBillRevision: pending.expectedBillRevision,
+    }, { scenario });
+    const advanced = executeCommand(resolved.state, { type: 'ADVANCE_WEEK' }, { scenario });
+    expect(advanced.state.week).toBe(2);
+  });
+
+  it('emits one unconditional completion receipt for zero-cost outreach without a pattern resource event', () => {
+    const scenario = structuredClone(sessionScenario);
+    scenario.patterns = scenario.patterns.map((pattern) => pattern.id === 'pattern-coalition-outreach'
+      ? { ...pattern, durationMs: 1_000, resourceCost: {} }
+      : pattern);
+    scenario.obligationDefinitions[0] = {
+      ...scenario.obligationDefinitions[0],
+      due: { week: 1, offsetMs: 2_000 },
+      fulfillment: { kind: 'completed-pattern', patternId: 'pattern-coalition-outreach' },
+    };
+    const base = { ...createRun({ ...sessionSetup, scenario, mode: 'session' }), paused: false };
+    const aide = base.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
+    const office = base.cards.find((card) => card.definitionId === 'coalition-office-hillcrest')!;
+    const started = executeCommand({
+      ...base,
+      obligations: [obligationOccurrence(scenario.obligationDefinitions[0], 'zero-cost')],
+    }, { type: 'SUBMIT_WORK', cardIds: [aide.id, office.id] }, { scenario });
+    expect(started.events.filter((event) => event.type === 'RESOURCE_CHANGED')).toHaveLength(0);
+    const completed = executeCommand(started.state, { type: 'TICK', deltaMs: 1_000 }, { scenario });
+    expect(completed.events.filter((event) => event.type === 'PATTERN_COMPLETED')).toEqual([{
+      type: 'PATTERN_COMPLETED',
+      workId: 'work-1',
+      patternId: 'pattern-coalition-outreach',
+    }]);
+    expect(completed.events.filter((event) =>
+      event.type === 'RESOURCE_CHANGED' && event.reason.startsWith('pattern-complete:'),
+    )).toHaveLength(0);
+    expect(completed.events.filter((event) => event.type === 'RESOURCE_CHANGED')).toEqual([
+      expect.objectContaining({ reason: 'obligation-fulfilled:obligation-answer-renters:zero-cost' }),
+    ]);
+    expect(completed.state.obligations[0].status).toBe('fulfilled');
   });
 
   it('fast-forward uses the same completion transition as bounded ticks', () => {

@@ -43,4 +43,26 @@ describe('WeekSummary', () => {
     expect(session.getState().week).toBe(2);
     expect(screen.getByRole('heading', { name: 'Deadlines' })).toBeInTheDocument();
   });
+
+  it('labels an optional deadline and previews a decline without a trust penalty', () => {
+    const base = createRun({ ...sessionSetup, mode: 'session' });
+    const optional = {
+      ...obligationOccurrence(sessionScenario.obligationDefinitions[0], 'optional'),
+      mandatory: false,
+      rewardCapital: 2,
+      trustPenalty: 7,
+    };
+    const state = {
+      ...base,
+      week: 2,
+      weekPhase: 'boundary' as const,
+      elapsedMs: base.weekLengthMs,
+      simulationMs: base.weekLengthMs * 2,
+      obligations: [optional],
+    };
+    render(<WeekSummary session={createGameSession(state, sessionScenario)} state={state} />);
+    expect(screen.getByText(/Optional · Reward \+2 Political Capital/)).toHaveTextContent('No trust penalty if declined');
+    expect(screen.getByTestId('week-boundary-preview')).toHaveTextContent('will be declined');
+    expect(screen.getByTestId('week-boundary-preview')).not.toHaveTextContent('District Trust');
+  });
 });

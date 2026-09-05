@@ -5,6 +5,7 @@ import {
   fulfillObligations,
   obligationOccurrence,
 } from '@/domain/obligations';
+import { executeCommand } from '@/domain/engine';
 import { createRun } from '@/domain/initialState';
 import type { CardInstance, ScenarioDefinition } from '@/domain/types';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
@@ -48,6 +49,41 @@ describe('obligations', () => {
     expect(replay.events).toEqual([]);
   });
 
+  it('requires prepared evidence to be idle before it can fulfill an obligation', () => {
+    const base = run();
+    const source = base.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    const staff = base.cards.find((card) => card.definitionId === 'staff-district-director')!;
+    const office = base.cards.find((card) => card.definitionId === 'coalition-office-hillcrest')!;
+    const prepared: CardInstance = {
+      ...source,
+      id: 'prepared-reserved',
+      stackId: 'stack-prepared-reserved',
+      form: 'prepared',
+    };
+    const obligation = obligationOccurrence(sessionScenario.obligationDefinitions[0], 'reserved');
+    const supplied = {
+      ...base,
+      cards: [...base.cards, prepared],
+      stacks: [...base.stacks, { id: prepared.stackId, cardIds: [prepared.id] }],
+    };
+    const started = executeCommand(supplied, {
+      type: 'SUBMIT_WORK',
+      cardIds: [staff.id, prepared.id, office.id],
+    }, { scenario: sessionScenario });
+    const reserved = { ...started.state, obligations: [obligation] };
+    expect(reserved.cards.find((card) => card.id === prepared.id)?.status).toBe('working');
+    expect(fulfillObligations(reserved, sessionScenario).state.obligations[0].status).toBe('open');
+
+    const ready = {
+      ...reserved,
+      paused: false,
+      activeWork: reserved.activeWork.map((work) => ({ ...work, completesAtSimulationMs: 1_000 })),
+    };
+    const completed = executeCommand(ready, { type: 'TICK', deltaMs: 1_000 }, { scenario: sessionScenario });
+    expect(completed.state.obligations[0].status).toBe('fulfilled');
+    expect(completed.state.cards.some((card) => card.form === 'prepared' && card.status === 'idle')).toBe(true);
+  });
+
   it('applies actual capped penalties and does not settle twice', () => {
     const base = run();
     const obligation = {
@@ -68,8 +104,7 @@ describe('obligations', () => {
     expect(expireObligations(first.state, 500).events).toEqual([]);
   });
 
-  it('keeps mandatory history after filing or archiving and rejects active-work filing', async () => {
-    const { executeCommand } = await import('@/domain/engine');
+  it('keeps mandatory history after filing or archiving and rejects active-work filing', () => {
     const base = run();
     const card = base.cards[0];
     const withObligation = { ...base, obligations: [obligationOccurrence(sessionScenario.obligationDefinitions[0])] };
@@ -93,8 +128,7 @@ describe('obligations', () => {
     expect(rejected.events[0]).toEqual(expect.objectContaining({ reason: 'card-busy' }));
   });
 
-  it('enforces exactly six filing slots', async () => {
-    const { executeCommand } = await import('@/domain/engine');
+  it('enforces exactly six filing slots', () => {
     const base = run();
     const expanded = {
       ...base,
@@ -120,9 +154,9 @@ describe('obligations', () => {
       ...run(scenario),
       obligations: [obligation],
       eventLog: [{
-        type: 'RESOURCE_CHANGED' as const,
-        changes: { staffAttention: 1 },
-        reason: 'pattern-complete:pattern-summarize-evidence',
+        type: 'PATTERN_COMPLETED' as const,
+        workId: 'old-work',
+        patternId: 'pattern-summarize-evidence',
       }],
     };
     const context = [{

@@ -53,6 +53,12 @@ export function WeekSummary({
             return (
               <li key={obligation.id}>
                 <strong>{definition?.title ?? obligation.id}</strong>
+                <span>
+                  {obligation.mandatory ? 'Mandatory' : 'Optional'} · Reward +{obligation.rewardCapital} Political Capital ·{' '}
+                  {obligation.mandatory
+                    ? `Missed: -${obligation.trustPenalty} District Trust`
+                    : 'No trust penalty if declined'}
+                </span>
                 <span>Due week {obligation.due.week}, {Math.ceil(obligation.due.offsetMs / 1000)}s</span>
                 <span>Affects {source?.title ?? definition?.sourceDefinitionId ?? 'office commitment'}</span>
               </li>
@@ -65,7 +71,10 @@ export function WeekSummary({
         <div className="week-summary__preview" data-testid="week-boundary-preview">
           <p>Review these effects before they are applied:</p>
           {preview.dueObligationIds.length > 0 && (
-            <ul>{preview.dueObligationIds.map((id) => <li key={id}>{titleOf(id)} will be missed</li>)}</ul>
+            <ul>{preview.dueObligationIds.map((id) => {
+              const obligation = state.obligations.find((candidate) => candidate.id === id);
+              return <li key={id}>{titleOf(id)} will be {obligation?.mandatory ? 'missed' : 'declined'}</li>;
+            })}</ul>
           )}
           {Object.entries(preview.effects).length > 0 && (
             <ul>{Object.entries(preview.effects).map(([key, amount]) => (
@@ -106,7 +115,8 @@ export function WeekSummary({
           <button
             type="button"
             data-testid="week-confirm"
-            disabled={state.week === 6 && state.resolvedWeekIds.includes('week:6')}
+            disabled={state.pendingDecisions.some((decision) => decision.status === 'pending')
+              || (state.week === 6 && state.resolvedWeekIds.includes('week:6'))}
             onClick={() => dispatch({ type: 'ADVANCE_WEEK' })}
           >
             {state.week < 6 ? `Apply review and start week ${state.week + 1}` : 'Apply final week review'}

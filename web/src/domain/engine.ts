@@ -135,6 +135,10 @@ function paidFromApplied(applied: Partial<Resources>): Partial<Resources> {
   ) as Partial<Resources>;
 }
 
+function hasActualResourceChange(changes: Partial<Resources>): boolean {
+  return Object.values(changes).some((amount) => amount !== 0);
+}
+
 function nextWorkId(state: TermState): string {
   const submitted = state.eventLog.filter((event) => event.type === 'WORK_SUBMITTED').length;
   return `work-${submitted + 1}`;
@@ -257,7 +261,7 @@ function startSessionPattern(
       completesAtSimulationMs: reservation.completesAtSimulationMs,
     },
   ];
-  if (Object.keys(charged.applied).length > 0) {
+  if (hasActualResourceChange(charged.applied)) {
     events.push({
       type: 'RESOURCE_CHANGED',
       changes: charged.applied,
@@ -317,7 +321,7 @@ function cancelSessionWork(
     ? applyResourceDelta(state.resources, { staffAttention: attention })
     : { resources: state.resources, applied: {} as Partial<Resources> };
   const events: GameEvent[] = [];
-  if (attention > 0) {
+  if (hasActualResourceChange(released.applied)) {
     events.push({ type: 'RESOURCE_CHANGED', changes: released.applied, reason: `cancel:${work.id}` });
   }
   const currentStack = state.stacks.find((stack) => stack.cardIds.includes(separatedCardId));
@@ -422,9 +426,15 @@ function startSessionStudy(
       cardIds: [...reservation.cardIds],
       completesAtSimulationMs: reservation.completesAtSimulationMs,
     },
-    { type: 'RESOURCE_CHANGED', changes: charged.applied, reason: `study:${reservation.expansionIds.join('+')}` },
     { type: 'ACTION_STARTED', stackId: tactic.stackId, durationMs, assignmentKind: 'study-tactic' },
   ];
+  if (hasActualResourceChange(charged.applied)) {
+    events.splice(2, 0, {
+      type: 'RESOURCE_CHANGED',
+      changes: charged.applied,
+      reason: `study:${reservation.expansionIds.join('+')}`,
+    });
+  }
   return accept(
     state,
     {
@@ -769,7 +779,7 @@ function completeSessionWork(
       .map((stack) => ({ ...stack, cardIds: stack.cardIds.filter((id) => id !== tacticId) }))
       .filter((stack) => stack.cardIds.length > 0);
     const events: GameEvent[] = [];
-    if (attention > 0) {
+    if (hasActualResourceChange(release.applied)) {
       events.push({ type: 'RESOURCE_CHANGED', changes: release.applied, reason: `study-complete:${work.id}` });
     }
     events.push(...activationEvents);
@@ -804,8 +814,12 @@ function completeSessionWork(
       state.pendingDecisions.some((decision) => decision.occurrenceId === occurrenceId)
       || state.eventLog.some((event) => event.type === 'DECISION_PRESENTED' && event.occurrenceId === occurrenceId)
     );
-    const events: GameEvent[] = [];
-    if (attention > 0) {
+    const events: GameEvent[] = [{
+      type: 'PATTERN_COMPLETED',
+      workId: work.id,
+      patternId: work.patternId,
+    }];
+    if (hasActualResourceChange(release.applied)) {
       events.push({ type: 'RESOURCE_CHANGED', changes: release.applied, reason: `pattern-complete:${work.patternId}` });
     }
     const pending = demand && office && occurrenceId && !alreadyPresented ? {
@@ -917,8 +931,15 @@ function completeSessionWork(
         outputDefinitionId: resolved.definitionId,
         explanationKey: resolved.explanationKey,
       },
-      { type: 'RESOURCE_CHANGED', changes: change.applied, reason: `pattern-complete:${work.patternId}` },
+      { type: 'PATTERN_COMPLETED', workId: work.id, patternId: work.patternId },
   ];
+  if (hasActualResourceChange(change.applied)) {
+    events.splice(1, 0, {
+      type: 'RESOURCE_CHANGED',
+      changes: change.applied,
+      reason: `pattern-complete:${work.patternId}`,
+    });
+  }
   const evaluated = applyRelationshipEvaluation(completedState, services.scenario, state.relationships, events);
   return { state: evaluated.state, events: [...events, ...evaluated.events] };
 }
@@ -1762,6 +1783,9 @@ export function executeCommand(
       }
       if (state.weekPhase !== 'boundary') {
         return rejectCommand(state, command.type, 'clock-not-expired', 'The week is still active.');
+      }
+      if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending decision before starting the next week.');
       }
       if (state.week === 6 && state.resolvedWeekIds.includes('week:6')) {
         return rejectCommand(state, command.type, 'invalid-stage', 'The sixth week is ready for Session conclusion.');

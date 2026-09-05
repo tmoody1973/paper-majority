@@ -11,7 +11,9 @@ export default function WeekBoundaryWorkbenchPage() {
   const scenario = structuredClone(sessionScenario);
   scenario.patterns = scenario.patterns.map((pattern) => ({
     ...pattern,
-    durationMs: pattern.id === 'pattern-summarize-evidence' ? 1_200 : pattern.durationMs,
+    durationMs: pattern.id === 'pattern-summarize-evidence'
+      ? 1_200
+      : pattern.id === 'pattern-coalition-outreach' ? 6_000 : pattern.durationMs,
   }));
   scenario.obligationDefinitions = scenario.obligationDefinitions.map((definition) => ({
     ...definition,

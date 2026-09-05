@@ -57,7 +57,11 @@ export function previewWeek(
 
 export function resolveWeek(state: TermState, scenario: ScenarioDefinition): EngineResult {
   const resolutionId = `week:${state.week}`;
-  if (state.weekPhase !== 'boundary' || state.resolvedWeekIds.includes(resolutionId)) {
+  if (
+    state.weekPhase !== 'boundary'
+    || state.resolvedWeekIds.includes(resolutionId)
+    || state.pendingDecisions.some((decision) => decision.status === 'pending')
+  ) {
     return { state, events: [] };
   }
 

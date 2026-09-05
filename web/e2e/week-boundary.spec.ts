@@ -60,3 +60,23 @@ test('filing, cancellation, fast-forward and boundary review use visible Session
   expect(advanced.resources.districtTrust).toBe(55);
   expect(advanced.rewardedOccurrenceIds.filter((id) => id === 'obligation-answer-renters:workbench')).toHaveLength(0);
 });
+
+test('a decision completed at the boundary blocks the visible week confirmation', async ({ page }) => {
+  await page.goto('/workbench/week-boundary');
+  await page.waitForFunction(() => Boolean(window.__congressGameTestApi));
+  await expect(page.getByTestId('week-summary')).toBeVisible({ timeout: 15_000 });
+
+  await stage(page, await idFor(page, 'staff-policy-aide'));
+  await stage(page, await idFor(page, 'coalition-office-hillcrest'));
+  await page.getByTestId('work-mat-begin').click();
+  await page.getByTestId('week-end-early').click();
+
+  await expect(page.getByRole('dialog')).toBeVisible();
+  expect((await state(page)).weekPhase).toBe('boundary');
+  await expect(page.getByTestId('week-confirm')).toBeDisabled();
+  await page.getByTestId('decision-resolve-reject').click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.getByTestId('week-confirm')).toBeEnabled();
+  await page.getByTestId('week-confirm').click();
+  expect((await state(page)).week).toBe(2);
+});

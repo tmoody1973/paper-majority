@@ -50,3 +50,31 @@ Commit: `feat: resolve visible weekly commitments and recoverable capital income
 - Task 8 still owns normal catalog/pack ingestion and therefore the normal gameplay moment that creates authored standing obligations. Task 6 verifies occurrences through decision creation and the development-only boundary fixture without adding Task 8 content behavior.
 - Task 7 owns save migrations/repository persistence. Task 6 verifies clone-equivalent receipt identity using `structuredClone` but does not add persistence code.
 - Task 9 owns readiness conclusion and the final Session record. After resolving week 6, Task 6 intentionally stays at the resolved week-6 boundary.
+
+## Review fix round 1
+
+Status: COMPLETE
+
+Fix commit: `fix: close weekly commitment review gaps` (the resulting hash is reported to the controller after commit creation)
+
+### Fixes
+
+- Plain boundary `ADVANCE_WEEK` now rejects while any decision is pending, preserving the exact canonical state and event log. Exported `resolveWeek` has the same defensive guard. The boundary confirmation button is disabled until the decision is resolved.
+- The same-timestamp boundary regression now proves the engine completes the decision at the boundary, refuses advancement, allows explicit refusal, and only then advances. The browser path performs the same sequence through Work Mat, early-end, decision, and boundary controls.
+- Prepared-evidence obligations require an idle, non-archived card. The regression reserves a prepared card in real active work, proves it cannot fulfill while working, completes that work through the engine, and proves the returned prepared output can fulfill.
+- Session pattern completion now emits one unconditional typed `PATTERN_COMPLETED { workId, patternId }` receipt for both general and specialized outreach work. Completed-pattern obligations use that receipt after occurrence creation order. A zero-cost outreach regression proves one completion receipt, no pattern resource event, and a separate actual obligation reward event.
+- Session `RESOURCE_CHANGED` events for work submission, study, cancellation, and completion are emitted only when at least one signed applied delta is nonzero. Legacy spike transitions were not changed.
+- Deadline rows now state Mandatory or Optional, reward, and the applicable trust consequence. Boundary preview says optional occurrences will be declined and does not invent a trust penalty.
+
+### Verification
+
+- `npm test -- --run src/domain/obligations.test.ts src/domain/week.test.ts src/domain/work.test.ts src/domain/decisions.test.ts src/domain/engine.test.ts src/components/WeekSummary.test.tsx src/components/Hud.test.tsx --pool=threads --maxWorkers=1` — PASS, 7 files and 101 tests.
+- `npm test -- --run src/domain/obligations.test.ts src/domain/week.test.ts --pool=threads --maxWorkers=1` — PASS, 2 files and 20 tests after strengthening the prepared-evidence test to use real engine completion.
+- `npm run typecheck` — PASS.
+- `npx eslint src/domain/events.ts src/domain/engine.ts src/domain/obligations.ts src/domain/obligations.test.ts src/domain/week.ts src/domain/week.test.ts src/components/WeekSummary.tsx src/components/WeekSummary.test.tsx src/app/workbench/week-boundary/page.tsx e2e/week-boundary.spec.ts` — PASS with no findings.
+- `npx playwright test e2e/week-boundary.spec.ts --project=chromium` — PASS, 2 tests, including the actual same-timestamp boundary-decision UI path on reserved port 3100.
+- `git diff --check` — PASS.
+
+### Residual concern
+
+- Task 8 must provide the explicit standing-occurrence creation-order hook so a newly activated completed-pattern obligation cannot consume an older `PATTERN_COMPLETED` receipt. This fix does not fabricate decision events for standing occurrences.

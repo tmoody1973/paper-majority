@@ -57,7 +57,7 @@ export function obligationIsFulfilled(
   }
   if (fulfillment.kind === 'prepared-evidence-tag') {
     return state.cards.some((card) => {
-      if (card.form !== 'prepared' || card.status === 'expired' || card.location === 'archived') return false;
+      if (card.form !== 'prepared' || card.status !== 'idle' || card.location === 'archived') return false;
       return scenario.cards.find((definition) => definition.id === card.definitionId)
         ?.tags.includes(fulfillment.tag) ?? false;
     });
@@ -67,8 +67,8 @@ export function obligationIsFulfilled(
   const createdAt = creationEventIndex(completed, obligation);
   return completed.some((event, index) =>
     index > createdAt
-      && event.type === 'RESOURCE_CHANGED'
-      && event.reason === `pattern-complete:${fulfillment.patternId}`,
+      && event.type === 'PATTERN_COMPLETED'
+      && event.patternId === fulfillment.patternId,
   );
 }
 

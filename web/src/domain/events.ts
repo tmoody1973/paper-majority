@@ -104,6 +104,7 @@ export type GameEvent =
   | { type: 'WEEK_RESOLVED'; week: number; summary: string[] }
   | { type: 'OBLIGATION_STATUS_CHANGED'; obligationId: string; status: 'fulfilled' | 'missed' | 'declined' }
   | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
+  | { type: 'PATTERN_COMPLETED'; workId: string; patternId: string }
   | { type: 'PROVISION_DOCKETED'; cardId: string; provisionId: string; revision: number }
   | { type: 'PROVISION_NEGOTIATED'; decisionId: string; occurrenceId: string; provisionId: string; change: 'added' | 'removed'; revision: number }
   | { type: 'DECISION_PRESENTED'; decisionId: string; sourceId: string; occurrenceId: string; choiceIds: string[] }
