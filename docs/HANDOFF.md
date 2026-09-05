@@ -1,5 +1,7 @@
 # Handoff — Paper Majority, Phase 1
 
+> **Active implementation — 2026-09-04:** Tarik authorized the [replayable Session plan](superpowers/plans/2026-09-04-replayable-session.md). Work runs in `.worktrees/replayable-session` on `codex/replayable-session`, with progress tracked in that worktree's `.superpowers/sdd/2026-09-04-replayable-session/progress.md`. The historical Phase 1 report below remains evidence of that earlier build. Its old stop instruction does not override the new execution request; human replay, content and art acceptance remain pending.
+
 **Written:** 2026-08-26 · **HEAD:** `776b295` · **Branch:** `main`
 
 Read this first if you are picking the project up cold. It is the shortest path to
