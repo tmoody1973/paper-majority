@@ -53,6 +53,9 @@ export function createGameSession(
   const checkpointWorthy = (result: EngineResult) => result.events.some((event) => {
     if (event.type === 'DECISION_PRESENTED'
       || event.type === 'DECISION_RESOLVED'
+      || event.type === 'STORY_DECISION_PRESENTED'
+      || event.type === 'STORY_DECISION_RESOLVED'
+      || event.type === 'PACK_OPENED'
       || event.type === 'PROVISION_DOCKETED'
       || event.type === 'WEEK_RESOLVED'
       || event.type === 'SESSION_CONCLUDED') return true;

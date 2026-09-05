@@ -100,9 +100,12 @@ export type GameEvent =
   | { type: 'ELECTION_EFFECT_ADDED'; effect: ElectionEffectEntry }
   | { type: 'ELECTION_OUTLOOK_UPDATED'; forecast: ElectionForecast }
   | { type: 'PAUSE_CHANGED'; paused: boolean }
-  | { type: 'EVENT_TRIGGERED'; storyEventId: string; whyRules: string[] }
+  | { type: 'EVENT_TRIGGERED'; storyEventId: string; occurrenceId: string; whyRules: string[] }
+  | { type: 'STORY_DECISION_PRESENTED'; decisionId: string; storyEventId: string; occurrenceId: string; choiceIds: string[] }
+  | { type: 'STORY_DECISION_RESOLVED'; decisionId: string; storyEventId: string; choiceId: string; occurrenceId: string }
   | { type: 'WEEK_RESOLVED'; week: number; summary: string[] }
   | { type: 'OBLIGATION_STATUS_CHANGED'; obligationId: string; status: 'fulfilled' | 'missed' | 'declined' }
+  | { type: 'OBLIGATION_CREATED'; obligationId: string; sourceId: string; occurrenceId: string }
   | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
   | { type: 'PATTERN_COMPLETED'; workId: string; patternId: string }
   | { type: 'PROVISION_DOCKETED'; cardId: string; provisionId: string; revision: number }

@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { getCandidateScenario } from '@/content/loadScenario';
 import { executeCommand } from '@/domain/engine';
 import { createRun } from '@/domain/initialState';
 import { obligationOccurrence } from '@/domain/obligations';
+import { openPack } from '@/domain/packs';
+import { drawStoryEvent } from '@/domain/storyDirector';
 import type { PendingDecision, TermState } from '@/domain/types';
 import { createSaveEnvelope } from '@/persistence/saveMigrations';
 import {
@@ -71,6 +74,37 @@ function richState(paused = true): TermState {
 }
 
 describe('save checkpoint round trips', () => {
+  it('preserves a pending Story, revealed pack, paid work, ledgers, and RNG exactly', () => {
+    const scenario = getCandidateScenario();
+    const storage = new MemoryStorage();
+    let before = createRun({
+      scenario,
+      districtId: 'GA-05',
+      party: 'democratic',
+      values: ['Tenant Stability', 'Housing Supply'],
+      mode: 'session',
+      seed: 417,
+    });
+    const staff = before.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
+    const evidence = before.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    before = executeCommand(before, {
+      type: 'SUBMIT_WORK',
+      cardIds: [staff.id, evidence.id],
+    }, { scenario }).state;
+    before = { ...before, week: 2 };
+    before = openPack(before, scenario, 'pack:week:2', 'week-two-policy').state;
+    before = drawStoryEvent(before, scenario).state;
+
+    expect(before.pendingStoryDecisions.some((decision) => decision.status === 'pending')).toBe(true);
+    expect(before.revealedPacks).toHaveLength(1);
+    expect(before.activeWork[0].paidCost.staffAttention).toBe(1);
+    expect(saveCheckpoint(storage, before, scenario).kind).toBe('saved');
+    const loaded = loadCheckpoint(storage, scenario);
+    expect(loaded.kind).toBe('loaded');
+    if (loaded.kind !== 'loaded') throw new Error('expected validated candidate state');
+    expect(loaded.state).toEqual(before);
+  });
+
   it('preserves pending decisions, paid jobs, filed obligations, ledgers and absolute time', () => {
     const storage = new MemoryStorage();
     const before = richState();

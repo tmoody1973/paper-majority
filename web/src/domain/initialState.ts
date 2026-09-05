@@ -57,7 +57,7 @@ export interface InitialStateInput {
   settings?: Partial<RunSettings>;
 }
 
-function buildInitialState(
+export function buildInitialState(
   input: InitialStateInput,
   schemaVersion: 1 | 2,
   mode: RunMode,
@@ -152,6 +152,8 @@ function buildInitialState(
     activeWork: [],
     obligations: [],
     pendingDecisions: [],
+    pendingStoryDecisions: [],
+    revealedPacks: [],
     rewardedOccurrenceIds: [],
     resolvedWeekIds: [],
     runStatus: 'active',
@@ -173,35 +175,5 @@ export function createInitialState(input: InitialStateInput): TermState {
 }
 
 /** Canonical version-2 run constructor. */
-export function createRun(input: InitialStateInput & { mode: RunMode }): TermState {
-  if (!input.scenario.supportedModes.includes(input.mode)) {
-    throw new Error(`Scenario does not support mode "${input.mode}"`);
-  }
-
-  if (input.mode === 'session') {
-    if (
-      input.scenario.tacticExpansions.some(
-        (expansion) => expansion.effect.kind === 'output-strength',
-      )
-    ) {
-      throw new Error('Session mode does not support output-strength Tactic effects');
-    }
-    const starting = input.scenario.startingCardDefinitionIds.map((id) =>
-      input.scenario.cards.find((card) => card.id === id),
-    );
-    const staffIds = starting
-      .filter((card) => card?.kind === 'staff')
-      .map((card) => card!.id);
-    if (staffIds.length !== 3 || new Set(staffIds).size !== 3) {
-      throw new Error('Session setup requires three distinct starting staff roles');
-    }
-    if (!starting.some((card) => card?.kind === 'evidence')) {
-      throw new Error('Session setup requires baseline Evidence');
-    }
-    if (!starting.some((card) => card?.kind === 'policy')) {
-      throw new Error('Session setup requires a starting Policy');
-    }
-  }
-
-  return buildInitialState(input, 2, input.mode);
-}
+// Kept as a compatibility export while canonical Session setup lives in runSetup.
+export { createRun } from '@/domain/runSetup';

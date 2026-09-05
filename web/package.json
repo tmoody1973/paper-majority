@@ -17,7 +17,12 @@
     "test:e2e": "playwright test",
     "validate:content": "tsx scripts/validate-content.ts",
     "balance": "tsx scripts/run-balance.ts",
-    "report:patterns": "tsx scripts/report-pattern-density.ts"
+    "report:patterns": "tsx scripts/report-pattern-density.ts",
+    "report:patterns:session": "tsx scripts/report-pattern-density.ts --mode session",
+    "ingest:congress": "tsx scripts/ingest/fetch-congress.ts",
+    "ingest:house-votes": "tsx scripts/ingest/fetch-house-votes.ts",
+    "ingest:census": "tsx scripts/ingest/fetch-census.ts",
+    "ingest:normalize": "tsx scripts/ingest/normalize-housing-snapshot.ts"
   },
   "dependencies": {
     "@noble/hashes": "2.0.1",

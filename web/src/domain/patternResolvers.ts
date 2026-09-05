@@ -47,6 +47,11 @@ function inputForSlot(context: ResolverContext, slotIndex: number): MatchInput {
   return found;
 }
 
+function parameterSlot(context: ResolverContext, fallback: number): number {
+  const value = context.parameters.outputSlot;
+  return typeof value === 'number' && Number.isInteger(value) ? value : fallback;
+}
+
 function officeConcernHasExpectedRecipient(context: ResolverContext): boolean {
   const office = inputForSlot(context, 2);
   const concern = inputForSlot(context, 3);
@@ -149,6 +154,36 @@ const strengthenProvision: PatternResolver = (context) => ({
   explanationKey: 'result.provision.strengthened',
 });
 
+const prepareDistrictResponse: PatternResolver = (context) => ({
+  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  effects: { districtTrust: 2 },
+  explanationKey: 'result.constituency.response-prepared',
+});
+
+const prepareCommitteePacket: PatternResolver = (context) => ({
+  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  effects: { billMomentum: 2 },
+  explanationKey: 'result.institution.committee-packet-prepared',
+});
+
+const prepareDistrictEndorsement: PatternResolver = (context) => ({
+  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  effects: { districtTrust: 3, billMomentum: 1 },
+  explanationKey: 'result.constituency.endorsement-earned',
+});
+
+const preparePoliticalAsset: PatternResolver = (context) => ({
+  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  effects: { billMomentum: 1 },
+  explanationKey: 'result.political.asset-prepared',
+});
+
+const reviewProvision: PatternResolver = (context) => ({
+  ...outputForSessionForm(context, parameterSlot(context, 1), 'drafted'),
+  effects: { billMomentum: 2 },
+  explanationKey: 'result.provision.reviewed',
+});
+
 export const DERIVED_RESOLVERS: Record<DerivedResolverId, PatternResolver> = {
   'summarize-evidence-v1': summarizeEvidence,
   'draft-provision-v1': draftProvision,
@@ -156,6 +191,11 @@ export const DERIVED_RESOLVERS: Record<DerivedResolverId, PatternResolver> = {
   'prepare-evidence-packet-v1': prepareEvidencePacket,
   'resolve-outreach-v1': resolveOutreach,
   'strengthen-provision-v1': strengthenProvision,
+  'prepare-district-response-v1': prepareDistrictResponse,
+  'prepare-committee-packet-v1': prepareCommitteePacket,
+  'prepare-district-endorsement-v1': prepareDistrictEndorsement,
+  'prepare-political-asset-v1': preparePoliticalAsset,
+  'review-provision-v1': reviewProvision,
 };
 
 export function resolvePatternOutput(

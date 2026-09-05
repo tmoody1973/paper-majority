@@ -13,6 +13,8 @@ import {
   getFixtureScenario,
   getStartingDefinitionIds,
 } from '../src/content/fixtures/loadFixture';
+import { analyzeCatalog, tacticSubsets } from '../src/content/catalogAnalysis';
+import { getCandidateScenario } from '../src/content/loadScenario';
 import { computeEffectiveTags, matchPattern } from '../src/domain/recipes';
 import type { MatchInput } from '../src/domain/recipes';
 import type { CardDefinition, Party } from '../src/domain/types';
@@ -20,6 +22,30 @@ import type { CardDefinition, Party } from '../src/domain/types';
 const EXPECTED_BASE = 4;
 const EXPECTED_EXPANDED = 5;
 const PLAYER_PARTY: Party = 'democratic';
+
+if (process.argv.includes('--mode') && process.argv[process.argv.indexOf('--mode') + 1] === 'session') {
+  const session = getCandidateScenario();
+  console.log('Paper Majority — Session pattern density');
+  console.log(`snapshot: ${session.snapshotId}`);
+  let failed = false;
+  for (const party of ['democratic', 'republican'] as const) {
+    const base = analyzeCatalog(session, party, []);
+    console.log(`${party}: definition sets=${base.definitionSetCount}; form-aware matches=${base.formAwareMatchCount}; distinct outcomes=${base.distinctOutcomes.length}`);
+    console.log(`  by pattern: ${Object.entries(base.byPattern).map(([id, count]) => `${id}=${count}`).join(', ')}`);
+    console.log(`  by family: ${Object.entries(base.byFamilyCombination).map(([id, count]) => `${id}=${count}`).join(', ')}`);
+    for (const subset of tacticSubsets(session)) {
+      const analysis = analyzeCatalog(session, party, subset);
+      if (analysis.collisions.length > 0) failed = true;
+    }
+    if (base.definitionSetCount < 50) failed = true;
+  }
+  if (failed) {
+    console.error('FAIL: Session density/collision gate failed.');
+    process.exit(1);
+  }
+  console.log(`PASS: all ${tacticSubsets(session).length} tactic subsets for both parties have zero equal-ranked collisions.`);
+  process.exit(0);
+}
 
 const scenario = getFixtureScenario();
 const startingIds = getStartingDefinitionIds();

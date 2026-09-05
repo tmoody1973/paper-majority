@@ -1,0 +1,28 @@
+{
+  "snapshotId": "housing-session-2026-09-04-candidate",
+  "candidate": true,
+  "humanReviewPending": true,
+  "retrievedAt": "2026-09-04",
+  "congressGovResources": [],
+  "congressGovDisclosure": "No Congress.gov legislative-history claim is used by this candidate catalog.",
+  "houseClerkRollCalls": [],
+  "houseClerkDisclosure": "No House roll-call result is used by this candidate catalog.",
+  "sources": [
+    { "id": "policy-zoning-incentive", "kind": "program", "url": "https://www.hud.gov/hud-partners/community-prohousing", "purpose": "Federal housing barrier-removal grant precedent; no causal effect claim.", "stagingFiles": ["policy-zoning-incentive.html"] },
+    { "id": "policy-low-income-housing-tax-credit", "kind": "program", "url": "https://www.irs.gov/instructions/i8609", "purpose": "Section 42 low-income housing credit program precedent.", "stagingFiles": ["policy-low-income-housing-tax-credit.html"] },
+    { "id": "policy-housing-choice-voucher", "kind": "program", "url": "https://www.hud.gov/hcv", "purpose": "Tenant-based rental-assistance program precedent.", "stagingFiles": ["policy-housing-choice-voucher.html"] },
+    { "id": "policy-rural-rental-preservation", "kind": "program", "url": "https://www.rd.usda.gov/programs-services/multifamily-housing-programs/multifamily-preservation-and-revitalization-mpr", "purpose": "Rural rental preservation precedent; official fallback extract records blocked raw retrieval.", "stagingFiles": ["policy-rural-rental-preservation-official-web-extract.txt"] },
+    { "id": "policy-tribal-housing-block-grant", "kind": "program", "url": "https://www.hud.gov/helping-americans/public-indian-housing-ihbg", "purpose": "NAHASDA formula grant precedent with government-to-government framing.", "stagingFiles": ["policy-tribal-housing-block-grant.html"] },
+    { "id": "office-mike-flood", "kind": "house-clerk-office", "url": "https://clerk.house.gov/members/F000474", "purpose": "Official name, party, state, district, and 119th Congress office record.", "stagingFiles": ["office-mike-flood.html"] },
+    { "id": "office-j-french-hill", "kind": "house-clerk-office", "url": "https://clerk.house.gov/members/H001072", "purpose": "Official name, party, state, district, and 119th Congress office record.", "stagingFiles": ["office-j-french-hill.html"] },
+    { "id": "office-maxine-waters", "kind": "house-clerk-office", "url": "https://clerk.house.gov/members/W000187", "purpose": "Official name, party, state, district, and 119th Congress office record.", "stagingFiles": ["office-maxine-waters.html"] },
+    { "id": "office-emanuel-cleaver", "kind": "house-clerk-office", "url": "https://clerk.house.gov/members/C001061", "purpose": "Official name, party, state, district, and 119th Congress office record.", "stagingFiles": ["office-emanuel-cleaver.html"] },
+    { "id": "committee-financial-services-members", "kind": "committee", "url": "https://financialservices.house.gov/about/members.htm", "purpose": "Candidate committee membership and leadership context; recheck at promotion.", "stagingFiles": ["committee-members.html"] },
+    { "id": "committee-housing-and-insurance", "kind": "committee", "url": "https://financialservices.house.gov/subcommittees/subcommittee/?IssueID=100090", "purpose": "Candidate Housing and Insurance subcommittee context; recheck at promotion.", "stagingFiles": ["committee-housing-and-insurance.html"] },
+    { "id": "acs-b25070-2024", "kind": "census-table", "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25070.dat", "metadataUrl": "https://api.census.gov/data/2024/acs/acs5/groups/B25070.json", "humanReadableUrl": "https://api.census.gov/data/2024/acs/acs5/groups/B25070.html", "purpose": "Gross rent as a percentage of household income for renter-occupied units; not policy effectiveness.", "stagingFiles": ["acsdt5y2024-b25070.dat", "acs5-2024-B25070-group.json"], "geographyIds": ["5001900US0622", "5001900US1305", "5001900US1904", "5001900US3503", "5001900US4824", "5001900US5504"], "mappedFields": ["GEO_ID", "B25070_E001", "B25070_M001", "B25070_E007", "B25070_M007", "B25070_E008", "B25070_M008", "B25070_E009", "B25070_M009", "B25070_E010", "B25070_M010", "B25070_E011", "B25070_M011"] },
+    { "id": "evidence-housing-needs-chas", "kind": "evidence", "url": "https://www.huduser.gov/portal/datasets/cp.html", "purpose": "CHAS documentation only; exact geography/table values are not asserted.", "stagingFiles": ["evidence-chas.html", "evidence-chas-official-web-extract.txt"] },
+    { "id": "evidence-fair-market-rents", "kind": "evidence", "url": "https://www.huduser.gov/portal/datasets/fmr.html", "purpose": "Fair Market Rent documentation only; exact local values are not asserted.", "stagingFiles": ["evidence-fmr.html", "evidence-fmr-official-web-extract.txt"] },
+    { "id": "evidence-building-permits-survey", "kind": "evidence", "url": "https://www.census.gov/construction/bps/index.html", "purpose": "Permitting statistics source; permits are not completed homes.", "stagingFiles": ["evidence-bps.html"] },
+    { "id": "evidence-ahs-table-creator", "kind": "evidence", "url": "https://www.census.gov/programs-surveys/ahs/about/ahstc_tool.html", "purpose": "AHS table source; exact year/geography/table remain candidate fields.", "stagingFiles": ["evidence-ahs-table-creator.html"] }
+  ]
+}

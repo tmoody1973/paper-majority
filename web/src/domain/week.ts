@@ -61,6 +61,7 @@ export function resolveWeek(state: TermState, scenario: ScenarioDefinition): Eng
     state.weekPhase !== 'boundary'
     || state.resolvedWeekIds.includes(resolutionId)
     || state.pendingDecisions.some((decision) => decision.status === 'pending')
+    || state.pendingStoryDecisions.some((decision) => decision.status === 'pending')
   ) {
     return { state, events: [] };
   }

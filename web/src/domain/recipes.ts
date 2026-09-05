@@ -57,9 +57,10 @@ export interface PatternMatch {
  */
 export function computeEffectiveTags(definition: CardDefinition, playerParty: Party): string[] {
   if (definition.kind !== 'coalition') return [...definition.tags];
-  if (!definition.officialRecord.party) return [...definition.tags];
+  const authoredSimulationTags = definition.simulation?.interestTags ?? [];
+  if (!definition.officialRecord.party) return [...definition.tags, ...authoredSimulationTags];
   const relation = definition.officialRecord.party === playerParty ? 'same-party' : 'opposing-party';
-  return [...definition.tags, relation];
+  return [...definition.tags, ...authoredSimulationTags, relation];
 }
 
 export function buildMatchInputs(

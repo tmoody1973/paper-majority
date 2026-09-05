@@ -61,7 +61,9 @@ function withStaffTraits(
     if (!staffCards.some((card) =>
       card.staffTraitId === trait.id && trait.eligibleStaffDefinitionIds.includes(card.definitionId),
     )) continue;
-    if (!pattern.slots.some((slot) => slot.requiredTags?.includes(trait.effect.taskTag))) continue;
+    const taskTag = pattern.output.mode === 'derived' ? pattern.output.parameters?.taskTag : undefined;
+    if (!pattern.slots.some((slot) => slot.requiredTags?.includes(trait.effect.taskTag))
+      && taskTag !== trait.effect.taskTag) continue;
     duration *= trait.effect.multiplier;
   }
 

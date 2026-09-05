@@ -94,6 +94,9 @@ const policyCardSchema = z.strictObject({
 const coalitionCardSchema = z.strictObject({
   ...cardBaseShape,
   kind: z.literal('coalition'),
+  simulation: z.strictObject({
+    interestTags: z.array(idSchema).min(1),
+  }).optional(),
   officialRecord: z.discriminatedUnion('provenance', [
     z.strictObject({
       provenance: z.literal('official'),
@@ -130,7 +133,25 @@ const constituencyCardSchema = z.strictObject({
 const cardSchema = z.discriminatedUnion('kind', [
   ordinaryCardSchema('staff'),
   policyCardSchema,
-  ordinaryCardSchema('evidence'),
+  z.strictObject({
+    ...cardBaseShape,
+    kind: z.literal('evidence'),
+    roleTags: z.array(idSchema).min(1).optional(),
+    validForms: z.array(z.enum(['raw', 'summary', 'prepared'])).min(1).optional(),
+    transformations: z.array(z.enum([
+      'summarize',
+      'office-response',
+      'district-packet',
+      'committee-packet',
+    ])).min(1).optional(),
+    underlyingSourceIds: z.array(idSchema).min(1).optional(),
+    sinks: z.array(z.enum([
+      'drafting',
+      'office-concern',
+      'district-preparation',
+      'committee-preparation',
+    ])).min(1).optional(),
+  }),
   coalitionCardSchema,
   constituencyCardSchema,
   ordinaryCardSchema('institution'),
@@ -165,6 +186,11 @@ const recipeOutputSchema = z.discriminatedUnion('mode', [
       'prepare-evidence-packet-v1',
       'resolve-outreach-v1',
       'strengthen-provision-v1',
+      'prepare-district-response-v1',
+      'prepare-committee-packet-v1',
+      'prepare-district-endorsement-v1',
+      'prepare-political-asset-v1',
+      'review-provision-v1',
     ]),
     parameters: z.record(z.string(), z.union([z.string(), z.number().finite(), z.boolean()])).optional(),
   }),
@@ -241,6 +267,7 @@ const storyConditionSchema = z.discriminatedUnion('kind', [
 const storyChoiceSchema = z.strictObject({
   id: idSchema,
   label: z.string().min(1),
+  cost: resourceCostSchema,
   effects: z.strictObject(
     Object.fromEntries(RESOURCE_KEYS.map((key) => [key, z.number().finite().optional()])) as {
       [K in (typeof RESOURCE_KEYS)[number]]: z.ZodOptional<z.ZodNumber>;
@@ -256,6 +283,8 @@ const storyChoiceSchema = z.strictObject({
 
 const storyEventSchema = z.strictObject({
   id: idSchema,
+  title: z.string().min(1),
+  body: z.string().min(1),
   class: z.enum(['opportunity', 'pressure', 'consequence', 'recovery']),
   pressureCategory: z.enum(['district', 'staff', 'media', 'coalition', 'procedure']).optional(),
   minWeek: positiveInteger,
@@ -344,6 +373,11 @@ const commonScenarioShape = {
 const rawScenarioSchema = z.strictObject({
   schemaVersion: z.literal(2),
   supportedModes: z.array(z.enum(RUN_MODES)).nonempty(),
+  contentStatus: z.strictObject({
+    status: z.enum(['candidate', 'reviewed']),
+    humanReviewPending: z.boolean(),
+    notice: z.string().min(1),
+  }).optional(),
   ...commonScenarioShape,
   tacticExpansions: z.array(tacticExpansionSchema),
   weeklyPacks: z.array(z.strictObject({
@@ -450,6 +484,15 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
       }
       for (const tag of card.tags) {
         if (!tags.has(tag)) addReferenceIssue(ctx, `Unknown tag: ${tag}`, ['cards', index, 'tags']);
+      }
+      if (card.kind === 'coalition') {
+        for (const tag of card.simulation?.interestTags ?? []) {
+          if (!tags.has(tag)) {
+            addReferenceIssue(ctx, `Unknown simulated interest tag: ${tag}`, [
+              'cards', index, 'simulation', 'interestTags',
+            ]);
+          }
+        }
       }
       if (card.sourceClass !== 'simulated' && card.citations.length === 0) {
         addReferenceIssue(ctx, `${card.sourceClass} cards require a citation`, ['cards', index, 'citations']);

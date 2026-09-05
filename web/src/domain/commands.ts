@@ -36,6 +36,8 @@ export type GameCommand =
       expectedBillRevision: number;
     }
   | { type: 'OPEN_PACK'; packOccurrenceId: string; categoryId: string }
+  | { type: 'DRAW_STORY_EVENT' }
+  | { type: 'RESOLVE_STORY'; decisionId: string; choiceId: string }
   | { type: 'FAST_FORWARD' }
   | { type: 'CONCLUDE_SESSION' }
   | { type: 'ACCEPT_AMENDMENT'; memberId: string; provisionId: string }

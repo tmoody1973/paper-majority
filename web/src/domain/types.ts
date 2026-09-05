@@ -136,6 +136,14 @@ export interface PolicyCardDefinition extends CardDefinitionBase {
 
 export interface EvidenceCardDefinition extends CardDefinitionBase {
   kind: 'evidence';
+  /** Authored research roles; these describe legitimate uses, never a quality score. */
+  roleTags?: string[];
+  validForms?: Array<'raw' | 'summary' | 'prepared'>;
+  transformations?: Array<'summarize' | 'office-response' | 'district-packet' | 'committee-packet'>;
+  /** Stable source-map IDs retained through every derived form. */
+  underlyingSourceIds?: string[];
+  /** Player-facing destinations where this finite evidence copy may be spent. */
+  sinks?: Array<'drafting' | 'office-concern' | 'district-preparation' | 'committee-preparation'>;
 }
 
 interface CoalitionRecordBase {
@@ -155,6 +163,10 @@ export interface CoalitionCardDefinition extends CardDefinitionBase {
   kind: 'coalition';
   /** Immutable public facts only. Simulated support and demands live in run state/content. */
   officialRecord: CoalitionOfficialRecord;
+  /** Authored game behavior kept structurally separate from the cited public record. */
+  simulation?: {
+    interestTags: string[];
+  };
 }
 
 export interface AuthoredConcernReference {
@@ -337,6 +349,21 @@ export interface PendingDecision {
   status: 'pending' | 'resolved';
 }
 
+export interface PendingStoryDecision {
+  id: string;
+  storyEventId: string;
+  occurrenceId: string;
+  choiceIds: string[];
+  status: 'pending' | 'resolved';
+}
+
+export interface RevealedPack {
+  packOccurrenceId: string;
+  week: number;
+  categoryId: string;
+  cardDefinitionIds: string[];
+}
+
 export interface SessionRecord {
   readonly id: string;
   readonly outcome: 'ready' | 'not-ready';
@@ -381,6 +408,8 @@ export interface TermState {
   activeWork: ActiveWork[];
   obligations: Obligation[];
   pendingDecisions: PendingDecision[];
+  pendingStoryDecisions: PendingStoryDecision[];
+  revealedPacks: RevealedPack[];
   rewardedOccurrenceIds: string[];
   resolvedWeekIds: string[];
   runStatus: 'active' | 'complete';
@@ -416,7 +445,12 @@ export type DerivedResolverId =
   | 'answer-office-concern-v1'
   | 'prepare-evidence-packet-v1'
   | 'resolve-outreach-v1'
-  | 'strengthen-provision-v1';
+  | 'strengthen-provision-v1'
+  | 'prepare-district-response-v1'
+  | 'prepare-committee-packet-v1'
+  | 'prepare-district-endorsement-v1'
+  | 'prepare-political-asset-v1'
+  | 'review-provision-v1';
 
 export type RecipeOutput =
   | { mode: 'fixed'; definitionId: string }
@@ -478,6 +512,7 @@ export type StoryCondition =
 export interface StoryChoiceDefinition {
   id: string;
   label: string;
+  cost: Partial<Resources>;
   effects: Partial<Resources>;
   electionEffect?: number;
   electionEffectExplanation?: string;
@@ -485,6 +520,8 @@ export interface StoryChoiceDefinition {
 
 export interface StoryEventDefinition {
   id: string;
+  title: string;
+  body: string;
   class: 'opportunity' | 'pressure' | 'consequence' | 'recovery';
   pressureCategory?: 'district' | 'staff' | 'media' | 'coalition' | 'procedure';
   minWeek: number;
@@ -603,6 +640,11 @@ export interface ScenarioDefinition {
   schemaVersion: 2;
   snapshotId: string;
   frozenAt: string;
+  contentStatus?: {
+    status: 'candidate' | 'reviewed';
+    humanReviewPending: boolean;
+    notice: string;
+  };
   supportedModes: RunMode[];
   issue: { id: 'housing-affordability'; title: string };
   districts: DistrictDefinition[];

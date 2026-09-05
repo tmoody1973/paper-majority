@@ -11,6 +11,7 @@ import { Hud } from '@/components/Hud';
 import { OfficeBrief } from '@/components/OfficeBrief';
 import { PlainEnglishKey } from '@/components/PlainEnglishKey';
 import { StaffHandbook } from '@/components/StaffHandbook';
+import { StoryDecisionModal } from '@/components/StoryDecisionModal';
 import { WorkMat } from '@/components/WorkMat';
 import { WeekSummary } from '@/components/WeekSummary';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
@@ -135,6 +136,8 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const pendingDecision = nextPendingDecision(state);
   const decisionOpen = Boolean(pendingDecision && dismissedDecisionId !== pendingDecision.id);
   const persistenceNotice = session.getPersistenceNotice();
+  const currentPack = scenario.weeklyPacks.find((pack) => pack.week === state.week);
+  const currentPackOpened = state.revealedPacks.some((pack) => pack.packOccurrenceId === `pack:week:${state.week}`);
 
   return (
     <main className="shell">
@@ -159,7 +162,26 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
         >
           {pendingDecision ? 'Review pending coalition decision' : 'No pending coalition decisions'}
         </button>
+        {state.mode === 'session' && currentPack && !currentPackOpened && currentPack.pools.map((pool) => (
+          <button
+            key={pool.id}
+            type="button"
+            data-testid={`open-pack-${pool.id}`}
+            onClick={() => {
+              const result = session.dispatch({ type: 'OPEN_PACK', packOccurrenceId: `pack:week:${state.week}`, categoryId: pool.id });
+              const rejection = result.events.find((event) => event.type === 'COMMAND_REJECTED');
+              onResult(rejection?.type === 'COMMAND_REJECTED' ? rejection.message : `${pool.title} opened.`);
+            }}
+          >
+            Open Week {state.week}: {pool.title}
+          </button>
+        ))}
       </div>
+      {scenario.contentStatus?.status === 'candidate' && (
+        <p className="shell__save-warning" data-testid="candidate-content-notice" role="status">
+          {scenario.contentStatus.notice}
+        </p>
+      )}
       {persistenceNotice && (
         <p className="shell__save-warning" data-testid="session-save-warning" role="status">
           {persistenceNotice}
@@ -176,6 +198,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
           onResult={onResult}
         />
       )}
+      <StoryDecisionModal session={session} state={state} onResult={onResult} />
 
       <div className="shell__body">
         <section

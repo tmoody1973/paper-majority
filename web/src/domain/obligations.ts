@@ -37,7 +37,11 @@ function definitionFor(
 function creationEventIndex(events: GameEvent[], obligation: Obligation): number {
   const occurrence = obligation.id.slice(`${obligation.sourceId}:`.length);
   return events.findIndex((event) =>
-    event.type === 'DECISION_RESOLVED' && event.occurrenceId === occurrence,
+    (event.type === 'DECISION_RESOLVED' && event.occurrenceId === occurrence)
+      || (event.type === 'OBLIGATION_CREATED'
+        && event.occurrenceId === occurrence
+        && event.obligationId === obligation.id
+        && event.sourceId === obligation.sourceId),
   );
 }
 

@@ -16,6 +16,11 @@ const ALL_RESOLVER_IDS: DerivedResolverId[] = [
   'prepare-evidence-packet-v1',
   'resolve-outreach-v1',
   'strengthen-provision-v1',
+  'prepare-district-response-v1',
+  'prepare-committee-packet-v1',
+  'prepare-district-endorsement-v1',
+  'prepare-political-asset-v1',
+  'review-provision-v1',
 ];
 
 function input(definitionId: string, instanceId: string, party: Party = 'democratic'): MatchInput {

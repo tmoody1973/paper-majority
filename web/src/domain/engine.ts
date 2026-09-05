@@ -4,8 +4,10 @@ import { applyRelationshipEvaluation, evaluateRelationships } from '@/domain/coa
 import { findRequiredDecisionWorkPlan, planDecisionUpfrontResources, previewDecision } from '@/domain/decisions';
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
+import { openPack } from '@/domain/packs';
 import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
 import { applyResourceDelta } from '@/domain/resources';
+import { drawStoryEvent, resolveStoryEvent } from '@/domain/storyDirector';
 import { expireObligations, fulfillObligations } from '@/domain/obligations';
 import { describeTag } from '@/domain/selectors';
 import { nextStopDelta, resolveWeek } from '@/domain/week';
@@ -814,14 +816,6 @@ function completeSessionWork(
       state.pendingDecisions.some((decision) => decision.occurrenceId === occurrenceId)
       || state.eventLog.some((event) => event.type === 'DECISION_PRESENTED' && event.occurrenceId === occurrenceId)
     );
-    const events: GameEvent[] = [{
-      type: 'PATTERN_COMPLETED',
-      workId: work.id,
-      patternId: work.patternId,
-    }];
-    if (hasActualResourceChange(release.applied)) {
-      events.push({ type: 'RESOURCE_CHANGED', changes: release.applied, reason: `pattern-complete:${work.patternId}` });
-    }
     const pending = demand && office && occurrenceId && !alreadyPresented ? {
       id: `decision:${occurrenceId}`,
       sourceId: demand.id,
@@ -832,6 +826,23 @@ function completeSessionWork(
       choiceIds: [...demand.choiceIds],
       status: 'pending' as const,
     } : undefined;
+    const events: GameEvent[] = [{
+      type: 'PATTERN_COMPLETED',
+      workId: work.id,
+      patternId: work.patternId,
+    }];
+    events.unshift({
+      type: 'CARD_TRANSFORMED',
+      stackId: memberCards[0]?.stackId ?? `stack-${work.id}`,
+      consumedCardIds: [...work.consumedCardIds],
+      producedCardIds: [],
+      returnedCardIds: [...work.returnedCardIds],
+      outputDefinitionId: String(work.effectivePattern.output.parameters?.outputDefinitionId ?? office?.definitionId ?? 'political-media-attention'),
+      explanationKey: pending ? 'result.outreach.offer-presented' : 'result.outreach.inspected',
+    });
+    if (hasActualResourceChange(release.applied)) {
+      events.push({ type: 'RESOURCE_CHANGED', changes: release.applied, reason: `pattern-complete:${work.patternId}` });
+    }
     if (pending) {
       events.push({
         type: 'DECISION_PRESENTED',
@@ -845,9 +856,21 @@ function completeSessionWork(
       ...state,
       paused: pending ? true : state.paused,
       resources: release.resources,
-      cards: state.cards.map((card) => work.cardIds.includes(card.id)
-        ? { ...card, status: 'idle' as const, remainingMs: 0 }
-        : card),
+      cards: state.cards
+        .filter((card) => !work.consumedCardIds.includes(card.id))
+        .map((card) => work.returnedCardIds.includes(card.id)
+          ? { ...card, status: 'idle' as const, remainingMs: 0 }
+          : card),
+      stacks: state.stacks
+        .map((stack) => work.cardIds.some((id) => stack.cardIds.includes(id))
+          ? {
+              ...stack,
+              cardIds: stack.cardIds.filter((id) => !work.consumedCardIds.includes(id)),
+              activeActionId: undefined,
+              paidCost: undefined,
+            }
+          : stack)
+        .filter((stack) => stack.cardIds.length > 0),
       activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
       pendingDecisions: pending ? [...state.pendingDecisions, pending] : state.pendingDecisions,
     };
@@ -1397,6 +1420,9 @@ export function executeCommand(
     }
 
     case 'START_ASSIGNMENT': {
+      if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before starting work.');
+      }
       if (command.assignmentKind === 'study-tactic') {
         if (state.mode !== 'interaction-spike') {
           return startSessionStudy(state, services, command.staffCardId, command.targetCardId);
@@ -1414,11 +1440,17 @@ export function executeCommand(
       if (state.mode === 'interaction-spike') {
         return rejectCommand(state, command.type, 'unsupported-command', 'The Work Mat is available in Session mode.');
       }
+      if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before starting work.');
+      }
       return startSessionPattern(state, services, command.type, command.cardIds);
 
     case 'DOCKET_PROVISION': {
       if (state.mode === 'interaction-spike') {
         return rejectCommand(state, command.type, 'unsupported-command', 'The Bill Docket is available in Session mode.');
+      }
+      if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before editing the bill.');
       }
       const preview = previewDocketProvision(state, services.scenario, command.cardId);
       if (!preview.accepted) {
@@ -1697,6 +1729,24 @@ export function executeCommand(
       return accept(state, applied.state, [applied.event]);
     }
 
+    case 'OPEN_PACK':
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'Opportunity packs are available in Session mode.');
+      }
+      return openPack(state, services.scenario, command.packOccurrenceId, command.categoryId);
+
+    case 'DRAW_STORY_EVENT':
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'Story events are available in Session mode.');
+      }
+      return drawStoryEvent(state, services.scenario);
+
+    case 'RESOLVE_STORY':
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'Story events are available in Session mode.');
+      }
+      return resolveStoryEvent(state, services.scenario, command.decisionId, command.choiceId);
+
     case 'FILE_CARD':
     case 'UNFILE_CARD':
     case 'ARCHIVE_CARD': {
@@ -1752,6 +1802,9 @@ export function executeCommand(
       if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
         return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending decision before advancing time.');
       }
+      if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before advancing time.');
+      }
       return advanceSessionTimeline(
         state,
         services,
@@ -1774,6 +1827,9 @@ export function executeCommand(
         if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
           return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending decision before ending the week.');
         }
+        if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+          return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before ending the week.');
+        }
         return advanceSessionTimeline(
           state,
           services,
@@ -1787,10 +1843,18 @@ export function executeCommand(
       if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
         return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending decision before starting the next week.');
       }
+      if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before starting the next week.');
+      }
       if (state.week === 6 && state.resolvedWeekIds.includes('week:6')) {
         return rejectCommand(state, command.type, 'invalid-stage', 'The sixth week is ready for Session conclusion.');
       }
-      return resolveWeek(state, services.scenario);
+      {
+        const resolved = resolveWeek(state, services.scenario);
+        if (resolved.state.weekPhase !== 'active' || resolved.state.week === state.week) return resolved;
+        const story = drawStoryEvent(resolved.state, services.scenario);
+        return { state: story.state, events: [...resolved.events, ...story.events] };
+      }
     }
 
     case 'TICK': {
