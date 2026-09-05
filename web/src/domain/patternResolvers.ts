@@ -47,6 +47,33 @@ function inputForSlot(context: ResolverContext, slotIndex: number): MatchInput {
   return found;
 }
 
+function officeConcernHasExpectedRecipient(context: ResolverContext): boolean {
+  const office = inputForSlot(context, 2);
+  const concern = inputForSlot(context, 3);
+  return concern.definition.kind === 'constituency'
+    && concern.definition.authoredConcern !== undefined
+    && concern.definition.authoredConcern.recipientOfficeDefinitionId === office.definition.id;
+}
+
+/**
+ * Validate relationships between matched inputs that cannot be expressed by
+ * recipe slot tags alone. Work preview and command submission both call this
+ * before reserving cards or charging resources; resolvers repeat it defensively.
+ */
+export function validatePatternPreflight(
+  match: PatternMatch,
+  inputs: MatchInput[],
+): string | undefined {
+  const output = match.effectivePattern.output;
+  if (output.mode !== 'derived' || output.resolverId !== 'answer-office-concern-v1') {
+    return undefined;
+  }
+  const context = { match, inputs, parameters: output.parameters ?? {} };
+  return officeConcernHasExpectedRecipient(context)
+    ? undefined
+    : 'That authored concern belongs to a different recipient office.';
+}
+
 function outputForSessionForm(
   context: ResolverContext,
   slotIndex: number,
@@ -83,13 +110,7 @@ const draftProvision: PatternResolver = (context) => ({
 });
 
 const answerOfficeConcern: PatternResolver = (context) => {
-  const office = inputForSlot(context, 2);
-  const concern = inputForSlot(context, 3);
-  if (
-    concern.definition.kind !== 'constituency' ||
-    !concern.definition.authoredConcern ||
-    concern.definition.authoredConcern.recipientOfficeDefinitionId !== office.definition.id
-  ) {
+  if (validatePatternPreflight(context.match, context.inputs)) {
     throw new Error('Office-concern work requires the authored concern for that recipient office');
   }
   return {

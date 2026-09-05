@@ -34,7 +34,44 @@ function withSummary(state = opening()): TermState {
   };
 }
 
+function addFixtureCard(state: TermState, definitionId: string, x: number): TermState {
+  const instance: CardInstance = {
+    id: `card-${definitionId}`,
+    definitionId,
+    stackId: `stack-card-${definitionId}`,
+    x,
+    y: 300,
+    remainingMs: 0,
+    status: 'idle',
+    form: 'raw',
+    location: 'desk',
+    sourceDefinitionIds: [],
+  };
+  return {
+    ...state,
+    cards: [...state.cards, instance],
+    stacks: [...state.stacks, { id: instance.stackId, cardIds: [instance.id] }],
+  };
+}
+
 describe('Session work reservations', () => {
+  it('rejects an authored concern paired with a different recipient office in preview', () => {
+    let state = withSummary();
+    state = addFixtureCard(state, 'coalition-office-ridgeline', 900);
+    state = addFixtureCard(state, 'constituency-renter-concern', 960);
+    const ids = [
+      card(state, 'staff-district-director').id,
+      state.cards.find((candidate) => candidate.id === 'card-summary')!.id,
+      card(state, 'coalition-office-ridgeline').id,
+      card(state, 'constituency-renter-concern').id,
+    ];
+
+    expect(previewWork(state, sessionScenario, ids)).toEqual({
+      accepted: false,
+      reason: 'That authored concern belongs to a different recipient office.',
+    });
+  });
+
   it('revalidates atomic 2–4 input work, snapshots effective rules, and resolves exact instances', () => {
     const state = withSummary();
     const counsel = card(state, 'staff-legislative-counsel');

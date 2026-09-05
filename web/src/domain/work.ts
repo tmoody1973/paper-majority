@@ -1,4 +1,5 @@
 import { buildMatchInputs, matchPattern, type PatternMatch } from '@/domain/recipes';
+import { validatePatternPreflight } from '@/domain/patternResolvers';
 import type {
   ActiveWork,
   CardInstance,
@@ -108,6 +109,8 @@ export function planWork(
     state.bill.stage,
   );
   if (!match) return reject('These cards do not form an available rule right now.');
+  const preflightRejection = validatePatternPreflight(match, inputs);
+  if (preflightRejection) return reject(preflightRejection);
 
   const staffCardIds = inputs
     .filter((input) => input.definition.kind === 'staff')

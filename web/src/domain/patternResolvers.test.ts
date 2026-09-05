@@ -5,6 +5,7 @@ import { computeEffectiveTags, matchPattern } from '@/domain/recipes';
 import type { MatchInput } from '@/domain/recipes';
 import type { DerivedResolverId, Party, RecipePattern } from '@/domain/types';
 import { findCardDefinition, testScenario } from '@/test/fixtures/scenario';
+import { sessionScenario } from '@/test/fixtures/session';
 
 const { patterns, tacticExpansions } = testScenario;
 
@@ -136,5 +137,53 @@ describe('resolvePatternOutput', () => {
     if (!found) throw new Error('fixture pattern should have matched');
 
     expect(() => resolvePatternOutput(found, inputs)).toThrow(/outputDefinitionId/);
+  });
+
+  it('resolves the authored recipient and defensively rejects a different office', () => {
+    const pattern = sessionScenario.patterns.find(
+      (candidate) => candidate.id === 'pattern-answer-office-concern',
+    )!;
+    const makeInput = (definitionId: string, index: number): MatchInput => {
+      const definition = sessionScenario.cards.find((candidate) => candidate.id === definitionId)!;
+      return {
+        instanceId: `session-input-${index}`,
+        definition,
+        effectiveTags: computeEffectiveTags(definition, 'democratic'),
+        effectiveSourceClass: definition.sourceClass,
+        form: definitionId === 'evidence-rent-burden-report' ? 'summary' : 'raw',
+        provenance: {
+          label: definition.title,
+          sourceClass: definition.sourceClass,
+          sourceDefinitionIds: definition.kind === 'evidence' ? [definition.id] : [],
+          policyDefinitionId: undefined,
+          precedentIds: [],
+          citations: definition.citations,
+        },
+      };
+    };
+    const matchingInputIds = [
+      'staff-district-director',
+      'evidence-rent-burden-report',
+      'coalition-office-hillcrest',
+      'constituency-renter-concern',
+    ];
+    const matchingInputs = matchingInputIds.map(makeInput);
+    const matching = matchPattern(matchingInputs, [pattern], [], []);
+    if (!matching) throw new Error('office-concern fixture should structurally match');
+    expect(resolvePatternOutput(matching, matchingInputs)).toMatchObject({
+      definitionId: 'evidence-rent-burden-report',
+      form: 'prepared',
+      explanationKey: 'result.evidence.office-concern-answered',
+    });
+
+    const mismatchedInputs = matchingInputIds
+      .map((id) => id === 'coalition-office-hillcrest' ? 'coalition-office-ridgeline' : id)
+      .map(makeInput);
+    const mismatched = matchPattern(mismatchedInputs, [pattern], [], []);
+    if (!mismatched) throw new Error('office-concern mismatch should structurally match');
+
+    expect(() => resolvePatternOutput(mismatched, mismatchedInputs)).toThrow(
+      'Office-concern work requires the authored concern for that recipient office',
+    );
   });
 });

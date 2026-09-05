@@ -178,6 +178,57 @@ describe('DOCKET_PROVISION', () => {
 });
 
 describe('competing summary evidence uses', () => {
+  it('rejects a mismatched concern recipient without reserving cards or spending attention', () => {
+    let state = summaryState();
+    state = addCard(state, {
+      id: 'card-coalition-office-ridgeline',
+      definitionId: 'coalition-office-ridgeline',
+      stackId: 'stack-card-coalition-office-ridgeline',
+      x: 900,
+      y: 300,
+      remainingMs: 0,
+      status: 'idle',
+      form: 'raw',
+      location: 'desk',
+      sourceDefinitionIds: [],
+    });
+    state = addCard(state, {
+      id: 'card-constituency-renter-concern',
+      definitionId: 'constituency-renter-concern',
+      stackId: 'stack-card-constituency-renter-concern',
+      x: 960,
+      y: 340,
+      remainingMs: 0,
+      status: 'idle',
+      form: 'raw',
+      location: 'desk',
+      sourceDefinitionIds: [],
+    });
+    const inputs = [
+      idOf(state, 'staff-district-director'),
+      idOf(state, 'evidence-rent-burden-report'),
+      idOf(state, 'coalition-office-ridgeline'),
+      idOf(state, 'constituency-renter-concern'),
+    ];
+    const originalResources = state.resources;
+    const originalEventLog = state.eventLog;
+
+    const rejected = executeCommand(state, { type: 'SUBMIT_WORK', cardIds: inputs }, services);
+
+    expect(rejected.state).toBe(state);
+    expect(rejected.state.resources).toBe(originalResources);
+    expect(rejected.state.eventLog).toBe(originalEventLog);
+    expect(rejected.state.activeWork).toEqual([]);
+    expect(rejected.state.cards.every((card) => card.status === 'idle')).toBe(true);
+    expect(rejected.events).toEqual([
+      expect.objectContaining({
+        type: 'COMMAND_REJECTED',
+        reason: 'no-matching-pattern',
+        message: 'That authored concern belongs to a different recipient office.',
+      }),
+    ]);
+  });
+
   it.each([
     {
       patternId: 'pattern-answer-office-concern',
