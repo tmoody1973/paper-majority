@@ -4,6 +4,7 @@ import type {
   ScenarioDefinition,
   TermState,
 } from '@/domain/types';
+import { effectiveRule } from '@/domain/recipes';
 
 /**
  * Staff Handbook state, derived — never stored.
@@ -66,12 +67,14 @@ export function describeStudyOption(
   const tactic = state.cards.find((card) => card.id === tacticCardId);
   if (!staff || !tactic) return { isTactic: false, canStudy: false };
 
-  const expansion = scenario.tacticExpansions.find(
+  const authoredExpansions = scenario.tacticExpansions.filter(
     (candidate) => candidate.tacticDefinitionId === tactic.definitionId,
-  );
-  if (!expansion) return { isTactic: false, canStudy: false };
+  ).sort((a, b) => a.id.localeCompare(b.id));
+  if (authoredExpansions.length === 0) return { isTactic: false, canStudy: false };
 
-  if ((state.unlockedSlotExpansions[expansion.targetPatternId] ?? []).includes(expansion.id)) {
+  const expansions = authoredExpansions.filter((expansion) =>
+    !(state.unlockedSlotExpansions[expansion.targetPatternId] ?? []).includes(expansion.id));
+  if (expansions.length === 0) {
     return { isTactic: true, canStudy: false, blockedReason: 'Your office has already learned this.' };
   }
 
@@ -79,14 +82,17 @@ export function describeStudyOption(
     return { isTactic: true, canStudy: false, blockedReason: 'That Tactic is already being studied.' };
   }
 
-  const wanted = expansion.eligibleStaffTags.map(describeTag).join(' or ');
+  const eligibleTags = Array.from(new Set(expansions.flatMap((expansion) => expansion.eligibleStaffTags)));
+  const wanted = eligibleTags.map(describeTag).join(' or ');
   const onTheDesk = state.cards
     .filter((card) => {
       if (card.status !== 'idle') return false;
       const definition = scenario.cards.find((entry) => entry.id === card.definitionId);
       return (
         definition?.kind === 'staff' &&
-        expansion.eligibleStaffTags.some((tag) => definition.tags.includes(tag))
+        expansions.every((expansion) =>
+          expansion.eligibleStaffTags.some((tag) => definition.tags.includes(tag)),
+        )
       );
     })
     .map(
@@ -114,7 +120,9 @@ export function describeStudyOption(
     };
   }
 
-  if (!expansion.eligibleStaffTags.some((tag) => staffDefinition.tags.includes(tag))) {
+  if (!expansions.every((expansion) =>
+    expansion.eligibleStaffTags.some((tag) => staffDefinition.tags.includes(tag)),
+  )) {
     return {
       isTactic: true,
       canStudy: false,
@@ -122,7 +130,7 @@ export function describeStudyOption(
     };
   }
 
-  if (state.resources.staffAttention < expansion.studyCost) {
+  if (state.resources.staffAttention < Math.max(...expansions.map((expansion) => expansion.studyCost))) {
     return {
       isTactic: true,
       canStudy: false,
@@ -265,27 +273,8 @@ export function buildHandbook(state: TermState, scenario: ScenarioDefinition): H
       };
     }
 
-    const effectiveSlots = pattern.slots.map((slot) => {
-      let widened = { ...slot };
-      for (const expansion of scenario.tacticExpansions) {
-        if (!activeIds.includes(expansion.id)) continue;
-        if (expansion.effect.kind !== 'widen-slot') continue;
-        if (pattern.slots[expansion.effect.slotIndex] !== slot) continue;
-        widened = {
-          ...widened,
-          anyTags: Array.from(
-            new Set([...(widened.anyTags ?? []), ...(expansion.effect.addAnyTags ?? [])]),
-          ),
-          sourceClasses: Array.from(
-            new Set([
-              ...(widened.sourceClasses ?? []),
-              ...(expansion.effect.addSourceClasses ?? []),
-            ]),
-          ),
-        };
-      }
-      return widened;
-    });
+    const effective = effectiveRule(pattern, activeIds, scenario.tacticExpansions);
+    const effectiveSlots = effective.pattern.slots;
 
     const outputDefinitionId =
       pattern.output.mode === 'fixed'

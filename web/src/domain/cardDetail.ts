@@ -1,4 +1,4 @@
-import { computeEffectiveTags } from '@/domain/recipes';
+import { computeEffectiveTags, effectiveRule } from '@/domain/recipes';
 import type {
   CardKind,
   Resources,
@@ -139,27 +139,16 @@ export function describeCard(
     if (!state.discoveredPatternIds.includes(pattern.id)) continue;
 
     const activeIds = state.unlockedSlotExpansions[pattern.id] ?? [];
-    const slots = pattern.slots.map((slot, index) => {
-      let widened = { ...slot };
-      for (const expansion of scenario.tacticExpansions) {
-        if (!activeIds.includes(expansion.id)) continue;
-        if (expansion.effect.kind !== 'widen-slot') continue;
-        if (expansion.effect.slotIndex !== index) continue;
-        widened = {
-          ...widened,
-          anyTags: Array.from(
-            new Set([...(widened.anyTags ?? []), ...(expansion.effect.addAnyTags ?? [])]),
-          ),
-        };
-      }
-      return widened;
-    });
+    const rule = effectiveRule(pattern, activeIds, scenario.tacticExpansions).pattern;
+    if (rule.eligibleStages && !rule.eligibleStages.includes(state.bill.stage)) continue;
+    const slots = rule.slots;
 
     const fits = slots.some((slot) => {
       if (slot.kind && slot.kind !== definition.kind) return false;
       if (slot.requiredTags?.some((tag) => !effectiveTags.includes(tag))) return false;
       if (slot.anyTags && !slot.anyTags.some((tag) => effectiveTags.includes(tag))) return false;
       if (slot.sourceClasses && !slot.sourceClasses.includes(definition.sourceClass)) return false;
+      if (slot.forms && !slot.forms.includes(instance.form)) return false;
       return true;
     });
     if (!fits) continue;
@@ -170,9 +159,10 @@ export function describeCard(
         : (pattern.output.parameters?.outputDefinitionId as string | undefined);
     const outputTitle = scenario.cards.find((card) => card.id === outputId)?.title ?? 'a new card';
 
-    knownUses.push(`Part of a rule your office knows: it helps make ${outputTitle}.`);
+    const knownUse = `Part of a rule your office knows: it helps make ${outputTitle}.`;
+    if (!knownUses.includes(knownUse)) knownUses.push(knownUse);
 
-    for (const cost of describeCost(pattern.resourceCost)) {
+    for (const cost of describeCost(rule.resourceCost)) {
       if (seenCosts.has(cost.short)) continue;
       seenCosts.add(cost.short);
       costs.push(cost);

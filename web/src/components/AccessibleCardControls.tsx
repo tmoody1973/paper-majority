@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { describeStudyOption } from '@/domain/selectors';
+import { remainingWorkMs } from '@/domain/work';
 import type { TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
 
@@ -44,13 +45,16 @@ export function AccessibleCardControls({
   const label = (cardId: string) => {
     const card = state.cards.find((candidate) => candidate.id === cardId);
     if (!card) return cardId;
+    const remainingMs = state.mode === 'interaction-spike'
+      ? card.remainingMs
+      : remainingWorkMs(state, card.id);
     const status =
       card.status === 'working'
         ? ' — working'
         : card.status === 'expired'
           ? ' — missed'
-          : card.remainingMs > 0
-            ? ` — due in ${Math.ceil(card.remainingMs / 1000)}s`
+          : remainingMs > 0
+            ? ` — due in ${Math.ceil(remainingMs / 1000)}s`
             : '';
     return `${titleOf(card.definitionId)}${status}`;
   };
@@ -80,7 +84,7 @@ export function AccessibleCardControls({
           }}
         >
           <option value="">Choose a card</option>
-          {state.cards.map((card) => (
+          {state.cards.filter((card) => card.location === 'desk').map((card) => (
             <option key={card.id} value={card.id}>
               {label(card.id)}
             </option>
@@ -97,6 +101,7 @@ export function AccessibleCardControls({
         >
           <option value="">Choose a card</option>
           {state.cards
+            .filter((card) => card.location === 'desk')
             .filter((card) => card.id !== sourceId)
             .map((card) => (
               <option key={card.id} value={card.id}>

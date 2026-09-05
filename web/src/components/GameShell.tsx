@@ -9,10 +9,11 @@ import { Hud } from '@/components/Hud';
 import { OfficeBrief } from '@/components/OfficeBrief';
 import { PlainEnglishKey } from '@/components/PlainEnglishKey';
 import { StaffHandbook } from '@/components/StaffHandbook';
+import { WorkMat } from '@/components/WorkMat';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
 import { describeCard } from '@/domain/cardDetail';
 import { buildHandbook } from '@/domain/selectors';
-import type { TermState } from '@/domain/types';
+import type { ScenarioDefinition, TermState } from '@/domain/types';
 import { createGameSession, type GameSession } from '@/game/session';
 
 // Phaser only exists in the browser. `ssr: false` is legal here because this file
@@ -35,13 +36,15 @@ declare global {
 
 export interface GameShellProps {
   fixture?: FixtureId;
+  scenario?: ScenarioDefinition;
+  initialState?: TermState;
 }
 
-export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
-  const scenario = useMemo(() => getFixtureScenario(), []);
+export function GameShell({ fixture = 'interaction-spike', scenario: providedScenario, initialState }: GameShellProps) {
+  const scenario = useMemo(() => providedScenario ?? getFixtureScenario(), [providedScenario]);
   const session = useMemo<GameSession>(
-    () => createGameSession(createFixtureState(fixture), scenario),
-    [fixture, scenario],
+    () => createGameSession(initialState ?? createFixtureState(fixture), scenario),
+    [fixture, initialState, scenario],
   );
 
   const [state, setState] = useState<TermState>(() => session.getState());
@@ -49,6 +52,7 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
   const [handbookOpen, setHandbookOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>();
   const [hoveredCardId, setHoveredCardId] = useState<string | undefined>();
+  const [workMatCardIds, setWorkMatCardIds] = useState<string[]>([]);
 
   useEffect(() => session.subscribe((result) => setState(result.state)), [session]);
 
@@ -81,7 +85,13 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
   }, [session]);
 
   const onResult = useCallback((phrase: string) => setLastResult(phrase), []);
-  const onSelect = useCallback((cardId: string) => setSelectedCardId(cardId), []);
+  const onSelect = useCallback((cardId: string) => {
+    setSelectedCardId(cardId);
+    if (session.getState().mode === 'interaction-spike') return;
+    setWorkMatCardIds((ids) => ids.includes(cardId)
+      ? ids.filter((id) => id !== cardId)
+      : ids.length < 4 ? [...ids, cardId] : ids);
+  }, [session]);
   const onHover = useCallback((cardId: string | undefined) => setHoveredCardId(cardId), []);
 
   // A tap pins a card open; hovering only previews. A card consumed by a
@@ -117,6 +127,15 @@ export function GameShell({ fixture = 'interaction-spike' }: GameShellProps) {
         </section>
 
         <aside className="shell__side">
+          {state.mode !== 'interaction-spike' && (
+            <WorkMat
+              session={session}
+              state={state}
+              selectedCardIds={workMatCardIds}
+              onSelectedCardIdsChange={setWorkMatCardIds}
+              onResult={onResult}
+            />
+          )}
           {detail ? (
             <CardInspector detail={detail} onClose={() => setSelectedCardId(undefined)} />
           ) : (

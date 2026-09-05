@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
 import { describeCard } from '@/domain/cardDetail';
 import { resolveDropIntent, wouldDropBeAccepted } from '@/domain/dropIntent';
+import { remainingWorkMs } from '@/domain/work';
 import type { CardDefinition, CardInstance } from '@/domain/types';
 import { resolveDropTarget, type DropTarget } from '@/game/input/dropResolver';
 import { CardView, CARD_HEIGHT, CARD_WIDTH } from '@/game/objects/CardView';
@@ -128,12 +129,13 @@ export class DeskScene extends Phaser.Scene {
    */
   private frameDesk(): void {
     const state = this.session.getState();
-    if (state.cards.length === 0) return;
+    const cards = state.cards.filter((card) => card.location === 'desk');
+    if (cards.length === 0) return;
 
-    const left = Math.min(...state.cards.map((card) => card.x)) - CARD_WIDTH / 2;
-    const right = Math.max(...state.cards.map((card) => card.x)) + CARD_WIDTH / 2;
-    const top = Math.min(...state.cards.map((card) => card.y)) - CARD_HEIGHT / 2;
-    const bottom = Math.max(...state.cards.map((card) => card.y)) + CARD_HEIGHT / 2;
+    const left = Math.min(...cards.map((card) => card.x)) - CARD_WIDTH / 2;
+    const right = Math.max(...cards.map((card) => card.x)) + CARD_WIDTH / 2;
+    const top = Math.min(...cards.map((card) => card.y)) - CARD_HEIGHT / 2;
+    const bottom = Math.max(...cards.map((card) => card.y)) + CARD_HEIGHT / 2;
 
     const camera = this.cameras.main;
     const margin = 24;
@@ -176,7 +178,7 @@ export class DeskScene extends Phaser.Scene {
     for (const stack of state.stacks) {
       stack.cardIds.forEach((cardId, indexInStack) => {
         const instance = state.cards.find((card) => card.id === cardId);
-        if (!instance) return;
+        if (!instance || instance.location !== 'desk') return;
         seen.add(cardId);
 
         // Fanned stacks keep every card's top 42px — the family band, label and
@@ -184,6 +186,9 @@ export class DeskScene extends Phaser.Scene {
         const anchor = state.cards.find((card) => card.id === stack.cardIds[0]) ?? instance;
         const placed: CardInstance = {
           ...instance,
+          remainingMs: state.mode === 'interaction-spike'
+            ? instance.remainingMs
+            : remainingWorkMs(state, instance.id),
           x: anchor.x,
           y: anchor.y + indexInStack * STACK_OFFSET_Y,
         };
@@ -275,6 +280,12 @@ export class DeskScene extends Phaser.Scene {
   }
 
   private installInput(): void {
+    // Phaser defaults both drag thresholds to zero, which starts a drag on the
+    // initial press. Requiring real movement keeps a stationary tap available for
+    // inspection/staging and lets the existing distance guard distinguish the two.
+    if (this.session.getState().mode !== 'interaction-spike') {
+      this.input.dragDistanceThreshold = 8;
+    }
     // Dragging works while paused: planning is never a timed activity.
     this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, view: CardView) => {
       this.dragOrigin = { x: view.x, y: view.y };

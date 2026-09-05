@@ -162,6 +162,7 @@ const recipeOutputSchema = z.discriminatedUnion('mode', [
 const recipePatternSchema = z.strictObject({
   id: idSchema,
   slots: z.array(recipeSlotSchema).min(1),
+  eligibleStages: z.array(z.enum(STAGES)).min(1).optional(),
   output: recipeOutputSchema,
   durationMs: positiveInteger,
   resourceCost: resourceCostSchema,
@@ -472,6 +473,7 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
       const pattern = patterns.get(expansion.targetPatternId);
       if (!pattern) addReferenceIssue(ctx, `Unknown target pattern: ${expansion.targetPatternId}`, ['tacticExpansions', index]);
       if (expansion.effect.kind === 'widen-slot' && !pattern?.slots[expansion.effect.slotIndex]) addReferenceIssue(ctx, 'Widen-slot effect targets a missing slot', ['tacticExpansions', index, 'effect']);
+      if (expansion.effect.kind === 'procedure-eligibility' && (!pattern?.eligibleStages || pattern.eligibleStages.includes(expansion.effect.stage))) addReferenceIssue(ctx, 'Procedure eligibility must unlock a stage excluded by the authored rule', ['tacticExpansions', index, 'effect']);
     }
 
     for (const [index, obligation] of scenario.obligationDefinitions.entries()) {

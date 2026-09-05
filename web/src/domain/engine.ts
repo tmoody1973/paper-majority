@@ -4,8 +4,10 @@ import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
 import { applyResourceDelta } from '@/domain/resources';
 import { describeTag } from '@/domain/selectors';
+import { EFFECTIVE_RULE_VERSION, patternReservation, planWork } from '@/domain/work';
 import type {
   CardInstance,
+  ActiveWork,
   RecipePattern,
   Resources,
   ScenarioDefinition,
@@ -84,6 +86,24 @@ function canAfford(resources: Resources, cost: Partial<Resources>): boolean {
   );
 }
 
+function spend(resources: Resources, cost: Partial<Resources>) {
+  return applyResourceDelta(
+    resources,
+    Object.fromEntries(Object.entries(cost).map(([key, amount]) => [key, -amount])) as Partial<Resources>,
+  );
+}
+
+function paidFromApplied(applied: Partial<Resources>): Partial<Resources> {
+  return Object.fromEntries(
+    Object.entries(applied).map(([key, amount]) => [key, -amount]),
+  ) as Partial<Resources>;
+}
+
+function nextWorkId(state: TermState): string {
+  const submitted = state.eventLog.filter((event) => event.type === 'WORK_SUBMITTED').length;
+  return `work-${submitted + 1}`;
+}
+
 /** Move one card into a target stack, dropping any stack that is left empty. */
 function mergeIntoStack(
   stacks: StackState[],
@@ -118,6 +138,233 @@ function findExpansion(
 
 function isExpansionActive(state: TermState, expansion: TacticExpansionDefinition): boolean {
   return (state.unlockedSlotExpansions[expansion.targetPatternId] ?? []).includes(expansion.id);
+}
+
+function sessionRejection(
+  state: TermState,
+  commandType: GameCommandType,
+  cardIds: string[],
+  reason: string,
+  targetStackId?: string,
+): EngineResult {
+  const code: RejectionReason = /expired/i.test(reason)
+    ? 'card-expired'
+    : /already working/i.test(reason)
+      ? 'card-busy'
+      : /capacity|staff slot/i.test(reason)
+        ? 'insufficient-resources'
+        : /no longer|desk/i.test(reason)
+          ? 'unknown-card'
+          : 'no-matching-pattern';
+  return commandType === 'STACK_CARD'
+    ? rejectStack(state, cardIds, targetStackId, code, reason)
+    : rejectCommand(state, commandType, code, reason);
+}
+
+function startSessionPattern(
+  state: TermState,
+  services: EngineServices,
+  commandType: GameCommandType,
+  cardIds: string[],
+  targetStackId?: string,
+): EngineResult {
+  const planned = planWork(state, services.scenario, cardIds);
+  if (!('preview' in planned)) {
+    return sessionRejection(state, commandType, cardIds, planned.reason, targetStackId);
+  }
+
+  const workId = nextWorkId(state);
+  const charged = spend(state.resources, planned.preview.cost);
+  const paidCost = paidFromApplied(charged.applied);
+  const reservation = {
+    ...patternReservation(workId, state, planned, cardIds),
+    paidCost,
+  };
+  const alreadyDiscovered = state.discoveredPatternIds.includes(planned.preview.patternId);
+  const stackId = targetStackId ?? findCard(state, cardIds[0])?.stackId ?? `work-${workId}`;
+  const definitionIds = cardIds
+    .map((id) => findCard(state, id)?.definitionId ?? id)
+    .sort();
+  const events: GameEvent[] = [
+    {
+      type: 'STACK_ACCEPTED',
+      stackId,
+      cardIds: [...cardIds],
+      definitionIds,
+      patternId: planned.preview.patternId,
+    },
+    {
+      type: 'WORK_SUBMITTED',
+      workId,
+      cardIds: [...reservation.cardIds],
+      completesAtSimulationMs: reservation.completesAtSimulationMs,
+    },
+  ];
+  if (Object.keys(charged.applied).length > 0) {
+    events.push({
+      type: 'RESOURCE_CHANGED',
+      changes: charged.applied,
+      reason: `pattern:${planned.preview.patternId}`,
+    });
+  }
+  if (!alreadyDiscovered) events.push({ type: 'PATTERN_DISCOVERED', patternId: planned.preview.patternId });
+  events.push({
+    type: 'ACTION_STARTED',
+    stackId,
+    durationMs: planned.preview.durationMs,
+    patternId: planned.preview.patternId,
+    assignmentKind: 'card-work',
+  });
+
+  const stacked = cardIds.reduce(
+    (stacks, cardId) => mergeIntoStack(stacks, cardId, stackId),
+    state.stacks,
+  );
+  return accept(
+    state,
+    {
+      ...state,
+      resources: charged.resources,
+      cards: state.cards.map((card) =>
+        cardIds.includes(card.id)
+          ? { ...card, stackId, status: 'working', remainingMs: 0 }
+          : card,
+      ),
+      stacks: stacked,
+      activeWork: [...state.activeWork, reservation],
+      discoveredPatternIds: alreadyDiscovered
+        ? state.discoveredPatternIds
+        : [...state.discoveredPatternIds, planned.preview.patternId],
+    },
+    events,
+  );
+}
+
+function cancelSessionWork(
+  state: TermState,
+  work: ActiveWork,
+  separatedCardId: string,
+  x: number,
+  y: number,
+): EngineResult {
+  const attention = work.paidCost.staffAttention ?? 0;
+  const released = attention > 0
+    ? applyResourceDelta(state.resources, { staffAttention: attention })
+    : { resources: state.resources, applied: {} as Partial<Resources> };
+  const events: GameEvent[] = [];
+  if (attention > 0) {
+    events.push({ type: 'RESOURCE_CHANGED', changes: released.applied, reason: `cancel:${work.id}` });
+  }
+  const currentStack = state.stacks.find((stack) => stack.cardIds.includes(separatedCardId));
+  const newStackId = `stack-${separatedCardId}`;
+  const stacks = currentStack && currentStack.cardIds.length > 1
+    ? [
+        ...state.stacks
+          .map((stack) => stack.id === currentStack.id
+            ? { ...stack, cardIds: stack.cardIds.filter((id) => id !== separatedCardId) }
+            : stack),
+        { id: newStackId, cardIds: [separatedCardId] },
+      ]
+    : state.stacks;
+  return accept(
+    state,
+    {
+      ...state,
+      resources: released.resources,
+      activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
+      cards: state.cards.map((card) =>
+        card.id === separatedCardId
+          ? { ...card, stackId: newStackId, x, y, status: 'idle', remainingMs: 0 }
+          : work.cardIds.includes(card.id)
+            ? { ...card, status: 'idle', remainingMs: 0 }
+            : card,
+      ),
+      stacks,
+    },
+    events,
+  );
+}
+
+function startSessionStudy(
+  state: TermState,
+  services: EngineServices,
+  staffCardId: string,
+  tacticCardId: string,
+): EngineResult {
+  const staff = findCard(state, staffCardId);
+  const tactic = findCard(state, tacticCardId);
+  if (!staff || !tactic || staff.location !== 'desk' || tactic.location !== 'desk') {
+    return rejectCommand(state, 'START_ASSIGNMENT', 'unknown-card', 'That card is no longer on the desk.');
+  }
+  if (staff.status !== 'idle' || tactic.status !== 'idle' || state.activeWork.some((work) => work.cardIds.includes(staffCardId) || work.cardIds.includes(tacticCardId))) {
+    return rejectCommand(state, 'START_ASSIGNMENT', 'card-busy', 'That work is still under way.');
+  }
+
+  const expansions = services.scenario.tacticExpansions
+    .filter((candidate) => candidate.tacticDefinitionId === tactic.definitionId)
+    .filter((candidate) => !isExpansionActive(state, candidate))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  if (expansions.length === 0) {
+    return rejectCommand(state, 'START_ASSIGNMENT', 'tactic-already-active', 'Your office has already learned that.');
+  }
+  const staffDefinition = services.scenario.cards.find((card) => card.id === staff.definitionId);
+  const eligible = staffDefinition?.kind === 'staff' && expansions.every((expansion) =>
+    expansion.eligibleStaffTags.some((tag) => staffDefinition.tags.includes(tag)),
+  );
+  if (!eligible) {
+    return rejectCommand(state, 'START_ASSIGNMENT', 'ineligible-staff', 'This staffer is not the right person to study that Tactic.');
+  }
+
+  const studyCost = Math.max(0, ...expansions.map((expansion) => expansion.studyCost));
+  const durationMs = Math.max(1, ...expansions.map((expansion) => expansion.studyDurationMs));
+  const cost: Partial<Resources> = { staffAttention: studyCost };
+  if (!canAfford(state.resources, cost)) {
+    return rejectCommand(state, 'START_ASSIGNMENT', 'insufficient-resources', 'No staffer is free to take that on right now.');
+  }
+
+  const workId = nextWorkId(state);
+  const charged = spend(state.resources, cost);
+  const reservation: ActiveWork = {
+    id: workId,
+    kind: 'study',
+    cardIds: [staffCardId, tacticCardId].sort(),
+    staffCardIds: [staffCardId],
+    paidCost: paidFromApplied(charged.applied),
+    completesAtSimulationMs: state.simulationMs + durationMs,
+    effectiveRuleVersion: EFFECTIVE_RULE_VERSION,
+    consumedCardIds: [tacticCardId],
+    returnedCardIds: [staffCardId],
+    expansionIds: expansions.map((expansion) => expansion.id),
+    effectiveExpansions: structuredClone(expansions),
+  };
+  const events: GameEvent[] = [
+    {
+      type: 'STACK_ACCEPTED',
+      stackId: tactic.stackId,
+      cardIds: [tacticCardId, staffCardId],
+      definitionIds: [tactic.definitionId, staff.definitionId].sort(),
+    },
+    {
+      type: 'WORK_SUBMITTED',
+      workId,
+      cardIds: [...reservation.cardIds],
+      completesAtSimulationMs: reservation.completesAtSimulationMs,
+    },
+    { type: 'RESOURCE_CHANGED', changes: charged.applied, reason: `study:${reservation.expansionIds.join('+')}` },
+    { type: 'ACTION_STARTED', stackId: tactic.stackId, durationMs, assignmentKind: 'study-tactic' },
+  ];
+  return accept(
+    state,
+    {
+      ...state,
+      resources: charged.resources,
+      cards: state.cards.map((card) =>
+        reservation.cardIds.includes(card.id) ? { ...card, status: 'working', remainingMs: 0 } : card,
+      ),
+      activeWork: [...state.activeWork, reservation],
+    },
+    events,
+  );
 }
 
 /**
@@ -156,7 +403,7 @@ export function applyTacticExpansion(
         .filter((stack) => stack.cardIds.length > 0),
       unlockedSlotExpansions: {
         ...state.unlockedSlotExpansions,
-        [expansion.targetPatternId]: [...existing, expansion.id],
+        [expansion.targetPatternId]: Array.from(new Set([...existing, expansion.id])).sort(),
       },
     },
     event: {
@@ -421,6 +668,142 @@ function completeAction(
   };
 }
 
+function completeSessionWork(
+  state: TermState,
+  work: ActiveWork,
+  services: EngineServices,
+): { state: TermState; events: GameEvent[] } {
+  const attention = work.paidCost.staffAttention ?? 0;
+  const release = attention > 0
+    ? applyResourceDelta(state.resources, { staffAttention: attention })
+    : { resources: state.resources, applied: {} as Partial<Resources> };
+
+  if (work.kind === 'study') {
+    const tacticId = work.consumedCardIds[0];
+    const unlocked = { ...state.unlockedSlotExpansions };
+    const activationEvents: GameEvent[] = [];
+    for (const expansion of [...work.effectiveExpansions].sort((a, b) => a.id.localeCompare(b.id))) {
+      unlocked[expansion.targetPatternId] = Array.from(
+        new Set([...(unlocked[expansion.targetPatternId] ?? []), expansion.id]),
+      ).sort();
+      activationEvents.push({
+        type: 'TACTIC_EXPANSION_ACTIVATED',
+        expansionId: expansion.id,
+        tacticDefinitionId: expansion.tacticDefinitionId,
+        targetPatternId: expansion.targetPatternId,
+      });
+    }
+    const nextCards = state.cards
+      .filter((card) => card.id !== tacticId)
+      .map((card) => work.returnedCardIds.includes(card.id)
+        ? { ...card, status: 'idle' as const, remainingMs: 0 }
+        : card);
+    const nextStacks = state.stacks
+      .map((stack) => ({ ...stack, cardIds: stack.cardIds.filter((id) => id !== tacticId) }))
+      .filter((stack) => stack.cardIds.length > 0);
+    const events: GameEvent[] = [];
+    if (attention > 0) {
+      events.push({ type: 'RESOURCE_CHANGED', changes: release.applied, reason: `study-complete:${work.id}` });
+    }
+    events.push(...activationEvents);
+    return {
+      state: {
+        ...state,
+        resources: release.resources,
+        cards: nextCards,
+        stacks: nextStacks,
+        activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
+        unlockedSlotExpansions: unlocked,
+      },
+      events,
+    };
+  }
+
+  const memberCards = work.cardIds
+    .map((id) => findCard(state, id))
+    .filter((card): card is CardInstance => card !== undefined);
+  const inputs = buildMatchInputs(memberCards, services.scenario, state.player.party);
+  const found = matchPattern(inputs, [work.effectivePattern], [], []);
+  if (!found) return { state, events: [] };
+
+  const resolved = resolvePatternOutput(found, inputs);
+  const anchor = memberCards[0];
+  if (!anchor) return { state, events: [] };
+  const seq = state.cardSeq + 1;
+  const producedId = `card-${seq}`;
+  const producedStackId = `stack-${producedId}`;
+  const requested = { ...resolved.effects };
+  if (attention > 0) requested.staffAttention = (requested.staffAttention ?? 0) + attention;
+  const change = applyResourceDelta(state.resources, requested);
+  const consumed = new Set(work.consumedCardIds);
+  const returned = new Set(work.returnedCardIds);
+  const survivors = memberCards
+    .filter((card) => returned.has(card.id))
+    .map((card) => ({ ...card, status: 'idle' as const, remainingMs: 0 }));
+  const outputDefinition = services.scenario.cards.find((entry) => entry.id === resolved.definitionId);
+  const produced: CardInstance = {
+    id: producedId,
+    definitionId: resolved.definitionId,
+    stackId: producedStackId,
+    x: anchor.x,
+    y: anchor.y,
+    remainingMs: 0,
+    status: 'idle',
+    form: resolved.form ?? 'raw',
+    location: 'desk',
+    sourceDefinitionIds: memberCards
+      .filter((card) => services.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'evidence')
+      .flatMap((card) => card.sourceDefinitionIds.length > 0 ? card.sourceDefinitionIds : [card.definitionId])
+      .filter((id, index, all) => all.indexOf(id) === index)
+      .sort(),
+    policyDefinitionId: outputDefinition?.kind === 'policy'
+      ? resolved.definitionId
+      : memberCards.find((card) => card.policyDefinitionId)?.policyDefinitionId,
+    origin: {
+      explanationKey: resolved.explanationKey,
+      inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
+      consumedDefinitionIds: memberCards
+        .filter((card) => consumed.has(card.id))
+        .map((card) => card.definitionId)
+        .sort(),
+    },
+  };
+  const cards = [
+    ...state.cards.filter((card) => !consumed.has(card.id) && !returned.has(card.id)),
+    ...survivors,
+    produced,
+  ];
+  const stacks = [
+    ...state.stacks
+      .map((stack) => ({ ...stack, cardIds: stack.cardIds.filter((id) => !consumed.has(id)) }))
+      .filter((stack) => stack.cardIds.length > 0),
+    { id: producedStackId, cardIds: [producedId] },
+  ];
+
+  return {
+    state: {
+      ...state,
+      cardSeq: seq,
+      resources: change.resources,
+      cards,
+      stacks,
+      activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
+    },
+    events: [
+      {
+        type: 'CARD_TRANSFORMED',
+        stackId: work.id,
+        consumedCardIds: [...work.consumedCardIds],
+        producedCardIds: [producedId],
+        returnedCardIds: [...work.returnedCardIds],
+        outputDefinitionId: resolved.definitionId,
+        explanationKey: resolved.explanationKey,
+      },
+      { type: 'RESOURCE_CHANGED', changes: change.applied, reason: `pattern-complete:${work.patternId}` },
+    ],
+  };
+}
+
 /**
  * Start an accepted pattern: pay the validated cost, put the inputs to work and
  * record the discovery exactly once. The transformation itself completes later,
@@ -514,6 +897,16 @@ function combine(
       commandType,
       'malformed-command',
       'That card is already in this stack.',
+    );
+  }
+
+  if (state.mode !== 'interaction-spike') {
+    return startSessionPattern(
+      state,
+      services,
+      commandType,
+      [...targetStack.cardIds, cardId],
+      targetStackId,
     );
   }
 
@@ -701,6 +1094,10 @@ export function executeCommand(
       if (!card || !stack || !stack.cardIds.includes(command.cardId)) {
         return rejectCommand(state, command.type, 'unknown-card', 'That card is not in this stack.');
       }
+      if (state.mode !== 'interaction-spike') {
+        const work = state.activeWork.find((candidate) => candidate.cardIds.includes(command.cardId));
+        if (work) return cancelSessionWork(state, work, command.cardId, command.x, command.y);
+      }
       // Pulling a card out of a running assignment cancels that assignment and
       // returns every participant to idle. The cost already paid is not refunded;
       // the office did start the work.
@@ -792,6 +1189,9 @@ export function executeCommand(
 
     case 'START_ASSIGNMENT': {
       if (command.assignmentKind === 'study-tactic') {
+        if (state.mode !== 'interaction-spike') {
+          return startSessionStudy(state, services, command.staffCardId, command.targetCardId);
+        }
         return startStudyTactic(state, services, command.staffCardId, command.targetCardId);
       }
       const target = findCard(state, command.targetCardId);
@@ -800,6 +1200,12 @@ export function executeCommand(
       }
       return combine(state, services, 'START_ASSIGNMENT', command.staffCardId, target.stackId);
     }
+
+    case 'SUBMIT_WORK':
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'The Work Mat is available in Session mode.');
+      }
+      return startSessionPattern(state, services, command.type, command.cardIds);
 
     case 'ACTIVATE_TACTIC': {
       const tactic = findCard(state, command.tacticCardId);
@@ -858,8 +1264,28 @@ export function executeCommand(
       const delta = Math.min(MAX_TICK_MS, Math.max(0, Math.trunc(command.deltaMs)));
       if (delta === 0) return { state, events: [] };
 
+      if (state.mode !== 'interaction-spike') {
+        let next: TermState = {
+          ...state,
+          simulationMs: state.simulationMs + delta,
+          elapsedMs: state.elapsedMs + delta,
+        };
+        const events: GameEvent[] = [];
+        const ready = next.activeWork
+          .filter((work) => work.completesAtSimulationMs <= next.simulationMs)
+          .sort((a, b) => a.id.localeCompare(b.id));
+        for (const work of ready) {
+          const completed = completeSessionWork(next, work, services);
+          next = completed.state;
+          events.push(...completed.events);
+        }
+        if (events.length === 0) return { state: next, events: [] };
+        return { state: { ...next, eventLog: [...next.eventLog, ...events] }, events };
+      }
+
       let next: TermState = {
         ...state,
+        simulationMs: state.simulationMs + delta,
         elapsedMs: state.elapsedMs + delta,
         cards: state.cards.map((card) => {
           if (card.remainingMs <= 0) return card;

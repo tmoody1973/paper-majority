@@ -187,6 +187,77 @@ select:focus-visible {
   padding: 14px 16px;
 }
 
+/* --------------------------------------------------------------- work mat */
+
+.work-mat {
+  border: 2px solid var(--family-staff);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.work-mat h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.work-mat__help,
+.work-mat__preview {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.work-mat__picker {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.work-mat__picker label {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.work-mat__picker select {
+  min-width: 0;
+  padding: 6px;
+}
+
+.work-mat__cards,
+.work-mat__active {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.work-mat__cards li,
+.work-mat__active li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px dashed var(--family-staff);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.work-mat__cards button,
+.work-mat__active button {
+  padding: 3px 7px;
+}
+
+.work-mat__preview--ready {
+  color: #276139;
+  font-weight: 700;
+}
+
 /* ---------------------------------------------------------- office brief */
 
 .brief {

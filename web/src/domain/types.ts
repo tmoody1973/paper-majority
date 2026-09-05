@@ -182,6 +182,8 @@ export interface CardInstance {
   sourceDefinitionIds: string[];
   /** The underlying authored policy retained through drafted/prepared forms. */
   policyDefinitionId?: string;
+  /** One setup-assigned trait. Absent means this staffer is a generalist. */
+  staffTraitId?: string;
   /**
    * Where a card produced in play came from: the resolver's explanation and the
    * definition IDs of every input, with the consumed ones singled out. Authored
@@ -372,6 +374,8 @@ export type RecipeOutput =
 export interface RecipePattern {
   id: string;
   slots: RecipeSlot[];
+  /** Procedure stages where this rule may run. Omitted means every stage. */
+  eligibleStages?: ProcedureStage[];
   output: RecipeOutput;
   durationMs: number;
   resourceCost: Partial<Resources>;

@@ -1,8 +1,9 @@
 import type { MatchInput, PatternMatch } from '@/domain/recipes';
-import type { DerivedResolverId, Resources } from '@/domain/types';
+import type { DerivedResolverId, InstanceForm, Resources } from '@/domain/types';
 
 export interface ResolvedPatternOutput {
   definitionId: string;
+  form?: InstanceForm;
   effects: Partial<Resources>;
   explanationKey: string;
 }
@@ -29,12 +30,32 @@ function requireOutputId(parameters: Record<string, string | number | boolean>):
   return value;
 }
 
-function inputForSlot(context: ResolverContext, slotIndex: number): MatchInput {
+export function inputsForSlot(context: ResolverContext, slotIndex: number): MatchInput[] {
   const assignment = context.match.assignments.find((a) => a.slotIndex === slotIndex);
-  const definitionId = assignment?.cardDefinitionIds[0];
-  const found = context.inputs.find((input) => input.definition.id === definitionId);
-  if (!found) throw new Error(`Resolver could not find the card assigned to slot ${slotIndex}`);
+  if (!assignment) throw new Error(`Resolver could not find slot ${slotIndex}`);
+
+  return assignment.cardInstanceIds.map((instanceId) => {
+    const found = context.inputs.find((input) => input.instanceId === instanceId);
+    if (!found) throw new Error(`Resolver could not find instance "${instanceId}" assigned to slot ${slotIndex}`);
+    return found;
+  });
+}
+
+function inputForSlot(context: ResolverContext, slotIndex: number): MatchInput {
+  const [found] = inputsForSlot(context, slotIndex);
+  if (!found) throw new Error(`Resolver found an empty slot ${slotIndex}`);
   return found;
+}
+
+function outputForSessionForm(
+  context: ResolverContext,
+  slotIndex: number,
+  form: InstanceForm,
+): Pick<ResolvedPatternOutput, 'definitionId' | 'form'> {
+  if (context.parameters.preserveInputDefinition === true) {
+    return { definitionId: inputForSlot(context, slotIndex).definition.id, form };
+  }
+  return { definitionId: requireOutputId(context.parameters) };
 }
 
 const summarizeEvidence: PatternResolver = (context) => {
@@ -44,19 +65,19 @@ const summarizeEvidence: PatternResolver = (context) => {
   // a derived local survey buys district relevance.
   return evidence.definition.sourceClass === 'official'
     ? {
-        definitionId: requireOutputId(context.parameters),
+        ...outputForSessionForm(context, 1, 'summary'),
         effects: { billMomentum: 3 },
         explanationKey: 'result.summary.committee-credibility',
       }
     : {
-        definitionId: requireOutputId(context.parameters),
+        ...outputForSessionForm(context, 1, 'summary'),
         effects: { districtTrust: 3 },
         explanationKey: 'result.summary.district-relevance',
       };
 };
 
 const draftProvision: PatternResolver = (context) => ({
-  definitionId: requireOutputId(context.parameters),
+  ...outputForSessionForm(context, 2, 'drafted'),
   effects: { billMomentum: 2 },
   explanationKey: 'result.provision.drafted',
 });
