@@ -58,7 +58,7 @@ describe('WorkMat', () => {
     await user.selectOptions(screen.getByTestId('work-mat-picker'), summary);
     await user.click(screen.getByTestId('work-mat-stage'));
     expect(screen.getByTestId('work-mat-begin')).toBeEnabled();
-    expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Drafted Housing Choice Voucher in 40s/i);
+    expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Housing Choice Voucher — drafted in 40s/i);
     expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Assigned: Legislative Counsel/i);
     expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Consumes: Housing Choice Voucher, Rent Burden Report — summary/i);
     expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Returns: Legislative Counsel/i);
@@ -120,7 +120,7 @@ describe('WorkMat', () => {
     }
 
     expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(
-      /Ready: Prepared Rent Burden Report/i,
+      /Ready: Rent Burden Report — prepared/i,
     );
     expect(screen.getByTestId('work-mat-preview')).toHaveTextContent(/Consumes:.*Renter Concern/i);
   });

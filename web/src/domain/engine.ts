@@ -3,7 +3,7 @@ import { previewBillChange, previewDocketProvision } from '@/domain/bill';
 import { applyRelationshipEvaluation, evaluateRelationships } from '@/domain/coalition';
 import { findRequiredDecisionWorkPlan, planDecisionUpfrontResources, previewDecision } from '@/domain/decisions';
 import type { GameEvent, RejectionReason } from '@/domain/events';
-import { resolvePatternOutput } from '@/domain/patternResolvers';
+import { resolveWorkOutput, resolvePatternOutput } from '@/domain/patternResolvers';
 import { openPack } from '@/domain/packs';
 import { buildMatchInputs, matchPattern, type MatchInput, type PatternMatch } from '@/domain/recipes';
 import { applyResourceDelta } from '@/domain/resources';
@@ -13,7 +13,7 @@ import { SESSION_READINESS_MILESTONE_ID, sessionReadiness } from '@/domain/objec
 import { buildSessionRecord } from '@/domain/sessionRecord';
 import { describeTag } from '@/domain/selectors';
 import { nextStopDelta, resolveWeek } from '@/domain/week';
-import { EFFECTIVE_RULE_VERSION, patternReservation, planWork } from '@/domain/work';
+import { EFFECTIVE_RULE_VERSION, patternReservation, planWork, sessionCompletionRejection } from '@/domain/work';
 import { demandForOffice } from '@/domain/variation';
 import type {
   CardInstance,
@@ -411,6 +411,8 @@ function startSessionStudy(
 
   const studyCost = Math.max(0, ...expansions.map((expansion) => expansion.studyCost));
   const durationMs = Math.max(1, ...expansions.map((expansion) => expansion.studyDurationMs));
+  const timingRejection = sessionCompletionRejection(state, durationMs);
+  if (timingRejection) return rejectCommand(state, 'START_ASSIGNMENT', 'invalid-stage', timingRejection);
   const cost: Partial<Resources> = { staffAttention: studyCost };
   const heldAttention = state.activeWork.reduce(
     (sum, work) => sum + (work.paidCost.staffAttention ?? 0),
@@ -831,16 +833,16 @@ function completeSessionWork(
     };
   }
 
-  if (
-    work.effectivePattern.output.mode === 'derived'
-    && work.effectivePattern.output.resolverId === 'resolve-outreach-v1'
-  ) {
-    const memberCards = work.cardIds
-      .map((id) => findCard(state, id))
-      .filter((card): card is CardInstance => card !== undefined);
-    const office = memberCards.find((card) =>
-      services.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'coalition',
-    );
+  const memberCards = work.cardIds
+    .map((id) => findCard(state, id))
+    .filter((card): card is CardInstance => card !== undefined);
+  const inputs = buildMatchInputs(memberCards, services.scenario, state.player.party);
+  const found = matchPattern(inputs, [work.effectivePattern], [], []);
+  if (!found) return { state, events: [] };
+  const plannedOutput = resolveWorkOutput(found, inputs, state.mode);
+
+  if (plannedOutput.kind === 'office-decision') {
+    const office = memberCards.find((card) => card.definitionId === plannedOutput.officeDefinitionId);
     const demand = office ? demandForOffice(state, services.scenario, office.definitionId) : undefined;
     const occurrenceId = demand ? `${demand.id}:revision:${state.bill.revision}` : undefined;
     const alreadyPresented = occurrenceId && (
@@ -858,8 +860,19 @@ function completeSessionWork(
       status: 'pending' as const,
     } : undefined;
     const authoredConcern = authoredConcernFor(memberCards, services.scenario);
+    const preparationSlot = work.effectivePattern.output.mode === 'derived'
+      ? work.effectivePattern.output.parameters?.preparationSlot : undefined;
+    const artifactId = typeof preparationSlot === 'number'
+      ? found.assignments.find((assignment) => assignment.slotIndex === preparationSlot)?.cardInstanceIds[0]
+      : undefined;
+    const delivery = pending && demand?.evidenceConcernId && artifactId ? {
+      artifactCardId: artifactId, officeDefinitionId: pending.officeDefinitionId,
+      demandId: demand.id, concernId: demand.evidenceConcernId, billRevision: state.bill.revision,
+    } : undefined;
+
     const events: GameEvent[] = [{
       type: 'PATTERN_COMPLETED',
+      delivery,
       workId: work.id,
       patternId: work.patternId,
       inputCardIds: memberCards.map((card) => card.id).sort(),
@@ -876,7 +889,7 @@ function completeSessionWork(
       consumedCardIds: [...work.consumedCardIds],
       producedCardIds: [],
       returnedCardIds: [...work.returnedCardIds],
-      outputDefinitionId: String(work.effectivePattern.output.parameters?.outputDefinitionId ?? office?.definitionId ?? 'political-media-attention'),
+      outputDefinitionId: String(work.effectivePattern.output.mode === 'derived' ? work.effectivePattern.output.parameters?.outputDefinitionId ?? office?.definitionId : office?.definitionId),
       explanationKey: pending ? 'result.outreach.offer-presented' : 'result.outreach.inspected',
     });
     if (hasActualResourceChange(release.applied)) {
@@ -917,14 +930,7 @@ function completeSessionWork(
     return { state: evaluated.state, events: [...events, ...evaluated.events] };
   }
 
-  const memberCards = work.cardIds
-    .map((id) => findCard(state, id))
-    .filter((card): card is CardInstance => card !== undefined);
-  const inputs = buildMatchInputs(memberCards, services.scenario, state.player.party);
-  const found = matchPattern(inputs, [work.effectivePattern], [], []);
-  if (!found) return { state, events: [] };
-
-  const resolved = resolvePatternOutput(found, inputs);
+  const resolved = plannedOutput;
   const outputSource = outputSourceFor(resolved, found, memberCards);
   const anchor = memberCards[0];
   if (!anchor) return { state, events: [] };
@@ -1783,6 +1789,9 @@ function executeCommandCore(
     }
 
     case 'ACTIVATE_TACTIC': {
+      if (state.mode === 'session') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'Session Tactics must complete a timed study assignment.');
+      }
       const tactic = findCard(state, command.tacticCardId);
       if (!tactic) {
         return rejectCommand(state, command.type, 'unknown-card', 'That Tactic is no longer on the desk.');
@@ -1936,6 +1945,10 @@ function executeCommandCore(
         return timeline;
       }
       if (timeline.state.weekPhase !== 'boundary') return timeline;
+      if (timeline.state.activeWork.length > 0) {
+        const rejection = rejectCommand(timeline.state, command.type, 'card-busy', 'Finish or cancel all reserved work before concluding the Session.');
+        return { state: timeline.state, events: [...timeline.events, ...rejection.events] };
+      }
 
       const alreadySettled = timeline.state.resolvedWeekIds.includes(`week:${timeline.state.week}`);
       const settlement = alreadySettled

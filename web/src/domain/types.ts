@@ -275,6 +275,7 @@ export type BillProvisionReceipt = BillProvisionReceiptBase & (
 export type RelationshipCondition =
   | { kind: 'bill-has-tag'; tag: string }
   | { kind: 'prepared-evidence-tag'; tag: string }
+  | { kind: 'delivered-preparation'; patternId: string; tag: string; requiresReviewedProvision: boolean }
   | { kind: 'governing-value'; value: GoverningValue };
 
 export interface RelationshipState {
@@ -649,6 +650,7 @@ export interface ObligationDefinition {
 export type DemandConditionDefinition =
   | { kind: 'bill-has-tag'; tag: string }
   | { kind: 'prepared-evidence-tag'; tag: string }
+  | { kind: 'delivered-preparation'; patternId: string; tag: string; requiresReviewedProvision: boolean }
   | { kind: 'governing-value'; value: GoverningValue };
 
 export interface DemandDefinition {
@@ -725,4 +727,13 @@ export interface ScenarioDefinition {
   decisionChoices: DecisionChoiceDefinition[];
   modeObjectives: ModeObjectiveDefinition[];
   staffTraits: StaffTraitDefinition[];
+}
+
+/** A completed delivery binds a produced artifact to one authored concern and revision. */
+export interface PreparationDelivery {
+  artifactCardId: string;
+  officeDefinitionId: string;
+  demandId: string;
+  concernId: string;
+  billRevision: number;
 }

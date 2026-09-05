@@ -1,5 +1,5 @@
 import { buildMatchInputs, effectiveRule, matchPattern, type PatternMatch } from '@/domain/recipes';
-import { validatePatternPreflight } from '@/domain/patternResolvers';
+import { resolveWorkOutput, type PlannedWorkOutput, validatePatternPreflight } from '@/domain/patternResolvers';
 import type {
   ActiveWork,
   CardInstance,
@@ -11,6 +11,16 @@ import type {
 } from '@/domain/types';
 
 export const EFFECTIVE_RULE_VERSION = 'session-work-v1';
+export const SESSION_COMPLETION_REJECTION = 'This work cannot finish before the Session ends.';
+
+/** Shared preflight for every captured Session reservation, including study and counters. */
+export function sessionCompletionRejection(state: TermState, durationMs: number): string | undefined {
+  if (state.mode !== 'session') return undefined;
+  const remainingMs = Math.max(0, 6 - state.week) * state.weekLengthMs
+    + Math.max(0, state.weekLengthMs - state.elapsedMs);
+  return durationMs > remainingMs ? SESSION_COMPLETION_REJECTION : undefined;
+}
+
 
 export type WorkPreview =
   | { accepted: false; reason: string }
@@ -22,6 +32,7 @@ export type WorkPreview =
       durationMs: number;
       consumedCardIds: string[];
       returnedCardIds: string[];
+      output: PlannedWorkOutput;
     };
 
 export interface WorkPlan {
@@ -145,6 +156,8 @@ export function planWork(
     scenario,
   );
   const effectivePattern = capturedRule.effectivePattern;
+  const timingRejection = sessionCompletionRejection(state, effectivePattern.durationMs);
+  if (timingRejection) return reject(timingRejection);
   const attention = effectivePattern.resourceCost.staffAttention ?? 0;
   if (attention > 0 && staffCardIds.length < Math.ceil(attention)) {
     return reject('This work needs an eligible staff card for every staff slot it uses.');
@@ -174,6 +187,7 @@ export function planWork(
   return {
     preview: {
       accepted: true,
+      output: resolveWorkOutput(match, inputs, state.mode),
       patternId: match.pattern.id,
       staffCardIds,
       cost: { ...effectivePattern.resourceCost },

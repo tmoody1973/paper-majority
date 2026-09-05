@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-05T16:06:48.781Z",
+  "generatedAt": "2026-09-05T17:45:50.025Z",
   "scenario": {
     "snapshotId": "housing-session-2026-09-04-candidate",
-    "snapshotHash": "ff90f497eaf2efc4c4e18877ff360f824f2ffe2391badbb44900d6301f0a13e4"
+    "snapshotHash": "52221d76ef034c5cab06d8d7066f575be0771ff80ff5de69f4d8cd1d3e9c739e"
   },
   "commandBound": 10000,
   "rotation": {

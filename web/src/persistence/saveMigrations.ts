@@ -1,3 +1,5 @@
+import { evaluateRelationships } from '@/domain/coalition';
+import { deliveredPreparationSatisfied, isPreparationDelivery, validPreparationDelivery } from '@/domain/preparation';
 import { COMPUTED_TAGS, type ScenarioDefinition, type TermState } from '@/domain/types';
 import { EFFECTIVE_RULE_VERSION, effectiveWorkRule } from '@/domain/work';
 import {
@@ -171,7 +173,7 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
   OBLIGATION_STATUS_CHANGED: ['type', 'obligationId', 'status'],
   OBLIGATION_CREATED: ['type', 'obligationId', 'sourceId', 'occurrenceId', 'sourceCardInstanceId'],
   WORK_SUBMITTED: ['type', 'workId', 'cardIds', 'completesAtSimulationMs'],
-  PATTERN_COMPLETED: ['type', 'workId', 'patternId', 'inputCardIds', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId'],
+  PATTERN_COMPLETED: ['delivery', 'type', 'workId', 'patternId', 'inputCardIds', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId'],
   PROVISION_DOCKETED: ['type', 'cardId', 'provisionId', 'revision'],
   PROVISION_NEGOTIATED: ['type', 'decisionId', 'occurrenceId', 'provisionId', 'change', 'revision'],
   DECISION_PRESENTED: ['type', 'decisionId', 'sourceId', 'occurrenceId', 'choiceIds'],
@@ -191,7 +193,7 @@ const OPTIONAL_EVENT_FIELDS = new Set([
   'patternId', 'assignmentKind', 'targetStackId', 'sourceCardInstanceId', 'inputCardIds',
   'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId', 'outputForm', 'producerPatternId',
   'authoredConcernOfficeDefinitionId', 'outputSlotIndex', 'outputSourceCardId', 'outputSourceDefinitionId',
-  'outputSourceForm',
+  'outputSourceForm', 'delivery',
 ]);
 const EVENT_STRING_ARRAY_FIELDS = new Set([
   'cardIds', 'definitionIds', 'consumedCardIds', 'producedCardIds', 'returnedCardIds',
@@ -199,7 +201,7 @@ const EVENT_STRING_ARRAY_FIELDS = new Set([
   'consumedDefinitionIds',
 ]);
 const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision', 'outputSlotIndex', 'appliedCapital']);
-const EVENT_OBJECT_FIELDS = new Set(['changes', 'effect', 'forecast', 'tally', 'result']);
+const EVENT_OBJECT_FIELDS = new Set(['delivery', 'changes', 'effect', 'forecast', 'tally', 'result']);
 
 function validElectionEffect(value: unknown): boolean {
   return isRecord(value)
@@ -315,6 +317,7 @@ function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
       return validTransformProducerClaim(value, scenario);
     case 'PATTERN_DISCOVERED':
     case 'PATTERN_COMPLETED':
+      if (value.delivery !== undefined && !isPreparationDelivery(value.delivery)) return false;
       return scenario.patterns.some((pattern) => pattern.id === value.patternId)
         && (value.inputDefinitionIds === undefined || (value.inputDefinitionIds as string[])
           .every((id) => scenario.cards.some((card) => card.id === id)))
@@ -387,6 +390,8 @@ function validRelationshipCondition(value: unknown, scenario: ScenarioDefinition
   if (!parsed.success) return false;
   const condition = parsed.data;
   if (condition.kind === 'governing-value') return true;
+  if (condition.kind === 'delivered-preparation' && !scenario.decisionChoices.some((choice) =>
+    choice.requirements.some((entry) => canonicalJson(entry) === canonicalJson(condition)))) return false;
   return scenario.tagTaxonomy.includes(condition.tag);
 }
 
@@ -764,6 +769,47 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   ))) return false;
   if (!Array.isArray(input.eventLog) || !input.eventLog.every((event) => validEvent(event, scenario))) return false;
   const eventLog = input.eventLog as TermState['eventLog'];
+  if (eventLog.some((event, index) => event.type === 'PATTERN_COMPLETED' && event.delivery
+    && (!validPreparationDelivery(event, eventLog.slice(0, index), scenario)
+      || !decisions.some((decision) => decision.sourceId === event.delivery!.demandId
+        && decision.officeDefinitionId === event.delivery!.officeDefinitionId
+        && decision.occurrenceId === `${event.delivery!.demandId}:revision:${event.delivery!.billRevision}`)))) return false;
+
+  for (const [index, event] of eventLog.entries()) {
+    if (event.type === 'PATTERN_COMPLETED') {
+      const pattern = scenario.patterns.find((pattern) => pattern.id === event.patternId);
+      if (pattern?.output.mode === 'derived' && pattern.output.parameters?.preparationSlot !== undefined && !event.delivery) return false;
+    }
+    if (event.type !== 'DECISION_RESOLVED') continue;
+    const choice = scenario.decisionChoices.find((choice) => choice.id === event.choiceId);
+    const preparation = choice?.requirements.filter((condition) => condition.kind === 'delivered-preparation') ?? [];
+    if (preparation.length === 0) continue;
+    const decision = decisions.find((decision) => decision.id === event.decisionId && decision.status === 'resolved'
+      && decision.occurrenceId === event.occurrenceId);
+    if (!decision || selectedDemandIds[decision.officeDefinitionId] !== decision.sourceId) return false;
+    const priorEvents = eventLog.slice(0, index);
+    const revision = priorEvents.reduce((revision, event) => event.type === 'PROVISION_DOCKETED' || event.type === 'PROVISION_NEGOTIATED'
+      ? Math.max(revision, event.revision) : revision, 0);
+    const historicalReceipts = receipts.filter((receipt) => receipt.docketedAtRevision <= revision);
+    const historical = { ...input, eventLog: priorEvents,
+      bill: { ...bill, revision, provisionReceipts: historicalReceipts, provisionIds: historicalReceipts.map((receipt) => receipt.provisionId) },
+    } as unknown as TermState;
+    const concern = scenario.demandDefinitions.find((demand) => demand.id === decision.sourceId)?.evidenceConcernId;
+    if (!preparation.every((condition) => deliveredPreparationSatisfied(historical, scenario, decision.officeDefinitionId, condition, concern))) return false;
+    const relationship = relationships.find((relationship) => relationship.memberId === decision.officeDefinitionId);
+    if (!relationship?.promiseOccurrenceIds.includes(event.occurrenceId)
+      || !preparation.every((condition) => relationship.conditions.some((entry) => canonicalJson(entry) === canonicalJson(condition)))) return false;
+  }
+  for (const relationship of relationships) {
+    const conditions = relationship.conditions.filter((condition) => condition.kind === 'delivered-preparation');
+    if (conditions.length === 0) continue;
+    if (!conditions.every((condition) => eventLog.some((event) => event.type === 'DECISION_RESOLVED'
+      && relationship.promiseOccurrenceIds.includes(event.occurrenceId)
+      && decisions.some((decision) => decision.id === event.decisionId && decision.officeDefinitionId === relationship.memberId)
+      && scenario.decisionChoices.find((choice) => choice.id === event.choiceId)?.requirements.some((entry) => canonicalJson(entry) === canonicalJson(condition))))) return false;
+    const evaluated = evaluateRelationships(input as unknown as TermState, scenario).find((entry) => entry.memberId === relationship.memberId);
+    if (evaluated?.support !== relationship.support) return false;
+  }
   if (receipts.some((receipt) => receipt.origin === 'draft'
     ? eventLog.filter((event) => event.type === 'CARD_TRANSFORMED'
       && event.producedCardIds.includes(receipt.draftedCardId)

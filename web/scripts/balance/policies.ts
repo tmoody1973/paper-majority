@@ -35,7 +35,6 @@ const STAFF_ORDER: Record<PolicyId, readonly string[]> = {
 };
 
 const TACTIC_BY_POLICY: Partial<Record<PolicyId, string>> = {
-  'district-advocate': 'tactic-targeted-data-briefing',
   'committee-specialist': 'tactic-early-committee-consultation',
   'coalition-broker': 'tactic-bipartisan-working-group',
   'district-reward': 'tactic-negotiated-cost-sharing',
@@ -84,7 +83,8 @@ function candidateCardIds(
       if (requiredCardId && !selected.some((card) => card.id === requiredCardId)) return;
       const ids = selected.map((card) => card.id).sort();
       const preview = previewWork(state, scenario, ids);
-      if (preview.accepted && preview.patternId === pattern.id) results.push(ids);
+      if (preview.accepted && preview.patternId === pattern.id
+        && (state.week < 6 || preview.durationMs <= state.weekLengthMs - state.elapsedMs)) results.push(ids);
       return;
     }
     const slot = units[index];
@@ -140,6 +140,7 @@ function storyChoice(policyId: PolicyId, state: TermState, scenario: ScenarioDef
       return net('districtTrust') * 10 + net('politicalCapital') * 4 + net('staffMorale');
     }
     if (policyId === 'committee-specialist') {
+      if ((choice.cost.politicalCapital ?? 0) > 0) return -1000;
       return net('billMomentum') * 10 + net('policyIntegrity') * 4 + net('staffMorale');
     }
     if (policyId === 'coalition-broker') {
@@ -158,13 +159,19 @@ function coalitionChoice(policyId: PolicyId, state: TermState, scenario: Scenari
   const authored = pending.choiceIds
     .map((id) => scenario.decisionChoices.find((choice) => choice.id === id))
     .filter((choice): choice is NonNullable<typeof choice> => choice !== undefined);
+  const prepared = authored.filter((choice) => choice.requirements.some((requirement) => requirement.kind === 'delivered-preparation'));
+  for (const choice of prepared) {
+    const preview = previewDecision(state, scenario, pending.id, choice.id);
+    if (preview.accepted) return { type: 'RESOLVE_DECISION', decisionId: pending.id, choiceId: choice.id, expectedBillRevision: pending.expectedBillRevision };
+  }
   const preference = policyId === 'district-advocate' || policyId === 'district-reward'
       ? ['counter', 'accept', 'reject'] as const
       : ['accept', 'counter', 'reject'] as const;
   for (const action of preference) {
     for (const choice of authored.filter((entry) => entry.action === action)) {
       const preview = previewDecision(state, scenario, pending.id, choice.id);
-      if (preview.accepted) {
+      if (preview.accepted && (!preview.requiredWork || state.week < 6
+        || preview.requiredWork.durationMs <= state.weekLengthMs - state.elapsedMs)) {
         return {
           type: 'RESOLVE_DECISION',
           decisionId: pending.id,
@@ -206,7 +213,7 @@ function mandatoryWork(policyId: PolicyId, state: TermState, scenario: ScenarioD
   return undefined;
 }
 
-function summaryDemand(state: TermState, scenario: ScenarioDefinition): number {
+function summaryDemand(state: TermState, scenario: ScenarioDefinition, policyId: PolicyId): number {
   const activeMandatorySources = new Set(state.activeWork
     .filter((work) => work.kind === 'pattern' && work.patternId === 'pattern-earn-district-endorsement')
     .flatMap((work) => work.cardIds));
@@ -214,10 +221,14 @@ function summaryDemand(state: TermState, scenario: ScenarioDefinition): number {
     obligation.mandatory
     && obligation.status === 'open'
     && (!obligation.sourceCardInstanceId || !activeMandatorySources.has(obligation.sourceCardInstanceId))).length;
-  const provisionGap = Math.max(0, 2 - new Set(state.bill.provisionIds).size);
+  const draftTarget = policyId === 'committee-specialist' ? 0 : policyId === 'district-reward' ? 1 : 2;
+  const draftedCount = state.eventLog.filter((event) => event.type === 'PATTERN_COMPLETED' && event.patternId === 'pattern-draft-policy').length
+    + state.activeWork.filter((work) => work.kind === 'pattern' && work.patternId === 'pattern-draft-policy').length;
+  const provisionGap = Math.max(0, draftTarget - draftedCount);
   const available = availableCards(state).filter((card) => {
     const definition = definitionOf(scenario, card);
-    return definition?.kind === 'evidence' && card.form === 'summary';
+    return definition?.kind === 'evidence' && card.form === 'summary'
+      && (mandatory === 0 || definition.tags.includes('district-relevant'));
   }).length;
   const inProgress = state.activeWork.filter((work) =>
     work.kind === 'pattern' && work.patternId === 'pattern-summarize-evidence').length;
@@ -239,17 +250,29 @@ function policyMatchScore(
     && relationship.conditions.some((condition) => condition.kind === 'bill-has-tag' && policy.tags.includes(condition.tag))).length;
   const valueScore = state.player.values.reduce((sum, value) => sum + (policy.valueEffects[value] ?? 0), 0);
   const districtScore = policy.tags.some((tag) => ['renter-focused', 'fair-access', 'rural-housing', 'tribal-housing'].includes(tag)) ? 1 : 0;
-  return promiseMatches * 100
+  const sharedOfficeMatches = state.relationships.filter((relationship) => {
+    if (!state.cards.some((card) => card.definitionId === relationship.memberId)) return false;
+    const office = scenario.cards.find((entry) => entry.id === relationship.memberId);
+    const demand = scenario.demandDefinitions.find((entry) => entry.id === relationship.demandProvisionId);
+    return office && computeEffectiveTags(office, state.player.party).includes('shared-interest')
+      && demand?.condition.kind === 'bill-has-tag' && policy.tags.includes(demand.condition.tag)
+      && !state.bill.provisionIds.some((id) => scenario.cards.find((entry) => entry.id === id)?.tags.includes(demand.condition.kind === 'bill-has-tag' ? demand.condition.tag : ''));
+  }).length;
+  return (policyId === 'coalition-broker' ? sharedOfficeMatches * 1000 : 0) + promiseMatches * 100
     + (policyId === 'district-advocate' || policyId === 'district-reward' ? districtScore * 10 : 0)
     + (policyId === 'greedy-same-party' ? valueScore * 10 : valueScore);
 }
 
-function draftWork(policyId: PolicyId, state: TermState, scenario: ScenarioDefinition): GameCommand | undefined {
+function draftWork(policyId: PolicyId, state: TermState, scenario: ScenarioDefinition, patternId = 'pattern-draft-policy'): GameCommand | undefined {
   if (new Set(state.bill.provisionIds).size >= 2 || state.week < 3) return undefined;
+  const draftedCount = completedCount(state, 'pattern-draft-policy');
+  if (state.activeWork.some((work) => work.kind === 'pattern' && work.patternId === 'pattern-draft-policy')) return undefined;
+  if (patternId === 'pattern-draft-policy' && (policyId === 'committee-specialist' || policyId === 'district-reward' && draftedCount >= 1)) return undefined;
+  if (policyId === 'coalition-broker' && (state.week < 4 || draftedCount >= 1 && state.week < 5)) return undefined;
   const candidates = candidateCardIds(
     state,
     scenario,
-    scenario.patterns.find((entry) => entry.id === 'pattern-draft-policy')!,
+    scenario.patterns.find((entry) => entry.id === patternId)!,
   ).sort((a, b) => {
     const draftedA = a.find((id) => definitionOf(scenario, state.cards.find((card) => card.id === id)!)?.kind === 'policy')!;
     const draftedB = b.find((id) => definitionOf(scenario, state.cards.find((card) => card.id === id)!)?.kind === 'policy')!;
@@ -260,36 +283,106 @@ function draftWork(policyId: PolicyId, state: TermState, scenario: ScenarioDefin
   return candidates[0] ? { type: 'SUBMIT_WORK', cardIds: candidates[0] } : undefined;
 }
 
+function completedCount(state: TermState, patternId: string): number {
+  return state.eventLog.filter((event) => event.type === 'PATTERN_COMPLETED' && event.patternId === patternId).length;
+}
+
+function plannedCount(state: TermState, patternId: string): number {
+  return completedCount(state, patternId) + state.activeWork.filter((work) => work.kind === 'pattern' && work.patternId === patternId).length;
+}
+
 function outreachWork(policyId: PolicyId, state: TermState, scenario: ScenarioDefinition): GameCommand | undefined {
-  // A player cannot know the cost/reward of a still-running office response. Wait
-  // for the revealed choice before committing the next unit of Political Capital.
-  if (state.activeWork.some((work) =>
-    work.kind === 'pattern' && work.patternId === 'pattern-shared-interest-outreach')) return undefined;
+  const earlyCommittee = policyId === 'committee-specialist' && state.week < 6;
+  if (earlyCommittee && state.relationships.some((relationship) => relationship.promiseOccurrenceIds.length > 0)) return undefined;
+  if (!earlyCommittee && policyId !== 'greedy-same-party' && policyId !== 'district-reward' && new Set(state.bill.provisionIds).size < 2) return undefined;
+  if (state.activeWork.some((work) => work.kind === 'pattern'
+    && work.effectivePattern.output.mode === 'derived'
+    && work.effectivePattern.output.resolverId === 'resolve-outreach-v1')) return undefined;
   if (state.resources.politicalCapital < 2) return undefined;
-  const interested = new Set(state.relationships
-    .filter((relationship) => relationship.support === 'interested')
-    .map((relationship) => relationship.memberId));
-  const pattern = scenario.patterns.find((entry) => entry.id === 'pattern-shared-interest-outreach');
-  if (!pattern) return undefined;
-  const candidates = candidateCardIds(state, scenario, pattern).filter((ids) => ids.some((id) => {
-    const card = state.cards.find((entry) => entry.id === id);
-    return card ? interested.has(card.definitionId) : false;
-  }));
-  candidates.sort((a, b) => {
-    const officeParty = (ids: string[]) => {
-      const office = ids.map((id) => state.cards.find((card) => card.id === id))
-        .map((card) => card && definitionOf(scenario, card))
-        .find((definition) => definition?.kind === 'coalition');
-      return office?.kind === 'coalition' ? office.officialRecord.party : undefined;
-    };
-    const preferred = policyId === 'greedy-same-party' || policyId === 'coalition-broker';
-    const sameA = officeParty(a) === state.player.party ? 0 : 1;
-    const sameB = officeParty(b) === state.player.party ? 0 : 1;
-    return (preferred ? sameA - sameB : 0)
-      || staffRank(policyId, state, scenario, a) - staffRank(policyId, state, scenario, b)
-      || a.join('|').localeCompare(b.join('|'));
-  });
-  return candidates[0] ? { type: 'SUBMIT_WORK', cardIds: candidates[0] } : undefined;
+  const interested = new Set(state.relationships.filter((relationship) => relationship.support === 'interested').map((relationship) => relationship.memberId));
+  const route = policyId === 'district-advocate' ? 'pattern-negotiate-district-endorsement'
+    : policyId === 'committee-specialist' ? 'pattern-negotiate-committee-packet'
+      : policyId === 'coalition-broker' ? 'pattern-tactic-coordination' : undefined;
+  const patterns = [earlyCommittee ? undefined : route, 'pattern-shared-interest-outreach'].filter((id): id is string => Boolean(id));
+  for (const patternId of patterns) {
+    if (patternId === 'pattern-tactic-coordination' && !state.unlockedSlotExpansions[patternId]?.length) continue;
+    const pattern = scenario.patterns.find((entry) => entry.id === patternId)!;
+    const candidates = candidateCardIds(state, scenario, pattern).filter((ids) => ids.some((id) => {
+      const card = state.cards.find((entry) => entry.id === id);
+      if (!card || !interested.has(card.definitionId)) return false;
+      const relationship = state.relationships.find((entry) => entry.memberId === card.definitionId);
+      const demand = scenario.demandDefinitions.find((entry) => entry.id === relationship?.demandProvisionId);
+      const compatible = demand?.condition.kind === 'bill-has-tag' && (earlyCommittee
+        ? availableCards(state).filter((entry) => definitionOf(scenario, entry)?.kind === 'policy').map((entry) => entry.definitionId)
+        : state.bill.provisionIds).some((id) =>
+        scenario.cards.find((entry) => entry.id === id)?.tags.includes(demand.condition.kind === 'bill-has-tag' ? demand.condition.tag : ''));
+      if ((policyId === 'coalition-broker' || policyId === 'committee-specialist')
+        && patternId !== 'pattern-negotiate-committee-packet' && !compatible) return false;
+      if (patternId !== 'pattern-tactic-coordination') return true;
+      if (state.resources.politicalCapital < 3) return false;
+      const office = definitionOf(scenario, card)!;
+      // Spend the finite asset only where the learned rule actually enables access.
+      return !computeEffectiveTags(office, state.player.party).includes('housing-interest');
+    }));
+    candidates.sort((a, b) => {
+      const score = (ids: string[]) => {
+        const office = ids.map((id) => state.cards.find((card) => card.id === id)!)
+          .map((card) => definitionOf(scenario, card)).find((definition) => definition?.kind === 'coalition');
+        const relationship = state.relationships.find((entry) => entry.memberId === office?.id);
+        const demand = scenario.demandDefinitions.find((entry) => entry.id === relationship?.demandProvisionId);
+        const compatible = demand?.condition.kind === 'bill-has-tag'
+          && state.bill.provisionIds.some((id) => scenario.cards.find((card) => card.id === id)?.tags.includes(demand.condition.kind === 'bill-has-tag' ? demand.condition.tag : ''));
+        return (compatible ? 100 : 0) + (office?.kind === 'coalition' && office.officialRecord.party === state.player.party ? 10 : 0);
+      };
+      return score(b) - score(a) || staffRank(policyId, state, scenario, a) - staffRank(policyId, state, scenario, b)
+        || a.join('|').localeCompare(b.join('|'));
+    });
+    if (candidates[0]) return { type: 'SUBMIT_WORK', cardIds: candidates[0] };
+  }
+  return undefined;
+}
+
+/** Finite preparation investments with named downstream uses, not activity for its own sake. */
+function routePreparation(policyId: PolicyId, state: TermState, scenario: ScenarioDefinition): GameCommand | undefined {
+  if (policyId === 'committee-specialist') {
+    const packetPatterns = ['pattern-tactic-early-preparation', 'pattern-prepare-committee-packet'];
+    const packetCount = packetPatterns.reduce((sum, id) => sum + plannedCount(state, id), 0);
+    if (packetCount < 2 && state.unlockedSlotExpansions['pattern-tactic-early-preparation']?.length) {
+      const packet = findWork(policyId, state, scenario, 'pattern-tactic-early-preparation');
+      if (packet) return packet;
+    }
+    if (plannedCount(state, 'pattern-review-bill-preparation') === 0) {
+      const review = findWork(policyId, state, scenario, 'pattern-review-bill-preparation');
+      if (review) return review;
+    }
+  }
+  if ((policyId === 'committee-specialist' || policyId === 'district-reward')
+    && plannedCount(state, 'pattern-tactic-costly-drafting') < (policyId === 'committee-specialist' ? 2 : 1)
+    && new Set(state.bill.provisionIds).size < 2) {
+    const drafting = draftWork(policyId, state, scenario, 'pattern-tactic-costly-drafting');
+    if (drafting) return drafting;
+  }
+  if (policyId === 'coalition-broker') {
+    // Only prepare for compatible offices already revealed. A drafting job's
+    // captured input is public work in progress; unopened supply is never read.
+    const projectedPolicies = [...state.bill.provisionIds, ...state.cards
+      .filter((card) => definitionOf(scenario, card)?.kind === 'policy' && (card.form === 'drafted' || card.status === 'working'))
+      .map((card) => card.definitionId)];
+    const targets = state.relationships.filter((relationship) => {
+      if (relationship.support !== 'interested' || !state.cards.some((card) => card.definitionId === relationship.memberId)) return false;
+      const office = scenario.cards.find((entry) => entry.id === relationship.memberId)!;
+      const tags = computeEffectiveTags(office, state.player.party);
+      const demand = scenario.demandDefinitions.find((entry) => entry.id === relationship.demandProvisionId);
+      return tags.includes('shared-interest') && !tags.includes('housing-interest')
+        && demand?.condition.kind === 'bill-has-tag' && projectedPolicies.some((id) =>
+          scenario.cards.find((entry) => entry.id === id)?.tags.includes(demand.condition.kind === 'bill-has-tag' ? demand.condition.tag : ''));
+    }).length;
+    const readyAssets = state.cards.filter((card) => definitionOf(scenario, card)?.kind === 'political' && card.form === 'prepared').length;
+    const preparing = state.activeWork.filter((work) => work.kind === 'pattern' && work.patternId === 'pattern-prepare-communication').length;
+    if (readyAssets + preparing < targets) return findWork(policyId, state, scenario, 'pattern-prepare-communication');
+  }
+
+  return undefined;
 }
 
 function tacticWork(policyId: PolicyId, state: TermState, scenario: ScenarioDefinition): GameCommand | undefined {
@@ -337,16 +430,30 @@ export function chooseCommand(
   const mandatory = mandatoryWork(policyId, state, scenario);
   if (mandatory) return mandatory;
 
+  const tactic = tacticWork(policyId, state, scenario);
+  if (tactic) return tactic;
+  const preparation = routePreparation(policyId, state, scenario);
+  if (preparation) return preparation;
+
   const drafted = availableCards(state)
     .filter((card) => card.form === 'drafted' && card.policyDefinitionId)
     .sort((a, b) => policyMatchScore(policyId, state, scenario, b.id) - policyMatchScore(policyId, state, scenario, a.id)
       || a.id.localeCompare(b.id))[0];
-  if (drafted && !state.bill.provisionIds.includes(drafted.policyDefinitionId!)) {
+  if (drafted && !state.bill.provisionIds.includes(drafted.policyDefinitionId!)
+    && (policyId !== 'committee-specialist' || completedCount(state, 'pattern-review-bill-preparation') > 0)) {
     return { type: 'DOCKET_PROVISION', cardId: drafted.id };
   }
 
-  if (summaryDemand(state, scenario) > 0) {
-    const summary = findWork(policyId, state, scenario, 'pattern-summarize-evidence');
+  if (summaryDemand(state, scenario, policyId) > 0
+    && !(policyId === 'committee-specialist' && state.week >= 3
+      && plannedCount(state, 'pattern-tactic-early-preparation') < 2
+      && availableCards(state).some((card) => card.form === 'raw' && definitionOf(scenario, card)?.kind === 'evidence'
+        && definitionOf(scenario, card)?.tags.includes('committee-relevant')))) {
+    const neededDistrict = state.obligations.some((obligation) => obligation.mandatory && obligation.status === 'open');
+    const rawEvidence = availableCards(state).find((card) => card.form === 'raw'
+      && definitionOf(scenario, card)?.kind === 'evidence'
+      && (!neededDistrict || definitionOf(scenario, card)?.tags.includes('district-relevant')));
+    const summary = rawEvidence ? findWork(policyId, state, scenario, 'pattern-summarize-evidence', rawEvidence.id) : undefined;
     if (summary) return summary;
   }
 
@@ -355,9 +462,6 @@ export function chooseCommand(
 
   const outreach = outreachWork(policyId, state, scenario);
   if (outreach) return outreach;
-
-  const tactic = tacticWork(policyId, state, scenario);
-  if (tactic) return tactic;
 
   return { type: 'FAST_FORWARD' };
 }

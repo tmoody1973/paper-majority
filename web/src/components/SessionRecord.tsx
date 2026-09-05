@@ -7,6 +7,7 @@ import { challengeSetupFromRecord, encodeChallenge } from '@/persistence/challen
 
 function conditionLabel(condition: SessionRecordValue['promises'][number]['conditions'][number]): string {
   if (condition.kind === 'governing-value') return `governing value: ${condition.value}`;
+  if (condition.kind === 'delivered-preparation') return `delivered preparation: ${condition.tag}${condition.requiresReviewedProvision ? ' with reviewed language' : ''}`;
   if (condition.kind === 'prepared-evidence-tag') return `prepared evidence: ${condition.tag}`;
   return `bill includes: ${condition.tag}`;
 }

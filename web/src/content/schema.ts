@@ -306,6 +306,7 @@ const dueTimeSchema = z.strictObject({
 export const relationshipConditionSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('bill-has-tag'), tag: idSchema }),
   z.strictObject({ kind: z.literal('prepared-evidence-tag'), tag: idSchema }),
+  z.strictObject({ kind: z.literal('delivered-preparation'), patternId: idSchema, tag: idSchema, requiresReviewedProvision: z.boolean() }),
   z.strictObject({ kind: z.literal('governing-value'), value: z.enum(GOVERNING_VALUES) }),
 ]);
 
@@ -475,6 +476,15 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
     const obligations = new Set(scenario.obligationDefinitions.map((entry) => entry.id));
     const demands = new Map(scenario.demandDefinitions.map((demand) => [demand.id, demand]));
 
+    if (scenario.supportedModes.includes('session')) {
+      scenario.patterns.forEach((pattern, index) => {
+        if (pattern.output.mode === 'derived' && pattern.output.resolverId === 'summarize-evidence-v1'
+          && pattern.output.parameters?.relevancePolicy !== 'committee-then-district-v1') {
+          addReferenceIssue(ctx, 'Session summaries require the frozen committee-then-district-v1 relevance policy', ['patterns', index, 'output', 'parameters']);
+        }
+      });
+    }
+
     if (new Set(scenario.supportedModes).size !== scenario.supportedModes.length) {
       addReferenceIssue(ctx, 'Supported modes must be unique', ['supportedModes']);
     }
@@ -551,6 +561,15 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
           }
         }
       }
+      if (pattern.output.mode === 'derived' && pattern.output.parameters?.preparationSlot !== undefined) {
+        const slotIndex = pattern.output.parameters.preparationSlot;
+        const slot = typeof slotIndex === 'number' && Number.isInteger(slotIndex) ? pattern.slots[slotIndex] : undefined;
+        if (pattern.output.resolverId !== 'resolve-outreach-v1' || !slot || slot.quantity !== 1
+          || slot.consumed === false || !slot.forms?.includes('prepared') || !slot.originExplanationKeys?.length
+          || typeof pattern.output.parameters.requireMatchingConcern !== 'boolean') {
+          addReferenceIssue(ctx, 'Preparation delivery requires one consumed prepared artifact with an authored producer and concern policy', ['patterns', patternIndex, 'output']);
+        }
+      }
       if (pattern.output.mode === 'fixed' && !cards.has(pattern.output.definitionId)) {
         addReferenceIssue(ctx, `Unknown fixed output: ${pattern.output.definitionId}`, ['patterns', patternIndex, 'output']);
       }
@@ -607,6 +626,16 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
       for (const choiceId of demand.choiceIds) if (!choices.has(choiceId)) addReferenceIssue(ctx, `Unknown decision choice: ${choiceId}`, ['demandDefinitions', index, 'choiceIds']);
     }
     for (const [index, choice] of scenario.decisionChoices.entries()) {
+      const conditions = [...choice.requirements, ...choice.effects.flatMap((effect) => effect.kind === 'promise-condition' ? [effect.condition] : [])];
+      for (const condition of conditions) {
+        if (condition.kind !== 'delivered-preparation') continue;
+        const deliveryPattern = patterns.get(condition.patternId);
+        if (deliveryPattern?.output.mode !== 'derived' || deliveryPattern.output.resolverId !== 'resolve-outreach-v1'
+          || typeof deliveryPattern.output.parameters?.preparationSlot !== 'number') {
+          addReferenceIssue(ctx, 'Preparation conditions require an authored delivery pattern', ['decisionChoices', index]);
+        }
+      }
+
       for (const effect of choice.effects) if (effect.kind === 'create-obligation' && !obligations.has(effect.obligationDefinitionId)) addReferenceIssue(ctx, `Unknown obligation effect: ${effect.obligationDefinitionId}`, ['decisionChoices', index, 'effects']);
       for (const effect of choice.effects) if ((effect.kind === 'bill-add-provision' || effect.kind === 'bill-remove-provision') && cards.get(effect.provisionId)?.kind !== 'policy') addReferenceIssue(ctx, `Unknown decision provision: ${effect.provisionId}`, ['decisionChoices', index, 'effects']);
       for (const effect of choice.effects) if (effect.kind === 'promise-condition' && 'tag' in effect.condition && !tags.has(effect.condition.tag)) addReferenceIssue(ctx, `Unknown promise condition tag: ${effect.condition.tag}`, ['decisionChoices', index, 'effects']);

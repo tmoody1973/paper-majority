@@ -117,6 +117,8 @@ async function makeSummary(page: Page, exerciseDrag = false) {
 }
 
 test('three-input Work Mat is usable by pointer while paused and keyboard while running', async ({ page }) => {
+  // Two complete real-time paths include cancellation and two timed drafts.
+  test.setTimeout(60_000);
   const browserErrors: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') browserErrors.push(message.text());

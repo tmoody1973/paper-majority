@@ -43,26 +43,15 @@ export function WorkMat({
   const resourceLabel = (resource: string) => resource.replace(/([A-Z])/g, ' $1').toLowerCase();
   const resultLabel = () => {
     if (!preview.accepted) return '';
-    const pattern = scenario.patterns.find((candidate) => candidate.id === preview.patternId);
-    if (!pattern) return preview.patternId;
-    const output = pattern.output;
-    if (output.mode === 'fixed') {
-      return scenario.cards.find((card) => card.id === output.definitionId)?.title ?? output.definitionId;
+    const output = preview.output;
+    if (output.kind === 'office-decision') {
+      const office = scenario.cards.find((card) => card.id === output.officeDefinitionId);
+      return `Office decision — ${office?.title ?? output.officeDefinitionId}`;
     }
-    if (output.parameters?.preserveInputDefinition === true) {
-      const isDraft = output.resolverId === 'draft-provision-v1';
-      const kind = isDraft ? 'policy' : 'evidence';
-      const input = selectedIds
-        .map((id) => state.cards.find((card) => card.id === id))
-        .find((card) => scenario.cards.find((definition) => definition.id === card?.definitionId)?.kind === kind);
-      const title = input ? titleOf(input.id).replace(/ — .+$/, '') : kind;
-      if (output.resolverId === 'summarize-evidence-v1') return `${title} summary`;
-      return isDraft ? `Drafted ${title}` : `Prepared ${title}`;
-    }
-    const outputId = output.parameters?.outputDefinitionId;
-    return typeof outputId === 'string'
-      ? scenario.cards.find((card) => card.id === outputId)?.title ?? outputId
-      : preview.patternId;
+    const definition = scenario.cards.find((card) => card.id === output.definitionId);
+    const title = definition?.title ?? output.definitionId;
+    return `${title}${output.form && output.form !== 'raw' ? ` — ${output.form}` : ''}`;
+
   };
 
   const stage = (cardId: string) => {

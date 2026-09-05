@@ -7,7 +7,7 @@ import {
 } from '@/domain/coalition';
 import { applyResourceDelta } from '@/domain/resources';
 import { obligationOccurrence } from '@/domain/obligations';
-import { planWork, type WorkPlan } from '@/domain/work';
+import { planWork, SESSION_COMPLETION_REJECTION, type WorkPlan } from '@/domain/work';
 import { demandForOffice } from '@/domain/variation';
 import type {
   DecisionChoiceDefinition,
@@ -70,6 +70,7 @@ function requiredWorkPlan(
   officeDefinitionId: string,
   concernId: string,
   patternId: string,
+  rejectedReasons: string[] = [],
 ): { plan: WorkPlan; cardIds: string[] } | undefined {
   const available = state.cards
     .filter((card) => card.location === 'desk' && card.status === 'idle')
@@ -92,6 +93,7 @@ function requiredWorkPlan(
       )) continue;
       const cardIds = cards.map((card) => card.id);
       const planned = planWork(state, scenario, cardIds);
+      if (!('preview' in planned)) rejectedReasons.push(planned.reason);
       if ('preview' in planned && planned.preview.patternId === patternId) {
         return { plan: planned, cardIds };
       }
@@ -300,7 +302,7 @@ export function previewDecision(
       pending.officeDefinitionId,
       requirement,
       state.bill.provisionIds,
-      pending.sourceId,
+      demandForOffice(state, scenario, pending.officeDefinitionId)?.evidenceConcernId,
     ),
   )) {
     return { accepted: false, reason: 'missing-prerequisites', message: 'The required evidence or bill condition is not ready.' };
@@ -310,13 +312,14 @@ export function previewDecision(
   if (!demand || demand.id !== pending.sourceId) {
     return { accepted: false, reason: 'missing-prerequisites', message: 'The authored office demand is unavailable.' };
   }
+  const rejectedWorkReasons: string[] = [];
   const required = choice.requiredWorkPatternId
     ? demand.evidenceConcernId
-      ? requiredWorkPlan(state, scenario, pending.officeDefinitionId, demand.evidenceConcernId, choice.requiredWorkPatternId)
+      ? requiredWorkPlan(state, scenario, pending.officeDefinitionId, demand.evidenceConcernId, choice.requiredWorkPatternId, rejectedWorkReasons)
       : undefined
     : undefined;
   if (choice.requiredWorkPatternId && !required) {
-    return { accepted: false, reason: 'missing-prerequisites', message: 'No eligible staff and evidence are ready for this counteroffer.' };
+    return { accepted: false, reason: 'missing-prerequisites', message: rejectedWorkReasons.includes(SESSION_COMPLETION_REJECTION) ? SESSION_COMPLETION_REJECTION : 'No eligible staff and evidence are ready for this counteroffer.' };
   }
 
   const nextProvisionIds = provisionEffects(state, choice);

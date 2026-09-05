@@ -44,7 +44,7 @@ describe('versioned Session challenge codes', () => {
     expect(decodeChallenge(code, scenario)).toEqual({ ok: true, setup });
     expect(setup.values).toEqual(['Fair Access', 'Housing Supply']);
     expect(setup.snapshotHash).toBe(scenarioSnapshotHash(scenario));
-    expect(setup.snapshotHash).toBe('ff90f497eaf2efc4c4e18877ff360f824f2ffe2391badbb44900d6301f0a13e4');
+    expect(setup.snapshotHash).toBe('52221d76ef034c5cab06d8d7066f575be0771ff80ff5de69f4d8cd1d3e9c739e');
   });
 
   it.each([

@@ -163,7 +163,7 @@ export const sessionScenario: ScenarioDefinition = {
       output: {
         mode: 'derived',
         resolverId: 'summarize-evidence-v1',
-        parameters: { preserveInputDefinition: true },
+        parameters: { preserveInputDefinition: true, relevancePolicy: 'committee-then-district-v1' },
       },
       durationMs: 20_000,
       resourceCost: { staffAttention: 1 },

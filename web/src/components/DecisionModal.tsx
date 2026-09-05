@@ -98,8 +98,11 @@ export function DecisionModal({ session, state, open, onOpenChange, returnFocusR
               ? state.bill.provisionIds.filter((id) => !preview.nextProvisionIds.includes(id))
               : [];
             return (
-              <section key={choiceId} className="decision-modal__choice" data-testid={`decision-choice-${choice.action}`}>
+              <section key={choiceId} className="decision-modal__choice" data-testid={`decision-choice-${choice.requirements.some((condition) => condition.kind === 'delivered-preparation') ? choice.id : choice.action}`}>
                 <h3>{choice.label}</h3>
+                {choice.requirements.some((condition) => condition.kind === 'delivered-preparation') && (
+                  <p>Requires relevant preparation delivered to this office for this bill revision{choice.requirements.some((condition) => condition.kind === 'delivered-preparation' && condition.requiresReviewedProvision) ? ' and a reviewed provision in the bill' : ''}.</p>
+                )}
                 {preview.accepted ? (
                   <ul>
                     <li>Affected offices: {preview.affectedOfficeDefinitionIds.map((id) => titleOf(session, id)).join(', ')}</li>
@@ -153,7 +156,7 @@ export function DecisionModal({ session, state, open, onOpenChange, returnFocusR
                 <button
                   type="button"
                   data-decision-choice
-                  data-testid={`decision-resolve-${choice.action}`}
+                  data-testid={`decision-resolve-${choice.requirements.some((condition) => condition.kind === 'delivered-preparation') ? choice.id : choice.action}`}
                   disabled={!preview.accepted}
                   onClick={() => {
                     const result = session.dispatch({

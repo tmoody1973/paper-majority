@@ -7,9 +7,10 @@
  */
 export const RESULT_PHRASES: Record<string, string> = {
   'result.summary.committee-credibility':
-    'Your aide turned the official report into a summary a committee will take seriously.',
+    'The evidence summary adds 3 Bill Momentum.',
   'result.summary.district-relevance':
-    'Your aide turned local survey answers into a summary that speaks for the district.',
+    'The evidence summary adds 3 District Trust.',
+  'result.summary.no-context-bonus': 'The source is summarized; it has no district or committee context bonus.',
   'result.provision.drafted': 'That summary is now bill language.',
   'result.provision.docketed': 'The drafted provision is now in the bill.',
   'result.evidence.office-concern-answered': 'The office concern now has a sourced response.',

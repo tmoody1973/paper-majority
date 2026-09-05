@@ -1,3 +1,4 @@
+import { sessionCompletionRejection } from '@/domain/work';
 import type {
   CardKind,
   Obligation,
@@ -160,6 +161,8 @@ export function describeStudyOption(
     };
   }
 
+  const timingRejection = sessionCompletionRejection(state, Math.max(1, ...expansions.map((expansion) => expansion.studyDurationMs)));
+  if (timingRejection) return { isTactic: true, canStudy: false, blockedReason: timingRejection };
   return { isTactic: true, canStudy: true };
 }
 

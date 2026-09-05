@@ -166,6 +166,7 @@ describe('week boundaries', () => {
 
   it('finishes a whole same-timestamp batch before a decision pauses deadline handling', () => {
     const scenario = structuredClone(sessionScenario);
+    scenario.patterns = scenario.patterns.map((pattern) => ({ ...pattern, durationMs: 1_000 }));
     const base = createRun({ ...sessionSetup, scenario, mode: 'session' });
     const policyAide = base.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
     const districtDirector = base.cards.find((card) => card.definitionId === 'staff-district-director')!;
@@ -192,7 +193,6 @@ describe('week boundaries', () => {
     const state = {
       ...prepared.state,
       paused: false,
-      activeWork: prepared.state.activeWork.map((work) => ({ ...work, completesAtSimulationMs: 1_000 })),
       obligations: [{
         id: 'obligation-answer-renters:batch',
         sourceId: 'obligation-answer-renters',

@@ -1,3 +1,4 @@
+import { deliveredPreparationSatisfied } from '@/domain/preparation';
 import type { GameEvent } from '@/domain/events';
 import { applyResourceDelta } from '@/domain/resources';
 import type {
@@ -35,6 +36,7 @@ export function relationshipConditionSatisfied(
   provisionIds = state.bill.provisionIds,
   expectedConcernId?: string,
 ): boolean {
+  if (condition.kind === 'delivered-preparation') return deliveredPreparationSatisfied({ ...state, bill: { ...state.bill, provisionIds } }, scenario, memberId, condition, expectedConcernId);
   if (condition.kind === 'governing-value') return state.player.values.includes(condition.value);
   if (condition.kind === 'bill-has-tag') {
     return definitionTags(state, scenario, provisionIds).has(condition.tag);
@@ -137,7 +139,8 @@ export function applyRelationshipEvaluation(
   before: RelationshipState[] = state.relationships,
   contextEvents: GameEvent[] = [],
 ): { state: TermState; events: GameEvent[] } {
-  const relationships = evaluateRelationships(state, scenario);
+  // Completion receipts are visible during this transition, before the engine appends its events.
+  const relationships = evaluateRelationships({ ...state, eventLog: [...state.eventLog, ...contextEvents] }, scenario);
   const promiseEvents = promiseChangeEvents(before, relationships);
   const rewarded = new Set(state.rewardedOccurrenceIds);
   let resources = state.resources;

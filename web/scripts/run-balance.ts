@@ -209,9 +209,9 @@ function markdownReport(report: {
   failures: Array<RunSummary & { commandTrace: BalanceRun['commandTrace'] }>;
 }): string {
   const descriptions: Record<PolicyId, string> = {
-    'district-advocate': 'prioritizes District Trust, mandatory constituent work, district staff, and the targeted-data Tactic',
-    'committee-specialist': 'prioritizes Bill Momentum, counsel, and early committee preparation even when optional Story costs compete with coalition work',
-    'coalition-broker': 'protects Political Capital for outreach, prefers same-party offices first, and studies bipartisan coordination',
+    'district-advocate': 'resolves mandatory district priorities and delivers their earned endorsements to the authored recipients after drafting; no Tactic study is needed',
+    'committee-specialist': 'reserves evidence for two early committee packets and mandatory district endorsements, uses one packet to review a provision and delivers the other, and drafts with finite political assets',
+    'coalition-broker': 'protects Political Capital, drafts compatible language, prepares finite communication assets, and applies bipartisan widening to shared-interest office commitments',
     'greedy-same-party': 'prefers same-party offices, minimizes optional Story cost, completes visible mandatory work, and does not study a Tactic',
     'district-reward': 'uses district-focused Story choices and staff order, meets visible deadlines, and studies negotiated cost sharing',
   };

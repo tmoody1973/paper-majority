@@ -259,7 +259,7 @@ describe('candidate producer-to-consumer commands', () => {
       && card.form === 'prepared' && card.origin?.explanationKey === 'result.constituency.endorsement-earned')!.id;
     expect(validateAndMigrateSave(createSaveEnvelope(state, scenario), scenario).kind).toBe('valid');
     const downstream = executeCommand(state, { type: 'SUBMIT_WORK', cardIds: [
-      cardId(state, 'staff-district-director'), cardId(state, 'coalition-office-mike-flood'), endorsementId,
+      cardId(state, 'staff-district-director'), cardId(state, 'coalition-office-maxine-waters'), endorsementId,
     ] }, { scenario });
     expect(downstream.events).toContainEqual(expect.objectContaining({ type: 'WORK_SUBMITTED' }));
   });

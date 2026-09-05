@@ -126,6 +126,7 @@ export type GameEvent =
   | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
   | {
       type: 'PATTERN_COMPLETED';
+      delivery?: import('@/domain/types').PreparationDelivery;
       workId: string;
       patternId: string;
       inputCardIds?: string[];

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 import { getCandidateScenario } from '../src/content/loadScenario';
 import type { GameCommand } from '../src/domain/commands';
+import { previewWork } from '../src/domain/work';
 import type { TermState } from '../src/domain/types';
 import { chooseCommand } from '../scripts/balance/policies';
 
@@ -20,10 +21,21 @@ async function keyboardActivate(page: Page, locator: Locator): Promise<void> {
 }
 
 async function selectByKeyboard(page: Page, locator: Locator, value: string): Promise<void> {
-  const label = await locator.locator(`option[value="${value}"]`).textContent();
-  if (!label) throw new Error(`No visible option for ${value}`);
+  const enabled = await locator.locator('option:not(:disabled)').evaluateAll((options) =>
+    options.map((option) => ({ value: (option as HTMLOptionElement).value, label: option.textContent?.trim() ?? '' })));
+  const target = enabled.findIndex((option) => option.value === value);
+  if (target < 0 || !enabled[target].label) throw new Error(`No enabled visible option for ${value}`);
+  const selected = await locator.inputValue();
+  const current = enabled.findIndex((option) => option.value === selected);
+  const firstLetter = enabled[target].label[0].toLowerCase();
+  const cyclicOptions = [...enabled.slice(current + 1), ...enabled.slice(0, current + 1)]
+    .filter((option) => option.label.toLowerCase().startsWith(firstLetter));
+  const presses = cyclicOptions.findIndex((option) => option.value === value) + 1;
+  // Native Chromium typeahead cycles equal initials; unlike full labels it can
+  // distinguish duplicate titles. Compute the count from DOM order, with no retries.
+  await page.keyboard.press('Tab');
   await locator.focus();
-  await page.keyboard.type(label);
+  await page.keyboard.type(firstLetter.repeat(presses));
   await expect(locator).toHaveValue(value);
 }
 
@@ -74,17 +86,25 @@ async function performCommand(page: Page, command: GameCommand): Promise<void> {
       if (!await page.getByTestId('decision-modal').isVisible()) {
         await keyboardActivate(page, page.getByTestId('decision-trigger'));
       }
-      await keyboardActivate(page, page.getByTestId(`decision-resolve-${choice.action}`));
+      await keyboardActivate(page, page.getByRole('button', { name: choice.label, exact: true }));
       break;
     }
     case 'OPEN_PACK':
       await keyboardActivate(page, page.getByTestId(`open-pack-${command.categoryId}`));
       break;
-    case 'SUBMIT_WORK':
+    case 'SUBMIT_WORK': {
+      const preview = previewWork(await state(page), scenario, command.cardIds);
+      if (!preview.accepted) throw new Error(preview.reason);
+      const output = preview.output;
+      const definition = scenario.cards.find((card) => card.id === (output.kind === 'office-decision' ? output.officeDefinitionId : output.definitionId))!;
       await expect(page.locator('[data-testid^="work-mat-ghost-"]')).toHaveCount(0);
       for (const cardId of command.cardIds) await stageByKeyboard(page, cardId);
+      await expect(page.getByTestId('work-mat-preview')).toContainText(output.kind === 'office-decision'
+        ? `Ready: Office decision — ${definition.title}`
+        : `Ready: ${definition.title}${output.form && output.form !== 'raw' ? ` — ${output.form}` : ''}`);
       await keyboardActivate(page, page.getByTestId('work-mat-begin'));
       break;
+    }
     case 'START_ASSIGNMENT':
       await selectByKeyboard(page, page.getByTestId('controls-source'), command.staffCardId);
       await selectByKeyboard(page, page.getByTestId('controls-target'), command.targetCardId);
@@ -112,7 +132,8 @@ async function performCommand(page: Page, command: GameCommand): Promise<void> {
   }
 }
 
-test('completes, reloads, and exports a ready Session through actual controls', async ({ context, page }) => {
+for (const policyId of ['district-advocate', 'committee-specialist', 'coalition-broker'] as const) {
+test(`${policyId} completes, reloads, and exports a ready Session through actual controls`, async ({ context, page }) => {
   test.setTimeout(120_000);
   const origin = new URL(test.info().project.use.baseURL ?? 'http://127.0.0.1:3100').origin;
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
@@ -129,7 +150,7 @@ test('completes, reloads, and exports a ready Session through actual controls', 
   await expect(page.locator('canvas')).toBeVisible({ timeout: 15_000 });
 
   const opening = await state(page);
-  const openingCommand = chooseCommand('district-advocate', opening, scenario);
+  const openingCommand = chooseCommand(policyId, opening, scenario);
   expect(openingCommand.type).toBe('RESOLVE_STORY');
   await performCommand(page, openingCommand);
   const aide = opening.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
@@ -138,7 +159,7 @@ test('completes, reloads, and exports a ready Session through actual controls', 
   for (let count = 0; count < 200; count += 1) {
     const before = await state(page);
     if (before.runStatus === 'complete') break;
-    const command = chooseCommand('district-advocate', before, scenario);
+    const command = chooseCommand(policyId, before, scenario);
     await performCommand(page, command);
     await expect.poll(async () => {
       const after = await state(page);
@@ -179,3 +200,5 @@ test('completes, reloads, and exports a ready Session through actual controls', 
   expect(reloaded.sessionRecord?.setup).toEqual(frozenSetup);
   expect(reloaded.sessionRecord?.outcome).toBe('ready');
 });
+
+}

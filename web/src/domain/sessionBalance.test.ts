@@ -131,10 +131,10 @@ describe('Session balance policies', () => {
     expect(run.commandCount).toBeLessThan(10_000);
   });
 
-  it('distinguishes a learned but unused Tactic from one applied to completed work', () => {
-    const learnedOnly = runPolicy('district-reward', setup(17), scenario);
-    expect(learnedOnly.activatedTacticIds).toContain('tactic-negotiated-cost-sharing');
-    expect(learnedOnly.usedTacticIds).toEqual([]);
+  it('distinguishes learning from completed Tactic use and exercises the policy target', () => {
+    const policyRun = runPolicy('district-reward', setup(17), scenario);
+    expect(policyRun.activatedTacticIds).toContain('tactic-negotiated-cost-sharing');
+    expect(policyRun.usedTacticIds).toEqual(['tactic-negotiated-cost-sharing']);
 
     let state = createRun({ ...setup(1), scenario, mode: 'session' });
     const targetPatternId = 'pattern-tactic-costly-drafting';
