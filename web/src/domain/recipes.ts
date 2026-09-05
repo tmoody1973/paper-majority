@@ -4,14 +4,30 @@ import type {
   Party,
   RecipePattern,
   RecipeSlot,
+  ProcedureStage,
   ScenarioDefinition,
   TacticExpansionDefinition,
+  InstanceForm,
+  SourceClass,
+  Citation,
 } from '@/domain/types';
+import { effectiveCard } from '@/domain/instanceForms';
 
 export interface MatchInput {
   instanceId: string;
   definition: CardDefinition;
   effectiveTags: string[];
+  effectiveSourceClass: SourceClass;
+  form: InstanceForm;
+  provenance: {
+    label: string;
+    sourceClass: SourceClass;
+    sourceDefinitionIds: string[];
+    policyDefinitionId?: string;
+    explanationKey?: string;
+    precedentIds: string[];
+    citations: Citation[];
+  };
 }
 
 export interface PatternSlotAssignment {
@@ -23,6 +39,8 @@ export interface PatternSlotAssignment {
 
 export interface PatternMatch {
   pattern: RecipePattern;
+  /** Fully resolved rule snapshot used by preview, start, and completion. */
+  effectivePattern: RecipePattern;
   assignments: PatternSlotAssignment[];
   specificity: number;
   activeExpansionIds: string[];
@@ -39,9 +57,11 @@ export interface PatternMatch {
  * party, and so no published card ever stores a claim about a relationship.
  */
 export function computeEffectiveTags(definition: CardDefinition, playerParty: Party): string[] {
-  if (!definition.officeParty) return [...definition.tags];
-  const relation = definition.officeParty === playerParty ? 'same-party' : 'opposing-party';
-  return [...definition.tags, relation];
+  if (definition.kind !== 'coalition') return [...definition.tags];
+  const authoredSimulationTags = definition.simulation?.interestTags ?? [];
+  if (!definition.officialRecord.party) return [...definition.tags, ...authoredSimulationTags];
+  const relation = definition.officialRecord.party === playerParty ? 'same-party' : 'opposing-party';
+  return [...definition.tags, ...authoredSimulationTags, relation];
 }
 
 export function buildMatchInputs(
@@ -49,18 +69,14 @@ export function buildMatchInputs(
   scenario: ScenarioDefinition,
   playerParty: Party,
 ): MatchInput[] {
-  const byId = new Map(scenario.cards.map((card) => [card.id, card]));
-
   return instances
     .map((instance) => {
-      const definition = byId.get(instance.definitionId);
-      if (!definition) {
-        throw new Error(`Scenario has no card definition "${instance.definitionId}"`);
-      }
+      const input = effectiveCard(instance, scenario);
       return {
-        instanceId: instance.id,
-        definition,
-        effectiveTags: computeEffectiveTags(definition, playerParty),
+        ...input,
+        effectiveTags: Array.from(
+          new Set([...input.effectiveTags, ...computeEffectiveTags(input.definition, playerParty)]),
+        ),
       };
     })
     // Stable instance-id ordering keeps assignment (and therefore replay) deterministic.
@@ -71,7 +87,9 @@ function slotAccepts(slot: RecipeSlot, input: MatchInput): boolean {
   if (slot.kind && input.definition.kind !== slot.kind) return false;
   if (slot.requiredTags?.some((tag) => !input.effectiveTags.includes(tag))) return false;
   if (slot.anyTags && !slot.anyTags.some((tag) => input.effectiveTags.includes(tag))) return false;
-  if (slot.sourceClasses && !slot.sourceClasses.includes(input.definition.sourceClass)) return false;
+  if (slot.sourceClasses && !slot.sourceClasses.includes(input.effectiveSourceClass)) return false;
+  if (slot.forms && !slot.forms.includes(input.form)) return false;
+  if (slot.originExplanationKeys && !slot.originExplanationKeys.includes(input.provenance.explanationKey ?? '')) return false;
   return true;
 }
 
@@ -81,41 +99,74 @@ function slotAccepts(slot: RecipeSlot, input: MatchInput): boolean {
  * Widening may only ever append accepted alternatives. There is no code path that
  * deletes a `kind`, a `requiredTags` entry or an existing alternative.
  */
+export function effectiveRule(
+  pattern: RecipePattern,
+  activeExpansionIds: string[],
+  expansions: TacticExpansionDefinition[],
+): { pattern: RecipePattern; appliedExpansionIds: string[] } {
+  const applicable = expansions.filter(
+    (expansion) =>
+      expansion.targetPatternId === pattern.id &&
+      activeExpansionIds.includes(expansion.id),
+  ).sort((a, b) => a.id.localeCompare(b.id));
+
+  const slots = pattern.slots.map((slot) => ({ ...slot }));
+  const applied: string[] = [];
+  const resourceCost = { ...pattern.resourceCost };
+  let duration = pattern.durationMs;
+  let eligibleStages = pattern.eligibleStages ? [...pattern.eligibleStages] : undefined;
+
+  for (const expansion of applicable) {
+    const effect = expansion.effect;
+    if (effect.kind === 'widen-slot') {
+      const slot = slots[effect.slotIndex];
+      if (!slot) continue;
+      if (effect.addAnyTags?.length) {
+        slot.anyTags = Array.from(new Set([...(slot.anyTags ?? []), ...effect.addAnyTags]));
+      }
+      if (effect.addSourceClasses?.length) {
+        slot.sourceClasses = Array.from(
+          new Set([...(slot.sourceClasses ?? []), ...effect.addSourceClasses]),
+        );
+      }
+    } else if (effect.kind === 'resource-cost') {
+      resourceCost[effect.resource] = Math.max(0, (resourceCost[effect.resource] ?? 0) + effect.delta);
+    } else if (effect.kind === 'duration-multiplier') {
+      duration *= effect.multiplier;
+    } else if (effect.kind === 'procedure-eligibility') {
+      // An unrestricted authored rule is already eligible everywhere. Validation
+      // rejects that no-op; this guard keeps hand-built fixtures honest too.
+      if (!eligibleStages) continue;
+      if (eligibleStages.includes(effect.stage)) continue;
+      eligibleStages = Array.from(new Set([...eligibleStages, effect.stage]));
+    } else {
+      // Session validation rejects output-strength. The legacy spike retains the
+      // authored expansion but it has no resolver meaning here.
+      continue;
+    }
+    applied.push(expansion.id);
+  }
+
+  return {
+    pattern: {
+      ...pattern,
+      slots,
+      eligibleStages,
+      resourceCost,
+      durationMs: Math.max(1, Math.round(duration)),
+    },
+    appliedExpansionIds: applied,
+  };
+}
+
+/** Backwards-compatible slot view for existing callers. */
 export function applyExpansions(
   pattern: RecipePattern,
   activeExpansionIds: string[],
   expansions: TacticExpansionDefinition[],
 ): { slots: RecipeSlot[]; appliedExpansionIds: string[] } {
-  const applicable = expansions.filter(
-    (expansion) =>
-      expansion.targetPatternId === pattern.id &&
-      activeExpansionIds.includes(expansion.id) &&
-      expansion.effect.kind === 'widen-slot',
-  );
-
-  if (applicable.length === 0) return { slots: pattern.slots, appliedExpansionIds: [] };
-
-  const slots = pattern.slots.map((slot) => ({ ...slot }));
-  const applied: string[] = [];
-
-  for (const expansion of applicable) {
-    const effect = expansion.effect;
-    if (effect.kind !== 'widen-slot') continue;
-    const slot = slots[effect.slotIndex];
-    if (!slot) continue;
-
-    if (effect.addAnyTags?.length) {
-      slot.anyTags = Array.from(new Set([...(slot.anyTags ?? []), ...effect.addAnyTags]));
-    }
-    if (effect.addSourceClasses?.length) {
-      slot.sourceClasses = Array.from(
-        new Set([...(slot.sourceClasses ?? []), ...effect.addSourceClasses]),
-      );
-    }
-    applied.push(expansion.id);
-  }
-
-  return { slots, appliedExpansionIds: applied };
+  const effective = effectiveRule(pattern, activeExpansionIds, expansions);
+  return { slots: effective.pattern.slots, appliedExpansionIds: effective.appliedExpansionIds };
 }
 
 /**
@@ -200,6 +251,7 @@ export function matchPattern(
   patterns: RecipePattern[],
   activeExpansionIds: string[],
   expansions: TacticExpansionDefinition[],
+  stage?: ProcedureStage,
 ): PatternMatch | undefined {
   if (inputs.length < 2 || inputs.length > 4) return undefined;
 
@@ -210,17 +262,21 @@ export function matchPattern(
   const candidates: PatternMatch[] = [];
 
   for (const pattern of patterns) {
-    const { slots, appliedExpansionIds } = applyExpansions(pattern, activeExpansionIds, expansions);
-    const assignments = assign(slots, ordered);
+    const effective = effectiveRule(pattern, activeExpansionIds, expansions);
+    if (stage && effective.pattern.eligibleStages && !effective.pattern.eligibleStages.includes(stage)) {
+      continue;
+    }
+    const assignments = assign(effective.pattern.slots, ordered);
     if (!assignments) continue;
 
     const [families, tags, sourceClasses] = specificityTuple(pattern);
     candidates.push({
       pattern,
+      effectivePattern: effective.pattern,
       assignments,
       specificity: families + tags + sourceClasses,
-      activeExpansionIds: appliedExpansionIds,
-      effectiveSlots: slots,
+      activeExpansionIds: effective.appliedExpansionIds,
+      effectiveSlots: effective.pattern.slots,
     });
   }
 

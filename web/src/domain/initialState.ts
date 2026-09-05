@@ -3,6 +3,7 @@ import type {
   GoverningValue,
   Party,
   Resources,
+  RunMode,
   RunSettings,
   ScenarioDefinition,
   TermState,
@@ -40,6 +41,13 @@ const OPENING_CARD_POSITIONS = [
   { x: 720, y: 360 },
 ];
 
+function openingPosition(index: number): { x: number; y: number } {
+  return OPENING_CARD_POSITIONS[index] ?? {
+    x: 320 + (index % 3) * 200,
+    y: 360 + Math.floor(index / 3) * 250,
+  };
+}
+
 export interface InitialStateInput {
   scenario: ScenarioDefinition;
   seed: number;
@@ -49,7 +57,11 @@ export interface InitialStateInput {
   settings?: Partial<RunSettings>;
 }
 
-export function createInitialState(input: InitialStateInput): TermState {
+export function buildInitialState(
+  input: InitialStateInput,
+  schemaVersion: 1 | 2,
+  mode: RunMode,
+): TermState {
   const { scenario, seed, districtId, party, values } = input;
 
   if (!scenario.districts.some((district) => district.id === districtId)) {
@@ -72,25 +84,50 @@ export function createInitialState(input: InitialStateInput): TermState {
 
   const settings: RunSettings = { ...DEFAULT_RUN_SETTINGS, ...input.settings };
 
-  const cards = scenario.startingCardDefinitionIds.map((definitionId, index) => ({
-    id: `card-${index + 1}`,
-    definitionId,
-    stackId: `stack-${index + 1}`,
-    x: OPENING_CARD_POSITIONS[index].x,
-    y: OPENING_CARD_POSITIONS[index].y,
-    remainingMs: 0,
-    status: 'idle' as const,
-  }));
+  const cards = scenario.startingCardDefinitionIds.map((definitionId, index) => {
+    const definition = scenario.cards.find((card) => card.id === definitionId)!;
+    const position = openingPosition(index);
+    return {
+      id: `card-${index + 1}`,
+      definitionId,
+      stackId: `stack-${index + 1}`,
+      x: position.x,
+      y: position.y,
+      remainingMs: 0,
+      status: 'idle' as const,
+      form: 'raw' as const,
+      location: 'desk' as const,
+      sourceDefinitionIds: definition.kind === 'evidence' ? [definition.id] : [],
+      policyDefinitionId: definition.kind === 'policy' ? definition.id : undefined,
+    };
+  });
 
   const stacks = cards.map((card) => ({ id: card.stackId, cardIds: [card.id] }));
+  const selectedDemandIdsByOffice = Object.fromEntries(
+    scenario.demandDefinitions
+      .map((demand) => demand.officeDefinitionId)
+      .filter((id, index, ids) => ids.indexOf(id) === index)
+      .sort()
+      .map((officeId) => [officeId, scenario.demandDefinitions
+        .filter((demand) => demand.officeDefinitionId === officeId)
+        .sort((a, b) => a.id.localeCompare(b.id))[0]!.id]),
+  );
+  const obligationDueByDefinitionId = Object.fromEntries(
+    [...scenario.obligationDefinitions]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((definition) => [definition.id, { ...definition.due }]),
+  );
 
   return {
-    schemaVersion: 1,
+    schemaVersion,
+    mode,
     snapshotId: scenario.snapshotId,
     seed,
     rngCursor: 1,
     week: 1,
+    simulationMs: 0,
     elapsedMs: 0,
+    weekPhase: 'active',
     weekLengthMs: WEEK_LENGTH_MS[settings.pace],
     paused: true,
     settings,
@@ -108,10 +145,33 @@ export function createInitialState(input: InitialStateInput): TermState {
       issueId: scenario.issue.id,
       title: scenario.issue.title,
       provisionIds: [],
+      provisionReceipts: [],
       stage: 'draft',
       outcome: 'active',
+      revision: 0,
     },
-    relationships: [],
+    relationships: mode === 'interaction-spike' ? [] : scenario.cards
+      .filter((card) => card.kind === 'coalition')
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((office) => ({
+        memberId: office.id,
+        support: scenario.demandDefinitions.some((demand) => demand.officeDefinitionId === office.id)
+          || office.tags.includes('housing-interest') ? 'interested' as const : 'unavailable' as const,
+        demandProvisionId: selectedDemandIdsByOffice[office.id],
+        promiseOccurrenceIds: [],
+        conditions: [],
+        evaluatedRevision: 0,
+      })),
+    staffCapacity: 3,
+    activeWork: [],
+    obligations: [],
+    pendingDecisions: [],
+    pendingStoryDecisions: [],
+    revealedPacks: [],
+    runVariation: { selectedDemandIdsByOffice, obligationDueByDefinitionId },
+    rewardedOccurrenceIds: [],
+    resolvedWeekIds: [],
+    runStatus: 'active',
     discoveredPatternIds: [],
     unlockedSlotExpansions: {},
     electionEffects: [],
@@ -120,3 +180,15 @@ export function createInitialState(input: InitialStateInput): TermState {
     eventLog: [],
   };
 }
+
+/**
+ * Legacy interaction entry point. It keeps the historical schema marker and RNG
+ * draw while constructing the same complete state shape used by the v2 engine.
+ */
+export function createInitialState(input: InitialStateInput): TermState {
+  return buildInitialState(input, 1, 'interaction-spike');
+}
+
+/** Canonical version-2 run constructor. */
+// Kept as a compatibility export while canonical Session setup lives in runSetup.
+export { createRun } from '@/domain/runSetup';

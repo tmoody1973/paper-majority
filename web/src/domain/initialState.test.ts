@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createInitialState, type InitialStateInput } from '@/domain/initialState';
+import { createInitialState, createRun, type InitialStateInput } from '@/domain/initialState';
+import { sessionSetup } from '@/test/fixtures/session';
 import { testScenario } from '@/test/fixtures/scenario';
 
 const baseInput: InitialStateInput = {
@@ -124,6 +125,41 @@ describe('createInitialState', () => {
 
     expect(districtB.player.election.opponentStrength).toBe(
       districtA.player.election.opponentStrength,
+    );
+  });
+});
+
+describe('createRun', () => {
+  it('keeps the three starting roles, baseline inputs and an empty bill in Session', () => {
+    const state = createRun({ ...sessionSetup, mode: 'session' });
+
+    expect(state.schemaVersion).toBe(2);
+    expect(state.mode).toBe('session');
+    expect(state.cards.filter((card) => card.definitionId.startsWith('staff-'))).toHaveLength(3);
+    expect(state.cards.some((card) => card.definitionId.startsWith('evidence-'))).toBe(true);
+    expect(state.cards.some((card) => card.definitionId.startsWith('policy-'))).toBe(true);
+    expect(state.bill.provisionIds).toEqual([]);
+    expect(state.bill.provisionReceipts).toEqual([]);
+    expect(state.bill.revision).toBe(0);
+    expect(state.activeWork).toEqual([]);
+  });
+
+  it('rejects a mode the scenario does not support', () => {
+    expect(() => createRun({ ...sessionSetup, mode: 'term' })).toThrow(/mode/i);
+  });
+
+  it('rejects an output-strength effect in Session even for a typed scenario', () => {
+    const scenario = {
+      ...sessionSetup.scenario,
+      tacticExpansions: sessionSetup.scenario.tacticExpansions.map((expansion, index) =>
+        index === 0
+          ? { ...expansion, effect: { kind: 'output-strength' as const, delta: 1 } }
+          : expansion,
+      ),
+    };
+
+    expect(() => createRun({ ...sessionSetup, scenario, mode: 'session' })).toThrow(
+      /output-strength/i,
     );
   });
 });

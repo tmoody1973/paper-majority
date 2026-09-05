@@ -1,6 +1,8 @@
 'use client';
 
 import type { Resources, TermState } from '@/domain/types';
+import { openObligations } from '@/domain/selectors';
+import { sessionReadiness } from '@/domain/objectives';
 
 const RESOURCE_LABELS: { key: keyof Resources; label: string; max?: number }[] = [
   { key: 'staffAttention', label: 'Staff Attention' },
@@ -30,13 +32,31 @@ export function Hud({
 }: HudProps) {
   const workIsFrozen = state.paused && state.cards.some((card) => card.status === 'working');
   const pausedNudge = workIsFrozen ? 'Paused — press Resume to let the work happen.' : undefined;
+  const readiness = sessionReadiness(state);
 
   return (
     <header className="hud" aria-label="Office status">
       <div className="hud__row">
         <p className="hud__week">
           <span className="hud__week-label">Legislative week</span>
-          <strong>{state.week}</strong>
+          <strong>{state.mode === 'interaction-spike' ? state.week : `${state.week} of 6`}</strong>
+          {state.mode !== 'interaction-spike' && (
+            <>
+              <span className="hud__week-phase">
+                {state.runStatus === 'complete'
+                  ? 'Session complete'
+                  : state.weekPhase === 'boundary'
+                    ? 'Boundary review'
+                    : `${Math.ceil((state.weekLengthMs - state.elapsedMs) / 1000)}s remaining`}
+              </span>
+              <span className="hud__week-phase">
+                {openObligations(state).filter((obligation) => obligation.due.week <= state.week).length} due obligation(s)
+              </span>
+              <span className="hud__week-phase" data-testid="hud-readiness-gap">
+                Goal gap: {readiness.provisionGap} provision · {readiness.supportGap} office · {readiness.overdueMandatoryIds.length} overdue
+              </span>
+            </>
+          )}
         </p>
 
         {/* Same-party and opposing-party are relative to the player. Without this,
@@ -61,8 +81,21 @@ export function Hud({
         </ul>
 
         <div className="hud__controls">
-          <button type="button" onClick={onTogglePause} data-testid="hud-pause">
-            {state.paused ? 'Resume' : 'Pause'}
+          <button
+            type="button"
+            onClick={onTogglePause}
+            data-testid="hud-pause"
+            disabled={state.runStatus === 'complete'
+              || state.weekPhase === 'boundary'
+              || state.pendingDecisions.some((decision) => decision.status === 'pending')
+              || state.pendingStoryDecisions.some((decision) => decision.status === 'pending')}
+            aria-disabled={state.runStatus === 'complete' || state.weekPhase === 'boundary'}
+          >
+            {state.runStatus === 'complete'
+              ? 'Session complete'
+              : state.weekPhase === 'boundary'
+                ? 'Paused for review'
+                : state.paused ? 'Resume' : 'Pause'}
           </button>
           <button
             type="button"

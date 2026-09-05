@@ -21,13 +21,14 @@ export function OfficeBrief({
   const partyWord = state.player.party === 'democratic' ? 'Democratic' : 'Republican';
   const otherWord = state.player.party === 'democratic' ? 'Republican' : 'Democratic';
   const district = scenario.districts.find((entry) => entry.id === state.player.districtId);
+  const session = state.mode === 'session';
 
   return (
     <section className="brief" aria-label="Your office">
       <header className="brief__header">
         <h2>Your office</h2>
         <span className="brief__source" data-testid="brief-source">
-          ✦ Simulated
+          {session ? '◎ Sourced district · simulated office' : '✦ Simulated'}
         </span>
       </header>
 
@@ -36,15 +37,19 @@ export function OfficeBrief({
       </p>
 
       <p className="brief__line" data-testid="brief-party">
-        You were elected as a <strong>{partyWord}</strong>. Offices that share your party are
-        easier to approach; a <strong>{otherWord}</strong> office is from the other party, and
-        needs a different approach.
+        {session ? (
+          <>You chose a <strong>{partyWord}</strong> office for this simulation. Other offices respond to shared bill interests and their authored conditions; party carries no Integrity penalty.</>
+        ) : (
+          <>You were elected as a <strong>{partyWord}</strong>. Offices that share your party are easier to approach; a <strong>{otherWord}</strong> office is from the other party, and needs a different approach.</>
+        )}
       </p>
 
       <p className="brief__line" data-testid="brief-district">
-        You represent <strong>{district?.title ?? state.player.districtId}</strong> — a
-        fictional district invented for this practice run. No real place or person is
-        represented here.
+        {session ? (
+          <>You represent <strong>{district?.title ?? state.player.districtId}</strong>. The district identity and linked public data are sourced; your priorities, support, and office demands are simulated.</>
+        ) : (
+          <>You represent <strong>{district?.title ?? state.player.districtId}</strong> — a fictional district invented for this practice run. No real place or person is represented here.</>
+        )}
       </p>
 
       <p className="brief__line" data-testid="brief-values">
@@ -53,8 +58,11 @@ export function OfficeBrief({
       </p>
 
       <p className="brief__goal" data-testid="brief-goal">
-        Your job: build a <strong>housing bill</strong> and win enough support to move it —
-        before your staff, your time and your district&rsquo;s patience run out.
+        {session ? (
+          <>Six-week goal: docket <strong>two distinct housing provisions</strong>, earn commitments from <strong>two offices</strong>, and leave <strong>no overdue mandatory commitment</strong>.</>
+        ) : (
+          <>Your job: build a <strong>housing bill</strong> and win enough support to move it — before your staff, your time and your district&rsquo;s patience run out.</>
+        )}
       </p>
     </section>
   );

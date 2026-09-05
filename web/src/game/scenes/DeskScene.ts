@@ -1,8 +1,14 @@
 import Phaser from 'phaser';
 
-import { rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
+import { OUTREACH_RECOVERY_PHRASE, rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
 import { describeCard } from '@/domain/cardDetail';
-import { resolveDropIntent, wouldDropBeAccepted } from '@/domain/dropIntent';
+import {
+  BILL_DOCKET_TARGET_ID,
+  resolveDropIntent,
+  wouldDropBeAccepted,
+} from '@/domain/dropIntent';
+import { remainingWorkMs } from '@/domain/work';
+import { openObligations } from '@/domain/selectors';
 import type { CardDefinition, CardInstance } from '@/domain/types';
 import { resolveDropTarget, type DropTarget } from '@/game/input/dropResolver';
 import { CardView, CARD_HEIGHT, CARD_WIDTH } from '@/game/objects/CardView';
@@ -19,6 +25,10 @@ const REJECT_MS = 160;
 const TRANSFORM_MS = 260;
 
 const STACK_OFFSET_Y = 34;
+const DOCKET_X = 1_080;
+const DOCKET_Y = 315;
+const DOCKET_WIDTH = 250;
+const DOCKET_HEIGHT = 300;
 
 export interface DeskSceneData {
   session: GameSession;
@@ -35,6 +45,8 @@ export class DeskScene extends Phaser.Scene {
   private onSelect!: (cardId: string) => void;
   private onHover!: (cardId: string | undefined) => void;
   private views = new Map<string, CardView>();
+  private docketBackground?: Phaser.GameObjects.Rectangle;
+  private docketRevision?: Phaser.GameObjects.Text;
   private dragOrigin = { x: 0, y: 0 };
   /**
    * The card the pointer is currently holding.
@@ -44,6 +56,7 @@ export class DeskScene extends Phaser.Scene {
    * depth, and the lost depth made the pan handler mistake a card drag for a desk pan.
    */
   private draggingCardId?: string;
+  private hoveredCardId?: string;
   private lastTickAt = 0;
 
   constructor() {
@@ -64,6 +77,7 @@ export class DeskScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#e9e2d3');
     this.drawDeskSurface();
+    if (this.session.getState().mode !== 'interaction-spike') this.drawBillDocket();
 
     this.syncViews();
     this.frameDesk();
@@ -86,6 +100,10 @@ export class DeskScene extends Phaser.Scene {
             getViewY: (cardId: string) => number | undefined;
             getProgress: (cardId: string) => number | undefined;
             getScreenPoint: (cardId: string) => { x: number; y: number } | undefined;
+            getExposedScreenPoint: (cardId: string) => { x: number; y: number } | undefined;
+            getDocketScreenPoint: () => { x: number; y: number } | undefined;
+            getDraggingCardId: () => string | undefined;
+            getHoveredCardId: () => string | undefined;
           };
         }
       ).__congressGameCamera = {
@@ -103,6 +121,42 @@ export class DeskScene extends Phaser.Scene {
             y: (view.y - camera.worldView.y) * camera.zoom,
           };
         },
+        getExposedScreenPoint: (cardId: string) => {
+          const view = this.views.get(cardId);
+          if (!view) return undefined;
+          const camera = this.cameras.main;
+          const inset = 10;
+          const xOffsets = [0, -CARD_WIDTH / 2 + inset, CARD_WIDTH / 2 - inset];
+          const yOffsets = [
+            0,
+            -CARD_HEIGHT / 2 + inset,
+            -CARD_HEIGHT / 2 + STACK_OFFSET_Y / 2,
+            CARD_HEIGHT / 2 - inset,
+          ];
+          const candidates = yOffsets.flatMap((y) => xOffsets.map((x) => ({ x: view.x + x, y: view.y + y })));
+          // A stack's header can still sit beneath an unrelated card. Find a
+          // physical point that no other card covers, so E2E taps exercise the
+          // same visible target a player can actually reach.
+          const point = candidates.find((candidate) => [...this.views.values()].every((other) =>
+            other === view
+              || Math.abs(candidate.x - other.x) >= CARD_WIDTH / 2
+              || Math.abs(candidate.y - other.y) >= CARD_HEIGHT / 2,
+          )) ?? candidates[0]!;
+          return {
+            x: (point.x - camera.worldView.x) * camera.zoom,
+            y: (point.y - camera.worldView.y) * camera.zoom,
+          };
+        },
+        getDocketScreenPoint: () => {
+          if (!this.docketBackground) return undefined;
+          const camera = this.cameras.main;
+          return {
+            x: (DOCKET_X - camera.worldView.x) * camera.zoom,
+            y: (DOCKET_Y - camera.worldView.y) * camera.zoom,
+          };
+        },
+        getDraggingCardId: () => this.draggingCardId,
+        getHoveredCardId: () => this.hoveredCardId,
       };
     }
   }
@@ -128,12 +182,13 @@ export class DeskScene extends Phaser.Scene {
    */
   private frameDesk(): void {
     const state = this.session.getState();
-    if (state.cards.length === 0) return;
+    const cards = state.cards.filter((card) => card.location === 'desk');
+    if (cards.length === 0) return;
 
-    const left = Math.min(...state.cards.map((card) => card.x)) - CARD_WIDTH / 2;
-    const right = Math.max(...state.cards.map((card) => card.x)) + CARD_WIDTH / 2;
-    const top = Math.min(...state.cards.map((card) => card.y)) - CARD_HEIGHT / 2;
-    const bottom = Math.max(...state.cards.map((card) => card.y)) + CARD_HEIGHT / 2;
+    const left = Math.min(...cards.map((card) => card.x), ...(this.docketBackground ? [DOCKET_X] : [])) - CARD_WIDTH / 2;
+    const right = Math.max(...cards.map((card) => card.x), ...(this.docketBackground ? [DOCKET_X + DOCKET_WIDTH / 2] : [])) + CARD_WIDTH / 2;
+    const top = Math.min(...cards.map((card) => card.y), ...(this.docketBackground ? [DOCKET_Y] : [])) - CARD_HEIGHT / 2;
+    const bottom = Math.max(...cards.map((card) => card.y), ...(this.docketBackground ? [DOCKET_Y + DOCKET_HEIGHT / 2] : [])) + CARD_HEIGHT / 2;
 
     const camera = this.cameras.main;
     const margin = 24;
@@ -160,6 +215,40 @@ export class DeskScene extends Phaser.Scene {
     surface.setDepth(-100);
   }
 
+  private drawBillDocket(): void {
+    this.docketBackground = this.add.rectangle(
+      DOCKET_X,
+      DOCKET_Y,
+      DOCKET_WIDTH,
+      DOCKET_HEIGHT,
+      0xfff8e8,
+      0.96,
+    );
+    this.docketBackground.setStrokeStyle(4, 0xb6503a, 1).setDepth(-10);
+    this.add.text(DOCKET_X - DOCKET_WIDTH / 2 + 18, DOCKET_Y - DOCKET_HEIGHT / 2 + 18, 'BILL DOCKET', {
+      color: '#203b49',
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '22px',
+      fontStyle: 'bold',
+    }).setDepth(-9);
+    this.add.text(
+      DOCKET_X - DOCKET_WIDTH / 2 + 18,
+      DOCKET_Y - 45,
+      'Drop finished\ndrafted language here',
+      { color: '#4a5c68', fontFamily: 'system-ui, sans-serif', fontSize: '16px', lineSpacing: 6 },
+    ).setDepth(-9);
+    this.docketRevision = this.add.text(
+      DOCKET_X - DOCKET_WIDTH / 2 + 18,
+      DOCKET_Y + DOCKET_HEIGHT / 2 - 48,
+      'Revision 0 · 0 provisions',
+      { color: '#b6503a', fontFamily: 'system-ui, sans-serif', fontSize: '15px', fontStyle: 'bold' },
+    ).setDepth(-9);
+  }
+
+  private setDocketHighlight(valid: boolean): void {
+    this.docketBackground?.setStrokeStyle(valid ? 7 : 4, valid ? 0x2878a8 : 0xb6503a, 1);
+  }
+
   private definitionFor(instance: CardInstance): CardDefinition {
     const definition = this.session
       .getScenario()
@@ -172,11 +261,14 @@ export class DeskScene extends Phaser.Scene {
   private syncViews(): void {
     const state = this.session.getState();
     const seen = new Set<string>();
+    this.docketRevision?.setText(
+      `Revision ${state.bill.revision} · ${state.bill.provisionIds.length} provision${state.bill.provisionIds.length === 1 ? '' : 's'}`,
+    );
 
     for (const stack of state.stacks) {
       stack.cardIds.forEach((cardId, indexInStack) => {
         const instance = state.cards.find((card) => card.id === cardId);
-        if (!instance) return;
+        if (!instance || instance.location !== 'desk') return;
         seen.add(cardId);
 
         // Fanned stacks keep every card's top 42px — the family band, label and
@@ -184,6 +276,9 @@ export class DeskScene extends Phaser.Scene {
         const anchor = state.cards.find((card) => card.id === stack.cardIds[0]) ?? instance;
         const placed: CardInstance = {
           ...instance,
+          remainingMs: state.mode === 'interaction-spike'
+            ? instance.remainingMs
+            : remainingWorkMs(state, instance.id),
           x: anchor.x,
           y: anchor.y + indexInStack * STACK_OFFSET_Y,
         };
@@ -194,6 +289,14 @@ export class DeskScene extends Phaser.Scene {
         const detail = describeCard(state, this.session.getScenario(), cardId);
         const costLine = detail?.costs[0]?.short;
         const originLine = detail?.origin?.short;
+        const deadlineLine = state.mode === 'interaction-spike' ? '' : openObligations(state)
+          .filter((obligation) => {
+            const definition = this.session.getScenario().obligationDefinitions.find(
+              (candidate) => candidate.id === obligation.sourceId,
+            );
+            return definition?.sourceDefinitionId === instance.definitionId;
+          })
+          .map((obligation) => `Due W${obligation.due.week} · ${Math.ceil(obligation.due.offsetMs / 1000)}s`)[0] ?? '';
 
         const existing = this.views.get(cardId);
         if (existing) {
@@ -205,9 +308,10 @@ export class DeskScene extends Phaser.Scene {
               this.definitionFor(instance),
               costLine,
               originLine,
+              deadlineLine,
             );
           } else {
-            existing.refresh(placed, this.definitionFor(instance), costLine, originLine);
+            existing.refresh(placed, this.definitionFor(instance), costLine, originLine, deadlineLine);
             existing.setDepth(indexInStack);
           }
         } else {
@@ -216,7 +320,7 @@ export class DeskScene extends Phaser.Scene {
             definition: this.definitionFor(instance),
             reducedMotion: this.reducedMotion,
           });
-          view.refresh(placed, this.definitionFor(instance), costLine, originLine);
+          view.refresh(placed, this.definitionFor(instance), costLine, originLine, deadlineLine);
           view.setDepth(indexInStack);
           this.views.set(cardId, view);
         }
@@ -246,7 +350,7 @@ export class DeskScene extends Phaser.Scene {
 
   private dropTargets(excludeCardId: string): DropTarget[] {
     const state = this.session.getState();
-    return state.stacks
+    const stackTargets = state.stacks
       .filter((stack) => !stack.cardIds.includes(excludeCardId))
       .map((stack, index) => {
         const view = this.views.get(stack.cardIds[0]);
@@ -261,6 +365,17 @@ export class DeskScene extends Phaser.Scene {
         };
       })
       .filter((target): target is DropTarget => target !== undefined);
+    if (state.mode !== 'interaction-spike') {
+      stackTargets.push({
+        stackId: BILL_DOCKET_TARGET_ID,
+        x: DOCKET_X - DOCKET_WIDTH / 2,
+        y: DOCKET_Y - DOCKET_HEIGHT / 2,
+        width: DOCKET_WIDTH,
+        height: DOCKET_HEIGHT,
+        z: 10_000,
+      });
+    }
+    return stackTargets;
   }
 
   /**
@@ -275,6 +390,12 @@ export class DeskScene extends Phaser.Scene {
   }
 
   private installInput(): void {
+    // Phaser defaults both drag thresholds to zero, which starts a drag on the
+    // initial press. Requiring real movement keeps a stationary tap available for
+    // inspection/staging and lets the existing distance guard distinguish the two.
+    if (this.session.getState().mode !== 'interaction-spike') {
+      this.input.dragDistanceThreshold = 8;
+    }
     // Dragging works while paused: planning is never a timed activity.
     this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, view: CardView) => {
       this.dragOrigin = { x: view.x, y: view.y };
@@ -298,7 +419,13 @@ export class DeskScene extends Phaser.Scene {
           if (cardId === view.cardId) continue;
           candidate.setHighlight('none');
         }
+        this.setDocketHighlight(false);
         if (!targetId) return;
+
+        if (targetId === BILL_DOCKET_TARGET_ID) {
+          this.setDocketHighlight(this.wouldAccept(view.cardId, targetId));
+          return;
+        }
 
         const stack = this.session.getState().stacks.find((s) => s.id === targetId);
         const head = stack ? this.views.get(stack.cardIds[0]) : undefined;
@@ -308,6 +435,7 @@ export class DeskScene extends Phaser.Scene {
 
     this.input.on('dragend', (_pointer: Phaser.Input.Pointer, view: CardView) => {
       for (const candidate of this.views.values()) candidate.setHighlight('none');
+      this.setDocketHighlight(false);
 
       const targetId = resolveDropTarget({ x: view.x, y: view.y }, this.dropTargets(view.cardId));
       if (!targetId) {
@@ -350,6 +478,11 @@ export class DeskScene extends Phaser.Scene {
         this.bounceBack(view);
         return;
       }
+      if (targetId === BILL_DOCKET_TARGET_ID) {
+        this.draggingCardId = undefined;
+        this.syncViews();
+        return;
+      }
       this.snap(view);
     });
 
@@ -359,12 +492,14 @@ export class DeskScene extends Phaser.Scene {
     this.input.on('gameobjectover', (_pointer: Phaser.Input.Pointer, gameObject: unknown) => {
       const view = gameObject as CardView;
       if (!view?.cardId || this.draggingCardId) return;
+      this.hoveredCardId = view.cardId;
       this.onHover(view.cardId);
     });
 
     this.input.on('gameobjectout', (_pointer: Phaser.Input.Pointer, gameObject: unknown) => {
       const view = gameObject as CardView;
       if (!view?.cardId) return;
+      if (this.hoveredCardId === view.cardId) this.hoveredCardId = undefined;
       this.onHover(undefined);
     });
 
@@ -484,6 +619,11 @@ export class DeskScene extends Phaser.Scene {
           resultPhrase(String(event.explanationKey), returned.map((id) => this.titleOf(id))),
         );
         this.flagReturned(returned);
+        return;
+      }
+      if (event.type === 'WORK_RECOVERED') {
+        this.onResult(OUTREACH_RECOVERY_PHRASE);
+        this.flagReturned(event.cardIds as string[]);
         return;
       }
       if (event.type === 'TACTIC_EXPANSION_ACTIVATED') {

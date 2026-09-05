@@ -1,10 +1,87 @@
 import type { MatchInput, PatternMatch } from '@/domain/recipes';
-import type { DerivedResolverId, Resources } from '@/domain/types';
+import type { DerivedResolverId, InstanceForm, Resources, RunMode, ScenarioDefinition } from '@/domain/types';
 
 export interface ResolvedPatternOutput {
   definitionId: string;
+  form?: InstanceForm;
   effects: Partial<Resources>;
   explanationKey: string;
+  /** Exact matched slot whose instance identity is preserved by this output. */
+  outputSlotIndex?: number;
+}
+
+const RESOLVER_OUTPUT_CONTRACTS: Record<DerivedResolverId, { form: InstanceForm; explanations: string[]; defaultOutputSlot?: number }> = {
+  'summarize-evidence-v1': { form: 'summary', explanations: ['result.summary.committee-credibility', 'result.summary.district-relevance', 'result.summary.no-context-bonus'], defaultOutputSlot: 1 },
+  'draft-provision-v1': { form: 'drafted', explanations: ['result.provision.drafted'], defaultOutputSlot: 2 },
+  'answer-office-concern-v1': { form: 'prepared', explanations: ['result.evidence.office-concern-answered'], defaultOutputSlot: 1 },
+  'prepare-evidence-packet-v1': { form: 'prepared', explanations: ['result.evidence.district-packet-prepared'], defaultOutputSlot: 1 },
+  'resolve-outreach-v1': { form: 'raw', explanations: ['result.outreach.counteroffer', 'result.outreach.support'] },
+  'strengthen-provision-v1': { form: 'raw', explanations: ['result.provision.strengthened'] },
+  'prepare-district-response-v1': { form: 'prepared', explanations: ['result.constituency.response-prepared'], defaultOutputSlot: 1 },
+  'prepare-committee-packet-v1': { form: 'prepared', explanations: ['result.institution.committee-packet-prepared'], defaultOutputSlot: 1 },
+  'prepare-district-endorsement-v1': { form: 'prepared', explanations: ['result.constituency.endorsement-earned'], defaultOutputSlot: 1 },
+  'prepare-political-asset-v1': { form: 'prepared', explanations: ['result.political.asset-prepared'], defaultOutputSlot: 1 },
+  'review-provision-v1': { form: 'drafted', explanations: ['result.provision.reviewed'], defaultOutputSlot: 1 },
+};
+
+/** One authored/default selection for both production and persisted receipts. */
+function outputSlotFor(
+  resolverId: DerivedResolverId,
+  parameters: Record<string, string | number | boolean> = {},
+): number | undefined {
+  return typeof parameters.outputSlot === 'number'
+    ? parameters.outputSlot
+    : RESOLVER_OUTPUT_CONTRACTS[resolverId].defaultOutputSlot;
+}
+
+/** Authenticate a persisted producer claim against the authored resolver contract. */
+export function matchesPatternOutputReceipt(
+  pattern: PatternMatch['pattern'],
+  scenario: ScenarioDefinition,
+  claim: {
+    definitionId: string;
+    form: InstanceForm;
+    explanationKey: string;
+    outputSlotIndex?: number;
+    outputSourceDefinitionId?: string;
+    outputSourceForm?: InstanceForm;
+  },
+): boolean {
+  if (pattern.output.mode === 'fixed') {
+    return claim.definitionId === pattern.output.definitionId
+      && claim.form === 'raw'
+      && claim.explanationKey === `result.fixed.${pattern.output.definitionId}`
+      && claim.outputSlotIndex === undefined
+      && claim.outputSourceDefinitionId === undefined
+      && claim.outputSourceForm === undefined;
+  }
+  const receipt = RESOLVER_OUTPUT_CONTRACTS[pattern.output.resolverId];
+  if (!receipt.explanations.includes(claim.explanationKey)) return false;
+  const preservesInput = pattern.output.parameters?.preserveInputDefinition === true;
+  if (preservesInput) {
+    const outputSlotIndex = outputSlotFor(pattern.output.resolverId, pattern.output.parameters);
+    const slot = outputSlotIndex === undefined ? undefined : pattern.slots[outputSlotIndex];
+    const source = scenario.cards.find((card) => card.id === claim.outputSourceDefinitionId);
+    if (pattern.output.resolverId === 'summarize-evidence-v1' && source
+      && claim.explanationKey !== summaryBenefit(source, pattern.output.parameters ?? {}).explanationKey) return false;
+    return claim.form === receipt.form
+      && claim.outputSlotIndex === outputSlotIndex
+      && claim.definitionId === claim.outputSourceDefinitionId
+      && source !== undefined
+      && slot !== undefined
+      && (slot.kind === undefined || source.kind === slot.kind)
+      && (slot.requiredTags === undefined || slot.requiredTags.every((tag) => source.tags.includes(tag)))
+      && (slot.anyTags === undefined || slot.anyTags.some((tag) => source.tags.includes(tag)))
+      && (slot.sourceClasses === undefined || slot.sourceClasses.includes(source.sourceClass))
+      && (slot.forms === undefined || claim.outputSourceForm !== undefined && slot.forms.includes(claim.outputSourceForm));
+  }
+  const authoredOutputId = pattern.output.parameters?.outputDefinitionId;
+  return claim.form === 'raw'
+    && typeof authoredOutputId === 'string'
+    && claim.definitionId === authoredOutputId
+    && claim.outputSlotIndex === undefined
+    && claim.outputSourceDefinitionId === undefined
+    && claim.outputSourceForm === undefined;
 }
 
 export interface ResolverContext {
@@ -29,36 +106,121 @@ function requireOutputId(parameters: Record<string, string | number | boolean>):
   return value;
 }
 
-function inputForSlot(context: ResolverContext, slotIndex: number): MatchInput {
+export function inputsForSlot(context: ResolverContext, slotIndex: number): MatchInput[] {
   const assignment = context.match.assignments.find((a) => a.slotIndex === slotIndex);
-  const definitionId = assignment?.cardDefinitionIds[0];
-  const found = context.inputs.find((input) => input.definition.id === definitionId);
-  if (!found) throw new Error(`Resolver could not find the card assigned to slot ${slotIndex}`);
+  if (!assignment) throw new Error(`Resolver could not find slot ${slotIndex}`);
+
+  return assignment.cardInstanceIds.map((instanceId) => {
+    const found = context.inputs.find((input) => input.instanceId === instanceId);
+    if (!found) throw new Error(`Resolver could not find instance "${instanceId}" assigned to slot ${slotIndex}`);
+    return found;
+  });
+}
+
+function inputForSlot(context: ResolverContext, slotIndex: number): MatchInput {
+  const [found] = inputsForSlot(context, slotIndex);
+  if (!found) throw new Error(`Resolver found an empty slot ${slotIndex}`);
   return found;
 }
 
-const summarizeEvidence: PatternResolver = (context) => {
-  const evidence = inputForSlot(context, 1);
+function officeConcernHasExpectedRecipient(context: ResolverContext): boolean {
+  const office = inputForSlot(context, 2);
+  const concern = inputForSlot(context, 3);
+  return concern.definition.kind === 'constituency'
+    && concern.definition.authoredConcern !== undefined
+    && concern.definition.authoredConcern.recipientOfficeDefinitionId === office.definition.id;
+}
 
-  // The card chosen still matters. An official record buys committee credibility;
-  // a derived local survey buys district relevance.
-  return evidence.definition.sourceClass === 'official'
-    ? {
-        definitionId: requireOutputId(context.parameters),
-        effects: { billMomentum: 3 },
-        explanationKey: 'result.summary.committee-credibility',
-      }
-    : {
-        definitionId: requireOutputId(context.parameters),
-        effects: { districtTrust: 3 },
-        explanationKey: 'result.summary.district-relevance',
-      };
-};
+/**
+ * Validate relationships between matched inputs that cannot be expressed by
+ * recipe slot tags alone. Work preview and command submission both call this
+ * before reserving cards or charging resources; resolvers repeat it defensively.
+ */
+export function validatePatternPreflight(
+  match: PatternMatch,
+  inputs: MatchInput[],
+): string | undefined {
+  const output = match.effectivePattern.output;
+  if (output.mode === 'derived' && output.parameters?.requireMatchingConcern === true) {
+    const context = { match, inputs, parameters: output.parameters };
+    const artifact = inputForSlot(context, Number(output.parameters.preparationSlot));
+    const office = inputs.find((input) => input.definition.kind === 'coalition');
+    if (artifact.definition.kind !== 'constituency'
+      || artifact.definition.authoredConcern?.recipientOfficeDefinitionId !== office?.definition.id) {
+      return 'That endorsement belongs to a different recipient office.';
+    }
+  }
+  if (output.mode !== 'derived' || output.resolverId !== 'answer-office-concern-v1') {
+    return undefined;
+  }
+  const context = { match, inputs, parameters: output.parameters ?? {} };
+  return officeConcernHasExpectedRecipient(context)
+    ? undefined
+    : 'That authored concern belongs to a different recipient office.';
+}
+
+function outputForSessionForm(
+  context: ResolverContext,
+): Pick<ResolvedPatternOutput, 'definitionId' | 'form' | 'outputSlotIndex'> {
+  if (context.parameters.preserveInputDefinition === true) {
+    const output = context.match.pattern.output;
+    if (output.mode !== 'derived') throw new Error('Preserved output requires a derived resolver');
+    const slotIndex = outputSlotFor(output.resolverId, context.parameters);
+    if (slotIndex === undefined) throw new Error('Resolver does not preserve an input slot');
+    const { form } = RESOLVER_OUTPUT_CONTRACTS[output.resolverId];
+    return { definitionId: inputForSlot(context, slotIndex).definition.id, form, outputSlotIndex: slotIndex };
+  }
+  return { definitionId: requireOutputId(context.parameters) };
+}
+
+/** Frozen Session policy: committee wins ties; unrelated evidence grants no context bonus. */
+export const SESSION_SUMMARY_RELEVANCE_POLICY = 'committee-then-district-v1';
+
+function summaryBenefit(
+  definition: MatchInput['definition'],
+  parameters: ResolverContext['parameters'],
+): Pick<ResolvedPatternOutput, 'effects' | 'explanationKey'> {
+  if (parameters.relevancePolicy === SESSION_SUMMARY_RELEVANCE_POLICY) {
+    if (definition.tags.includes('committee-relevant')) {
+      return { effects: { billMomentum: 3 }, explanationKey: 'result.summary.committee-credibility' };
+    }
+    if (definition.tags.includes('district-relevant')) {
+      return { effects: { districtTrust: 3 }, explanationKey: 'result.summary.district-relevance' };
+    }
+    return { effects: {}, explanationKey: 'result.summary.no-context-bonus' };
+  }
+  // The explicit legacy fixture retains its original provenance-based rule.
+  return definition.sourceClass === 'official'
+    ? { effects: { billMomentum: 3 }, explanationKey: 'result.summary.committee-credibility' }
+    : { effects: { districtTrust: 3 }, explanationKey: 'result.summary.district-relevance' };
+}
+
+const summarizeEvidence: PatternResolver = (context) => ({
+  ...outputForSessionForm(context),
+  ...summaryBenefit(inputForSlot(context, 1).definition, context.parameters),
+});
 
 const draftProvision: PatternResolver = (context) => ({
-  definitionId: requireOutputId(context.parameters),
+  ...outputForSessionForm(context),
   effects: { billMomentum: 2 },
   explanationKey: 'result.provision.drafted',
+});
+
+const answerOfficeConcern: PatternResolver = (context) => {
+  if (validatePatternPreflight(context.match, context.inputs)) {
+    throw new Error('Office-concern work requires the authored concern for that recipient office');
+  }
+  return {
+    ...outputForSessionForm(context),
+    effects: { billMomentum: 1 },
+    explanationKey: 'result.evidence.office-concern-answered',
+  };
+};
+
+const prepareEvidencePacket: PatternResolver = (context) => ({
+  ...outputForSessionForm(context),
+  effects: { districtTrust: 2 },
+  explanationKey: 'result.evidence.district-packet-prepared',
 });
 
 const resolveOutreach: PatternResolver = (context) => {
@@ -84,11 +246,48 @@ const strengthenProvision: PatternResolver = (context) => ({
   explanationKey: 'result.provision.strengthened',
 });
 
+const prepareDistrictResponse: PatternResolver = (context) => ({
+  ...outputForSessionForm(context),
+  effects: { districtTrust: 2 },
+  explanationKey: 'result.constituency.response-prepared',
+});
+
+const prepareCommitteePacket: PatternResolver = (context) => ({
+  ...outputForSessionForm(context),
+  effects: { billMomentum: 2 },
+  explanationKey: 'result.institution.committee-packet-prepared',
+});
+
+const prepareDistrictEndorsement: PatternResolver = (context) => ({
+  ...outputForSessionForm(context),
+  effects: { districtTrust: 3, billMomentum: 1 },
+  explanationKey: 'result.constituency.endorsement-earned',
+});
+
+const preparePoliticalAsset: PatternResolver = (context) => ({
+  ...outputForSessionForm(context),
+  effects: { billMomentum: 1 },
+  explanationKey: 'result.political.asset-prepared',
+});
+
+const reviewProvision: PatternResolver = (context) => ({
+  ...outputForSessionForm(context),
+  effects: { billMomentum: 2 },
+  explanationKey: 'result.provision.reviewed',
+});
+
 export const DERIVED_RESOLVERS: Record<DerivedResolverId, PatternResolver> = {
   'summarize-evidence-v1': summarizeEvidence,
   'draft-provision-v1': draftProvision,
+  'answer-office-concern-v1': answerOfficeConcern,
+  'prepare-evidence-packet-v1': prepareEvidencePacket,
   'resolve-outreach-v1': resolveOutreach,
   'strengthen-provision-v1': strengthenProvision,
+  'prepare-district-response-v1': prepareDistrictResponse,
+  'prepare-committee-packet-v1': prepareCommitteePacket,
+  'prepare-district-endorsement-v1': prepareDistrictEndorsement,
+  'prepare-political-asset-v1': preparePoliticalAsset,
+  'review-provision-v1': reviewProvision,
 };
 
 export function resolvePatternOutput(
@@ -113,4 +312,23 @@ export function resolvePatternOutput(
   }
 
   return resolver({ match, inputs, parameters: output.parameters ?? {} });
+}
+
+export type PlannedWorkOutput =
+  | ({ kind: 'card' } & ResolvedPatternOutput)
+  | { kind: 'office-decision'; officeDefinitionId: string };
+
+/** The same result discriminator drives Session completion and its pure preview. */
+export function resolveWorkOutput(
+  match: PatternMatch,
+  inputs: MatchInput[],
+  mode: RunMode,
+): PlannedWorkOutput {
+  const output = match.effectivePattern.output;
+  if (mode === 'session' && output.mode === 'derived' && output.resolverId === 'resolve-outreach-v1') {
+    const office = inputs.find((input) => input.definition.kind === 'coalition');
+    if (!office) throw new Error('Office outreach requires a matched office');
+    return { kind: 'office-decision', officeDefinitionId: office.definition.id };
+  }
+  return { kind: 'card', ...resolvePatternOutput(match, inputs) };
 }

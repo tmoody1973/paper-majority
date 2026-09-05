@@ -9,7 +9,21 @@ const { patterns, tacticExpansions } = testScenario;
 
 function input(definitionId: string, instanceId = `i-${definitionId}`, party: Party = 'democratic'): MatchInput {
   const definition = findCardDefinition(definitionId);
-  return { instanceId, definition, effectiveTags: computeEffectiveTags(definition, party) };
+  return {
+    instanceId,
+    definition,
+    effectiveTags: computeEffectiveTags(definition, party),
+    effectiveSourceClass: definition.sourceClass,
+    form: 'raw',
+    provenance: {
+      label: 'Test input',
+      sourceClass: definition.sourceClass,
+      sourceDefinitionIds: definition.kind === 'evidence' ? [definition.id] : [],
+      policyDefinitionId: definition.kind === 'policy' ? definition.id : undefined,
+      precedentIds: definition.kind === 'policy' ? definition.precedentIds : [],
+      citations: definition.citations,
+    },
+  };
 }
 
 function match(definitionIds: string[], activeExpansionIds: string[] = []) {
@@ -58,6 +72,9 @@ describe('buildMatchInputs', () => {
         y: 0,
         remainingMs: 0,
         status: 'idle',
+        form: 'raw',
+        location: 'desk',
+        sourceDefinitionIds: [],
       },
     ];
 

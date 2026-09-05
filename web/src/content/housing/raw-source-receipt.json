@@ -1,0 +1,112 @@
+{
+  "candidate": true,
+  "humanReviewPending": true,
+  "purpose": "Preserve source research inputs independently of temporary SDD workspace. This is not a normalized or promoted scenario.",
+  "files": [
+    {
+      "path": "source-data/acs5-2024-B25070-group.json",
+      "bytes": 213800,
+      "sha256": "81516d5733ff2931eab994443db33bcf9057fdb39263336cf3768bcb2d848638"
+    },
+    {
+      "path": "source-data/acsdt5y2024-b25070.dat",
+      "bytes": 46466758,
+      "sha256": "862ccc17d913305d11e6f802ce4518d76b30585ea0b05b251cd8cf21f8661386"
+    },
+    {
+      "path": "source-data/committee-housing-and-insurance.html",
+      "bytes": 27074,
+      "sha256": "62770a3c6a49e9abb2be4ceaef5b96b9672f81ba5495aad58de600de21a019c0"
+    },
+    {
+      "path": "source-data/committee-members.html",
+      "bytes": 43646,
+      "sha256": "e3e34965a4103e51bc3c16a5b5c3dd66e31238c9a3b2fea2f8d93b48d59a96a3"
+    },
+    {
+      "path": "source-data/evidence-ahs-table-creator.html",
+      "bytes": 331969,
+      "sha256": "697354ceeb202c6beb2df65d768b6e5bca519ac81e2c856fb1e009f156b92aa3"
+    },
+    {
+      "path": "source-data/evidence-b25070-metadata.html",
+      "bytes": 220525,
+      "sha256": "7c453e72859b3c0ded4889a6442ec16b6281b426ffcbe3eb5eaff0a73b01afdf"
+    },
+    {
+      "path": "source-data/evidence-bps.html",
+      "bytes": 54942,
+      "sha256": "635da0f26b078327b14ea85219585b760da838a893296d6374b58b8fb257fa4f"
+    },
+    {
+      "path": "source-data/evidence-chas-official-web-extract.txt",
+      "bytes": 1634,
+      "sha256": "9bd2b3a9b5a4f7d63e47fae5f871b544e1ed693374b77535b6fd76771293ba9f"
+    },
+    {
+      "path": "source-data/evidence-chas.html",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-data/evidence-fmr-official-web-extract.txt",
+      "bytes": 1568,
+      "sha256": "d2fded6c0a51329b071f845c73560cb0f6117b7b98e1f4a487ce99c3d4d2acbb"
+    },
+    {
+      "path": "source-data/evidence-fmr.html",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-data/housing-source-freeze-metadata.json",
+      "bytes": 17293,
+      "sha256": "508db10db9d097fe72d46fa71cdcc0d9e2ab950633bcf7d730a53facaab2cc24"
+    },
+    {
+      "path": "source-data/office-emanuel-cleaver.html",
+      "bytes": 259618,
+      "sha256": "8079fd8eb28988fb9fef8a65b009b82f872b2de45177cbca9ad2472f8f32b3f9"
+    },
+    {
+      "path": "source-data/office-j-french-hill.html",
+      "bytes": 260015,
+      "sha256": "3618a2448bdc89e7586a3eec8f34354b658c41e1a06c3d53e2fe0f833bccd94f"
+    },
+    {
+      "path": "source-data/office-maxine-waters.html",
+      "bytes": 259198,
+      "sha256": "4645cc4784b0eebf480f541643ea4f3604377dd7974ecb799a40082d8e23e822"
+    },
+    {
+      "path": "source-data/office-mike-flood.html",
+      "bytes": 259562,
+      "sha256": "de040b5dbb356672ca1974853446e8659f71365ef8f7932bc84dddcf893ec692"
+    },
+    {
+      "path": "source-data/policy-housing-choice-voucher.html",
+      "bytes": 122048,
+      "sha256": "32d46bbb2a1f92f35627b87df5c5aebcac2d8c544179dada250b0a4a43976ccb"
+    },
+    {
+      "path": "source-data/policy-low-income-housing-tax-credit.html",
+      "bytes": 160221,
+      "sha256": "4b1937ae04de7b13da227a9ab41a0804b775e62672b01ed21804069eb23ac2be"
+    },
+    {
+      "path": "source-data/policy-rural-rental-preservation-official-web-extract.txt",
+      "bytes": 1761,
+      "sha256": "ba7703e674f59819650a05121f742b0e61f6417f925b0c160a3e2f21d7dd9dba"
+    },
+    {
+      "path": "source-data/policy-tribal-housing-block-grant.html",
+      "bytes": 152770,
+      "sha256": "b10271d4d6bf53e00257051f7a70db2da35d7bdb206949c21b9628738711c952"
+    },
+    {
+      "path": "source-data/policy-zoning-incentive.html",
+      "bytes": 153962,
+      "sha256": "e102a1359234a8d3e0f065eebcc96479b6d3fe2c2fb4d8f5c0001a9aba8acf24"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # 015 — The six-week loop ships as a permanent mode, not as scaffolding
 
+**2026-09-04 execution disposition:** Adopted for Session implementation through Tarik’s instruction to execute the replayable Session plan; see that addendum for exact rules. Outcome evidence remains pending.
+
 **Status:** Proposed by Claude on 2026-09-01. Decision pending Tarik.
 
 - **Decision (proposed)** — The six-week playable core built for Checkpoint 2 is kept forever as a playable mode called **Session**, alongside the 24-week **Term**. Week 6 is designed as a real ending with its own record, not as a development checkpoint that later disappears.

@@ -1,5 +1,7 @@
 # Paper Majority Vertical Slice Implementation Plan
 
+> **Execution update — 2026-09-04:** Tarik authorized execution of the replayable Session plan. For the six-week implementation, apply `docs/superpowers/specs/2026-09-04-replayable-session-design.md` and its paired plan where they explicitly revise this document. Human playtest, factual-content and art acceptance remain pending; no historical result is asserted.
+
 **Revision:** August 24, 2026 — Added a fun-first interaction spike, staged 30-to-77 content expansion, visible-pressure validation, portrait-free member-office cards and replayability/recognition gates. Replaced exact-ID recipes with deterministic pattern matching, declarative Tactic expansions, discovered-pattern state, a Staff Handbook and recipe-density gates. Added the Teased → Discovered → Expanded onboarding sequence and a transparent simulated election with a Week 1 opponent reveal, narrowing outlook, auditable line items and no hidden final roll.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

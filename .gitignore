@@ -32,3 +32,4 @@ next-env.d.ts
 
 # tooling scratch (not part of the project)
 .remember/
+web/.ingest-staging/

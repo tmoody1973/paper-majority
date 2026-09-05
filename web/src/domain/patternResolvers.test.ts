@@ -1,23 +1,46 @@
 import { describe, expect, it } from 'vitest';
 
-import { DERIVED_RESOLVERS, resolvePatternOutput } from '@/domain/patternResolvers';
+import { DERIVED_RESOLVERS, matchesPatternOutputReceipt, resolvePatternOutput } from '@/domain/patternResolvers';
+import { getCandidateScenario } from '@/content/loadScenario';
 import { computeEffectiveTags, matchPattern } from '@/domain/recipes';
 import type { MatchInput } from '@/domain/recipes';
 import type { DerivedResolverId, Party, RecipePattern } from '@/domain/types';
 import { findCardDefinition, testScenario } from '@/test/fixtures/scenario';
+import { sessionScenario } from '@/test/fixtures/session';
 
 const { patterns, tacticExpansions } = testScenario;
 
 const ALL_RESOLVER_IDS: DerivedResolverId[] = [
   'summarize-evidence-v1',
   'draft-provision-v1',
+  'answer-office-concern-v1',
+  'prepare-evidence-packet-v1',
   'resolve-outreach-v1',
   'strengthen-provision-v1',
+  'prepare-district-response-v1',
+  'prepare-committee-packet-v1',
+  'prepare-district-endorsement-v1',
+  'prepare-political-asset-v1',
+  'review-provision-v1',
 ];
 
 function input(definitionId: string, instanceId: string, party: Party = 'democratic'): MatchInput {
   const definition = findCardDefinition(definitionId);
-  return { instanceId, definition, effectiveTags: computeEffectiveTags(definition, party) };
+  return {
+    instanceId,
+    definition,
+    effectiveTags: computeEffectiveTags(definition, party),
+    effectiveSourceClass: definition.sourceClass,
+    form: 'raw',
+    provenance: {
+      label: 'Test input',
+      sourceClass: definition.sourceClass,
+      sourceDefinitionIds: definition.kind === 'evidence' ? [definition.id] : [],
+      policyDefinitionId: definition.kind === 'policy' ? definition.id : undefined,
+      precedentIds: definition.kind === 'policy' ? definition.precedentIds : [],
+      citations: definition.citations,
+    },
+  };
 }
 
 function resolve(definitionIds: string[], activeExpansionIds: string[] = []) {
@@ -44,6 +67,29 @@ describe('DERIVED_RESOLVERS', () => {
     expect(serialized).not.toContain('function');
     expect(serialized).not.toContain('=>');
     expect(JSON.parse(serialized)).toEqual(JSON.parse(JSON.stringify(testScenario.patterns)));
+  });
+});
+
+describe('producer receipts', () => {
+  it('authenticates the exact preserved output slot and card family', () => {
+    const scenario = getCandidateScenario();
+    const pattern = scenario.patterns.find((candidate) => candidate.id === 'pattern-tactic-early-preparation')!;
+    const common = {
+      form: 'prepared' as const,
+      explanationKey: 'result.institution.committee-packet-prepared',
+      outputSlotIndex: 2,
+      outputSourceForm: 'raw' as const,
+    };
+    expect(matchesPatternOutputReceipt(pattern, scenario, {
+      ...common,
+      definitionId: 'institution-committee-hearing',
+      outputSourceDefinitionId: 'institution-committee-hearing',
+    })).toBe(true);
+    expect(matchesPatternOutputReceipt(pattern, scenario, {
+      ...common,
+      definitionId: 'evidence-rent-burden-report',
+      outputSourceDefinitionId: 'evidence-rent-burden-report',
+    })).toBe(false);
   });
 });
 
@@ -120,5 +166,53 @@ describe('resolvePatternOutput', () => {
     if (!found) throw new Error('fixture pattern should have matched');
 
     expect(() => resolvePatternOutput(found, inputs)).toThrow(/outputDefinitionId/);
+  });
+
+  it('resolves the authored recipient and defensively rejects a different office', () => {
+    const pattern = sessionScenario.patterns.find(
+      (candidate) => candidate.id === 'pattern-answer-office-concern',
+    )!;
+    const makeInput = (definitionId: string, index: number): MatchInput => {
+      const definition = sessionScenario.cards.find((candidate) => candidate.id === definitionId)!;
+      return {
+        instanceId: `session-input-${index}`,
+        definition,
+        effectiveTags: computeEffectiveTags(definition, 'democratic'),
+        effectiveSourceClass: definition.sourceClass,
+        form: definitionId === 'evidence-rent-burden-report' ? 'summary' : 'raw',
+        provenance: {
+          label: definition.title,
+          sourceClass: definition.sourceClass,
+          sourceDefinitionIds: definition.kind === 'evidence' ? [definition.id] : [],
+          policyDefinitionId: undefined,
+          precedentIds: [],
+          citations: definition.citations,
+        },
+      };
+    };
+    const matchingInputIds = [
+      'staff-district-director',
+      'evidence-rent-burden-report',
+      'coalition-office-hillcrest',
+      'constituency-renter-concern',
+    ];
+    const matchingInputs = matchingInputIds.map(makeInput);
+    const matching = matchPattern(matchingInputs, [pattern], [], []);
+    if (!matching) throw new Error('office-concern fixture should structurally match');
+    expect(resolvePatternOutput(matching, matchingInputs)).toMatchObject({
+      definitionId: 'evidence-rent-burden-report',
+      form: 'prepared',
+      explanationKey: 'result.evidence.office-concern-answered',
+    });
+
+    const mismatchedInputs = matchingInputIds
+      .map((id) => id === 'coalition-office-hillcrest' ? 'coalition-office-ridgeline' : id)
+      .map(makeInput);
+    const mismatched = matchPattern(mismatchedInputs, [pattern], [], []);
+    if (!mismatched) throw new Error('office-concern mismatch should structurally match');
+
+    expect(() => resolvePatternOutput(mismatched, mismatchedInputs)).toThrow(
+      'Office-concern work requires the authored concern for that recipient office',
+    );
   });
 });

@@ -1,0 +1,5061 @@
+{
+  "generatedAt": "2026-09-05T17:45:50.025Z",
+  "elapsedMs": 127701,
+  "scenario": {
+    "snapshotId": "housing-session-2026-09-04-candidate",
+    "snapshotHash": "52221d76ef034c5cab06d8d7066f575be0771ff80ff5de69f4d8cd1d3e9c739e"
+  },
+  "options": {
+    "mode": "session",
+    "seeds": 1000,
+    "parties": [
+      "democratic",
+      "republican"
+    ],
+    "pace": "standard"
+  },
+  "totalRuns": 10000,
+  "observationModel": "Visible cards/forms/tags, relationships, revealed packs, pending choices, obligations/deadlines, resources, and authored public rules. No runVariation, rngCursor, unopened packs, or future Story draws.",
+  "idleDefinition": "Simulation milliseconds advanced by FAST_FORWARD while no work reservation was active at command start.",
+  "byPolicy": {
+    "district-advocate": {
+      "runs": 2000,
+      "complete": 2000,
+      "ready": 1602,
+      "notReady": 398,
+      "failures": 0,
+      "averageCommands": 52.277,
+      "averageSpentPoliticalCapital": 5.518,
+      "averageEarnedPoliticalCapital": 4.747,
+      "averageIdleSimulationMs": 332562,
+      "missedMandatoryOccurrences": 0,
+      "minimumResources": {
+        "staffAttention": 2,
+        "politicalCapital": 2,
+        "districtTrust": 60,
+        "billMomentum": 8,
+        "policyIntegrity": 58,
+        "staffMorale": 58
+      },
+      "averageFinalResources": {
+        "staffAttention": 3,
+        "politicalCapital": 2.229,
+        "districtTrust": 76.384,
+        "billMomentum": 20.514,
+        "policyIntegrity": 72.994,
+        "staffMorale": 71.788
+      },
+      "uniqueTraceHashes": 998,
+      "commandFrequencies": {
+        "ADVANCE_WEEK": 10000,
+        "CONCLUDE_SESSION": 2000,
+        "DOCKET_PROVISION": 4000,
+        "DRAW_STORY_EVENT": 2000,
+        "FAST_FORWARD": 37518,
+        "OPEN_PACK": 10000,
+        "RESOLVE_DECISION": 5518,
+        "RESOLVE_STORY": 12000,
+        "SUBMIT_WORK": 21518
+      },
+      "completedPatternFrequencies": {
+        "pattern-draft-policy": 4000,
+        "pattern-earn-district-endorsement": 4000,
+        "pattern-negotiate-district-endorsement": 3518,
+        "pattern-shared-interest-outreach": 2000,
+        "pattern-summarize-evidence": 8000
+      },
+      "activatedTacticFrequencies": {},
+      "tacticFrequencies": {},
+      "fulfilledObligationFrequencies": {
+        "obligation-renter-response:pack:week:2": 2000,
+        "obligation-tribal-consultation:pack:week:5": 2000
+      },
+      "missedObligationFrequencies": {},
+      "acceptedChoiceFrequencies": {
+        "answer-renter-calls": 2812,
+        "choice-accept-local-control": 1046,
+        "choice-accept-permitting-path": 954,
+        "choice-preparation-district-demand-fair-access": 1028,
+        "choice-preparation-district-demand-preservation": 760,
+        "choice-preparation-district-demand-renter-stability": 972,
+        "choice-preparation-district-demand-tribal-consultation": 758,
+        "convene-shared-table": 1306,
+        "hold-service-clinic": 264,
+        "join-forum": 1956,
+        "protect-staff-time": 836,
+        "take-office-reset": 1970
+      },
+      "rejectedChoiceFrequencies": {
+        "decline-briefing-slot": 1260,
+        "decline-coalition-breather": 70,
+        "let-cycle-pass": 1526
+      }
+    },
+    "committee-specialist": {
+      "runs": 2000,
+      "complete": 2000,
+      "ready": 2000,
+      "notReady": 0,
+      "failures": 0,
+      "averageCommands": 53.76,
+      "averageSpentPoliticalCapital": 6,
+      "averageEarnedPoliticalCapital": 5,
+      "averageIdleSimulationMs": 343632,
+      "missedMandatoryOccurrences": 0,
+      "minimumResources": {
+        "staffAttention": 1,
+        "politicalCapital": 1,
+        "districtTrust": 57,
+        "billMomentum": 9,
+        "policyIntegrity": 58,
+        "staffMorale": 58
+      },
+      "averageFinalResources": {
+        "staffAttention": 3,
+        "politicalCapital": 2,
+        "districtTrust": 66.486,
+        "billMomentum": 25.247,
+        "policyIntegrity": 72.234,
+        "staffMorale": 64.947
+      },
+      "uniqueTraceHashes": 1330,
+      "commandFrequencies": {
+        "ADVANCE_WEEK": 10000,
+        "CONCLUDE_SESSION": 2000,
+        "DOCKET_PROVISION": 4000,
+        "DRAW_STORY_EVENT": 2000,
+        "FAST_FORWARD": 39520,
+        "OPEN_PACK": 10000,
+        "RESOLVE_DECISION": 4000,
+        "RESOLVE_STORY": 12000,
+        "START_ASSIGNMENT": 2000,
+        "SUBMIT_WORK": 22000
+      },
+      "completedPatternFrequencies": {
+        "pattern-earn-district-endorsement": 4000,
+        "pattern-negotiate-committee-packet": 2000,
+        "pattern-review-bill-preparation": 2000,
+        "pattern-shared-interest-outreach": 2000,
+        "pattern-summarize-evidence": 4000,
+        "pattern-tactic-costly-drafting": 4000,
+        "pattern-tactic-early-preparation": 4000
+      },
+      "activatedTacticFrequencies": {
+        "tactic-early-committee-consultation": 2000
+      },
+      "tacticFrequencies": {
+        "tactic-early-committee-consultation": 2000
+      },
+      "fulfilledObligationFrequencies": {
+        "obligation-renter-response:pack:week:2": 2000,
+        "obligation-tribal-consultation:pack:week:5": 2000
+      },
+      "missedObligationFrequencies": {},
+      "acceptedChoiceFrequencies": {
+        "choice-accept-fair-access": 1028,
+        "choice-accept-renter-stability": 972,
+        "choice-preparation-committee-demand-local-control": 704,
+        "choice-preparation-committee-demand-permitting-path": 202,
+        "choice-preparation-committee-demand-preservation": 212,
+        "choice-preparation-committee-demand-rural-preservation": 216,
+        "choice-preparation-committee-demand-tax-credit": 248,
+        "choice-preparation-committee-demand-tribal-consultation": 418,
+        "press-through-overload": 1126,
+        "steady-coalition": 796,
+        "take-coalition-breather": 216
+      },
+      "rejectedChoiceFrequencies": {
+        "decline-briefing-slot": 1084,
+        "decline-forum": 1734,
+        "decline-office-reset": 1268,
+        "decline-service-clinic": 1266,
+        "decline-shared-table": 1006,
+        "defer-renter-calls": 2406,
+        "let-cycle-pass": 1098
+      }
+    },
+    "coalition-broker": {
+      "runs": 2000,
+      "complete": 2000,
+      "ready": 1626,
+      "notReady": 374,
+      "failures": 0,
+      "averageCommands": 54.548,
+      "averageSpentPoliticalCapital": 5.474,
+      "averageEarnedPoliticalCapital": 4.982,
+      "averageIdleSimulationMs": 355219,
+      "missedMandatoryOccurrences": 0,
+      "minimumResources": {
+        "staffAttention": 0,
+        "politicalCapital": 1,
+        "districtTrust": 57,
+        "billMomentum": 8,
+        "policyIntegrity": 58,
+        "staffMorale": 69
+      },
+      "averageFinalResources": {
+        "staffAttention": 3,
+        "politicalCapital": 2.508,
+        "districtTrust": 66.156,
+        "billMomentum": 22.724,
+        "policyIntegrity": 75.662,
+        "staffMorale": 75.734
+      },
+      "uniqueTraceHashes": 1427,
+      "commandFrequencies": {
+        "ADVANCE_WEEK": 10000,
+        "CONCLUDE_SESSION": 2000,
+        "DOCKET_PROVISION": 4000,
+        "DRAW_STORY_EVENT": 2000,
+        "FAST_FORWARD": 40148,
+        "OPEN_PACK": 10000,
+        "RESOLVE_DECISION": 4338,
+        "RESOLVE_STORY": 12000,
+        "START_ASSIGNMENT": 2000,
+        "SUBMIT_WORK": 22610
+      },
+      "completedPatternFrequencies": {
+        "pattern-draft-policy": 4000,
+        "pattern-earn-district-endorsement": 4000,
+        "pattern-prepare-communication": 2272,
+        "pattern-shared-interest-outreach": 2066,
+        "pattern-summarize-evidence": 8000,
+        "pattern-tactic-coordination": 2272
+      },
+      "activatedTacticFrequencies": {
+        "tactic-bipartisan-working-group": 2000
+      },
+      "tacticFrequencies": {
+        "tactic-bipartisan-working-group": 1810
+      },
+      "fulfilledObligationFrequencies": {
+        "obligation-renter-response:pack:week:2": 2000,
+        "obligation-tribal-consultation:pack:week:5": 2000
+      },
+      "missedObligationFrequencies": {},
+      "acceptedChoiceFrequencies": {
+        "choice-accept-fair-access": 676,
+        "choice-accept-local-control": 735,
+        "choice-accept-permitting-path": 469,
+        "choice-accept-preservation": 722,
+        "choice-accept-renter-stability": 186,
+        "choice-accept-rural-preservation": 662,
+        "choice-accept-tax-credit": 262,
+        "choice-accept-tribal-consultation": 626,
+        "convene-shared-table": 1304,
+        "protect-staff-time": 574,
+        "take-office-reset": 1452
+      },
+      "rejectedChoiceFrequencies": {
+        "decline-briefing-slot": 1198,
+        "decline-forum": 1866,
+        "decline-service-clinic": 1294,
+        "defer-renter-calls": 2844,
+        "let-cycle-pass": 1468
+      }
+    },
+    "greedy-same-party": {
+      "runs": 2000,
+      "complete": 2000,
+      "ready": 2000,
+      "notReady": 0,
+      "failures": 0,
+      "averageCommands": 50,
+      "averageSpentPoliticalCapital": 4,
+      "averageEarnedPoliticalCapital": 6,
+      "averageIdleSimulationMs": 378976,
+      "missedMandatoryOccurrences": 0,
+      "minimumResources": {
+        "staffAttention": 1,
+        "politicalCapital": 0,
+        "districtTrust": 57,
+        "billMomentum": 10,
+        "policyIntegrity": 56,
+        "staffMorale": 58
+      },
+      "averageFinalResources": {
+        "staffAttention": 3,
+        "politicalCapital": 5,
+        "districtTrust": 66.564,
+        "billMomentum": 23.633,
+        "policyIntegrity": 69.772,
+        "staffMorale": 65.266
+      },
+      "uniqueTraceHashes": 1994,
+      "commandFrequencies": {
+        "ADVANCE_WEEK": 10000,
+        "CONCLUDE_SESSION": 2000,
+        "DOCKET_PROVISION": 4000,
+        "DRAW_STORY_EVENT": 2000,
+        "FAST_FORWARD": 36000,
+        "OPEN_PACK": 10000,
+        "RESOLVE_DECISION": 4000,
+        "RESOLVE_STORY": 12000,
+        "SUBMIT_WORK": 20000
+      },
+      "completedPatternFrequencies": {
+        "pattern-draft-policy": 4000,
+        "pattern-earn-district-endorsement": 4000,
+        "pattern-shared-interest-outreach": 4000,
+        "pattern-summarize-evidence": 8000
+      },
+      "activatedTacticFrequencies": {},
+      "tacticFrequencies": {},
+      "fulfilledObligationFrequencies": {
+        "obligation-renter-response:pack:week:2": 2000,
+        "obligation-tribal-consultation:pack:week:5": 2000
+      },
+      "missedObligationFrequencies": {},
+      "acceptedChoiceFrequencies": {
+        "choice-accept-fair-access": 1028,
+        "choice-accept-local-control": 1046,
+        "choice-accept-permitting-path": 954,
+        "choice-accept-renter-stability": 972,
+        "press-through-overload": 1156
+      },
+      "rejectedChoiceFrequencies": {
+        "accept-friction": 816,
+        "decline-briefing-slot": 1084,
+        "decline-coalition-breather": 20,
+        "decline-forum": 1734,
+        "decline-office-reset": 1364,
+        "decline-service-clinic": 1266,
+        "decline-shared-table": 1022,
+        "defer-renter-calls": 2436,
+        "let-cycle-pass": 1102
+      }
+    },
+    "district-reward": {
+      "runs": 2000,
+      "complete": 2000,
+      "ready": 2000,
+      "notReady": 0,
+      "failures": 0,
+      "averageCommands": 50,
+      "averageSpentPoliticalCapital": 4,
+      "averageEarnedPoliticalCapital": 6,
+      "averageIdleSimulationMs": 390332,
+      "missedMandatoryOccurrences": 0,
+      "minimumResources": {
+        "staffAttention": 1,
+        "politicalCapital": 0,
+        "districtTrust": 60,
+        "billMomentum": 8,
+        "policyIntegrity": 56,
+        "staffMorale": 61
+      },
+      "averageFinalResources": {
+        "staffAttention": 3,
+        "politicalCapital": 5,
+        "districtTrust": 75.928,
+        "billMomentum": 16.848,
+        "policyIntegrity": 68.088,
+        "staffMorale": 72.694
+      },
+      "uniqueTraceHashes": 1958,
+      "commandFrequencies": {
+        "ADVANCE_WEEK": 10000,
+        "CONCLUDE_SESSION": 2000,
+        "DOCKET_PROVISION": 4000,
+        "DRAW_STORY_EVENT": 2000,
+        "FAST_FORWARD": 36000,
+        "OPEN_PACK": 10000,
+        "RESOLVE_DECISION": 4000,
+        "RESOLVE_STORY": 12000,
+        "START_ASSIGNMENT": 2000,
+        "SUBMIT_WORK": 18000
+      },
+      "completedPatternFrequencies": {
+        "pattern-draft-policy": 2000,
+        "pattern-earn-district-endorsement": 4000,
+        "pattern-shared-interest-outreach": 4000,
+        "pattern-summarize-evidence": 6000,
+        "pattern-tactic-costly-drafting": 2000
+      },
+      "activatedTacticFrequencies": {
+        "tactic-negotiated-cost-sharing": 2000
+      },
+      "tacticFrequencies": {
+        "tactic-negotiated-cost-sharing": 2000
+      },
+      "fulfilledObligationFrequencies": {
+        "obligation-renter-response:pack:week:2": 2000,
+        "obligation-tribal-consultation:pack:week:5": 2000
+      },
+      "missedObligationFrequencies": {},
+      "acceptedChoiceFrequencies": {
+        "answer-renter-calls": 2558,
+        "choice-accept-fair-access": 1028,
+        "choice-accept-local-control": 1046,
+        "choice-accept-permitting-path": 954,
+        "choice-accept-renter-stability": 972,
+        "convene-shared-table": 1144,
+        "hold-service-clinic": 276,
+        "join-forum": 1840,
+        "protect-staff-time": 698,
+        "take-office-reset": 1992
+      },
+      "rejectedChoiceFrequencies": {
+        "accept-friction": 950,
+        "decline-briefing-slot": 1162,
+        "decline-coalition-breather": 52,
+        "let-cycle-pass": 1328
+      }
+    }
+  },
+  "strata": {
+    "district-advocate": {
+      "CA-22 | democratic | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 151,
+        "notReady": 16,
+        "failures": 0,
+        "averageCommands": 52.4251497005988,
+        "averageSpentPoliticalCapital": 5.616766467065868,
+        "averageEarnedPoliticalCapital": 5.275449101796407,
+        "averageIdleSimulationMs": 331059.880239521,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.658682634730539,
+          "districtTrust": 76.60479041916167,
+          "billMomentum": 20.407185628742514,
+          "policyIntegrity": 84,
+          "staffMorale": 71.9880239520958
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3141,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 469,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1805
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 302,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 229,
+          "choice-accept-local-control": 94,
+          "choice-accept-permitting-path": 73,
+          "choice-preparation-district-demand-fair-access": 67,
+          "choice-preparation-district-demand-preservation": 71,
+          "choice-preparation-district-demand-renter-stability": 100,
+          "choice-preparation-district-demand-tribal-consultation": 64,
+          "convene-shared-table": 105,
+          "hold-service-clinic": 24,
+          "join-forum": 173,
+          "protect-staff-time": 85,
+          "take-office-reset": 163
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 102,
+          "decline-coalition-breather": 3,
+          "let-cycle-pass": 118
+        }
+      },
+      "CA-22 | republican | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 151,
+        "notReady": 16,
+        "failures": 0,
+        "averageCommands": 52.4251497005988,
+        "averageSpentPoliticalCapital": 5.616766467065868,
+        "averageEarnedPoliticalCapital": 5.275449101796407,
+        "averageIdleSimulationMs": 331059.880239521,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.658682634730539,
+          "districtTrust": 76.60479041916167,
+          "billMomentum": 20.407185628742514,
+          "policyIntegrity": 84,
+          "staffMorale": 71.9880239520958
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3141,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 469,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1805
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 302,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 229,
+          "choice-accept-local-control": 94,
+          "choice-accept-permitting-path": 73,
+          "choice-preparation-district-demand-fair-access": 67,
+          "choice-preparation-district-demand-preservation": 71,
+          "choice-preparation-district-demand-renter-stability": 100,
+          "choice-preparation-district-demand-tribal-consultation": 64,
+          "convene-shared-table": 105,
+          "hold-service-clinic": 24,
+          "join-forum": 173,
+          "protect-staff-time": 85,
+          "take-office-reset": 163
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 102,
+          "decline-coalition-breather": 3,
+          "let-cycle-pass": 118
+        }
+      },
+      "GA-05 | democratic | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 122,
+        "notReady": 45,
+        "failures": 0,
+        "averageCommands": 52.191616766467064,
+        "averageSpentPoliticalCapital": 5.461077844311378,
+        "averageEarnedPoliticalCapital": 4.461077844311378,
+        "averageIdleSimulationMs": 332724.55089820357,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.47305389221557,
+          "billMomentum": 20.568862275449103,
+          "policyIntegrity": 76,
+          "staffMorale": 71.76646706586827
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3128,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 456,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1792
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 289,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 252,
+          "choice-accept-local-control": 83,
+          "choice-accept-permitting-path": 84,
+          "choice-preparation-district-demand-fair-access": 89,
+          "choice-preparation-district-demand-preservation": 56,
+          "choice-preparation-district-demand-renter-stability": 78,
+          "choice-preparation-district-demand-tribal-consultation": 66,
+          "convene-shared-table": 109,
+          "hold-service-clinic": 20,
+          "join-forum": 161,
+          "protect-staff-time": 67,
+          "take-office-reset": 172
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 101,
+          "decline-coalition-breather": 7,
+          "let-cycle-pass": 113
+        }
+      },
+      "GA-05 | republican | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 122,
+        "notReady": 45,
+        "failures": 0,
+        "averageCommands": 52.191616766467064,
+        "averageSpentPoliticalCapital": 5.461077844311378,
+        "averageEarnedPoliticalCapital": 4.461077844311378,
+        "averageIdleSimulationMs": 332724.55089820357,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.47305389221557,
+          "billMomentum": 20.568862275449103,
+          "policyIntegrity": 76,
+          "staffMorale": 71.76646706586827
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3128,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 456,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1792
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 289,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 252,
+          "choice-accept-local-control": 83,
+          "choice-accept-permitting-path": 84,
+          "choice-preparation-district-demand-fair-access": 89,
+          "choice-preparation-district-demand-preservation": 56,
+          "choice-preparation-district-demand-renter-stability": 78,
+          "choice-preparation-district-demand-tribal-consultation": 66,
+          "convene-shared-table": 109,
+          "hold-service-clinic": 20,
+          "join-forum": 161,
+          "protect-staff-time": 67,
+          "take-office-reset": 172
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 101,
+          "decline-coalition-breather": 7,
+          "let-cycle-pass": 113
+        }
+      },
+      "IA-04 | democratic | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 126,
+        "notReady": 41,
+        "failures": 0,
+        "averageCommands": 52.26347305389221,
+        "averageSpentPoliticalCapital": 5.508982035928144,
+        "averageEarnedPoliticalCapital": 4.508982035928144,
+        "averageIdleSimulationMs": 333011.9760479042,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.23353293413173,
+          "billMomentum": 20.520958083832337,
+          "policyIntegrity": 66,
+          "staffMorale": 71.91017964071857
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3132,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 460,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1796
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 293,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 229,
+          "choice-accept-local-control": 82,
+          "choice-accept-permitting-path": 85,
+          "choice-preparation-district-demand-fair-access": 99,
+          "choice-preparation-district-demand-preservation": 77,
+          "choice-preparation-district-demand-renter-stability": 68,
+          "choice-preparation-district-demand-tribal-consultation": 49,
+          "convene-shared-table": 105,
+          "hold-service-clinic": 22,
+          "join-forum": 160,
+          "protect-staff-time": 64,
+          "take-office-reset": 172
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 117,
+          "decline-coalition-breather": 6,
+          "let-cycle-pass": 127
+        }
+      },
+      "IA-04 | republican | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 126,
+        "notReady": 41,
+        "failures": 0,
+        "averageCommands": 52.26347305389221,
+        "averageSpentPoliticalCapital": 5.508982035928144,
+        "averageEarnedPoliticalCapital": 4.508982035928144,
+        "averageIdleSimulationMs": 333011.9760479042,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.23353293413173,
+          "billMomentum": 20.520958083832337,
+          "policyIntegrity": 66,
+          "staffMorale": 71.91017964071857
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3132,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 460,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1796
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 293,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 229,
+          "choice-accept-local-control": 82,
+          "choice-accept-permitting-path": 85,
+          "choice-preparation-district-demand-fair-access": 99,
+          "choice-preparation-district-demand-preservation": 77,
+          "choice-preparation-district-demand-renter-stability": 68,
+          "choice-preparation-district-demand-tribal-consultation": 49,
+          "convene-shared-table": 105,
+          "hold-service-clinic": 22,
+          "join-forum": 160,
+          "protect-staff-time": 64,
+          "take-office-reset": 172
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 117,
+          "decline-coalition-breather": 6,
+          "let-cycle-pass": 127
+        }
+      },
+      "NM-03 | democratic | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 149,
+        "notReady": 17,
+        "failures": 0,
+        "averageCommands": 52.22289156626506,
+        "averageSpentPoliticalCapital": 5.481927710843373,
+        "averageEarnedPoliticalCapital": 5.198795180722891,
+        "averageIdleSimulationMs": 333650.6024096386,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.716867469879518,
+          "districtTrust": 76.3855421686747,
+          "billMomentum": 20.451807228915662,
+          "policyIntegrity": 68,
+          "staffMorale": 71.90963855421687
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3111,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 455,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1783
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-district-endorsement": 289,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 217,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 73,
+          "choice-preparation-district-demand-fair-access": 89,
+          "choice-preparation-district-demand-preservation": 49,
+          "choice-preparation-district-demand-renter-stability": 77,
+          "choice-preparation-district-demand-tribal-consultation": 74,
+          "convene-shared-table": 117,
+          "hold-service-clinic": 20,
+          "join-forum": 173,
+          "protect-staff-time": 77,
+          "take-office-reset": 154
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 96,
+          "decline-coalition-breather": 6,
+          "let-cycle-pass": 136
+        }
+      },
+      "NM-03 | republican | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 149,
+        "notReady": 17,
+        "failures": 0,
+        "averageCommands": 52.22289156626506,
+        "averageSpentPoliticalCapital": 5.481927710843373,
+        "averageEarnedPoliticalCapital": 5.198795180722891,
+        "averageIdleSimulationMs": 333650.6024096386,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.716867469879518,
+          "districtTrust": 76.3855421686747,
+          "billMomentum": 20.451807228915662,
+          "policyIntegrity": 68,
+          "staffMorale": 71.90963855421687
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3111,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 455,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1783
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-district-endorsement": 289,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 217,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 73,
+          "choice-preparation-district-demand-fair-access": 89,
+          "choice-preparation-district-demand-preservation": 49,
+          "choice-preparation-district-demand-renter-stability": 77,
+          "choice-preparation-district-demand-tribal-consultation": 74,
+          "convene-shared-table": 117,
+          "hold-service-clinic": 20,
+          "join-forum": 173,
+          "protect-staff-time": 77,
+          "take-office-reset": 154
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 96,
+          "decline-coalition-breather": 6,
+          "let-cycle-pass": 136
+        }
+      },
+      "TX-24 | democratic | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 130,
+        "notReady": 36,
+        "failures": 0,
+        "averageCommands": 52.34939759036145,
+        "averageSpentPoliticalCapital": 5.566265060240964,
+        "averageEarnedPoliticalCapital": 4.566265060240964,
+        "averageIdleSimulationMs": 331710.843373494,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.43975903614458,
+          "billMomentum": 20.6144578313253,
+          "policyIntegrity": 84,
+          "staffMorale": 71.36144578313252
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3118,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 462,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1790
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-district-endorsement": 296,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 240,
+          "choice-accept-local-control": 78,
+          "choice-accept-permitting-path": 88,
+          "choice-preparation-district-demand-fair-access": 88,
+          "choice-preparation-district-demand-preservation": 65,
+          "choice-preparation-district-demand-renter-stability": 78,
+          "choice-preparation-district-demand-tribal-consultation": 65,
+          "convene-shared-table": 106,
+          "hold-service-clinic": 27,
+          "join-forum": 155,
+          "protect-staff-time": 60,
+          "take-office-reset": 158
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 109,
+          "decline-coalition-breather": 9,
+          "let-cycle-pass": 132
+        }
+      },
+      "TX-24 | republican | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 130,
+        "notReady": 36,
+        "failures": 0,
+        "averageCommands": 52.34939759036145,
+        "averageSpentPoliticalCapital": 5.566265060240964,
+        "averageEarnedPoliticalCapital": 4.566265060240964,
+        "averageIdleSimulationMs": 331710.843373494,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.43975903614458,
+          "billMomentum": 20.6144578313253,
+          "policyIntegrity": 84,
+          "staffMorale": 71.36144578313252
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3118,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 462,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1790
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-district-endorsement": 296,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 240,
+          "choice-accept-local-control": 78,
+          "choice-accept-permitting-path": 88,
+          "choice-preparation-district-demand-fair-access": 88,
+          "choice-preparation-district-demand-preservation": 65,
+          "choice-preparation-district-demand-renter-stability": 78,
+          "choice-preparation-district-demand-tribal-consultation": 65,
+          "convene-shared-table": 106,
+          "hold-service-clinic": 27,
+          "join-forum": 155,
+          "protect-staff-time": 60,
+          "take-office-reset": 158
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 109,
+          "decline-coalition-breather": 9,
+          "let-cycle-pass": 132
+        }
+      },
+      "WI-04 | democratic | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 123,
+        "notReady": 44,
+        "failures": 0,
+        "averageCommands": 52.209580838323355,
+        "averageSpentPoliticalCapital": 5.473053892215569,
+        "averageEarnedPoliticalCapital": 4.473053892215569,
+        "averageIdleSimulationMs": 333215.56886227545,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.16766467065868,
+          "billMomentum": 20.520958083832337,
+          "policyIntegrity": 60,
+          "staffMorale": 71.79041916167665
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3129,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 457,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1793
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 290,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 239,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 74,
+          "choice-preparation-district-demand-fair-access": 82,
+          "choice-preparation-district-demand-preservation": 62,
+          "choice-preparation-district-demand-renter-stability": 85,
+          "choice-preparation-district-demand-tribal-consultation": 61,
+          "convene-shared-table": 111,
+          "hold-service-clinic": 19,
+          "join-forum": 156,
+          "protect-staff-time": 65,
+          "take-office-reset": 166
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 105,
+          "decline-coalition-breather": 4,
+          "let-cycle-pass": 137
+        }
+      },
+      "WI-04 | republican | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 123,
+        "notReady": 44,
+        "failures": 0,
+        "averageCommands": 52.209580838323355,
+        "averageSpentPoliticalCapital": 5.473053892215569,
+        "averageEarnedPoliticalCapital": 4.473053892215569,
+        "averageIdleSimulationMs": 333215.56886227545,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 2,
+          "politicalCapital": 2,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 76.16766467065868,
+          "billMomentum": 20.520958083832337,
+          "policyIntegrity": 60,
+          "staffMorale": 71.79041916167665
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3129,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 457,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1793
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-district-endorsement": 290,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 239,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 74,
+          "choice-preparation-district-demand-fair-access": 82,
+          "choice-preparation-district-demand-preservation": 62,
+          "choice-preparation-district-demand-renter-stability": 85,
+          "choice-preparation-district-demand-tribal-consultation": 61,
+          "convene-shared-table": 111,
+          "hold-service-clinic": 19,
+          "join-forum": 156,
+          "protect-staff-time": 65,
+          "take-office-reset": 166
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 105,
+          "decline-coalition-breather": 4,
+          "let-cycle-pass": 137
+        }
+      }
+    },
+    "committee-specialist": {
+      "CA-22 | democratic | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.778443113772454,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343964.0718562874,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.53293413173652,
+          "billMomentum": 25.293413173652695,
+          "policyIntegrity": 84,
+          "staffMorale": 64.8443113772455
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3303,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 67,
+          "choice-accept-renter-stability": 100,
+          "choice-preparation-committee-demand-local-control": 58,
+          "choice-preparation-committee-demand-preservation": 29,
+          "choice-preparation-committee-demand-rural-preservation": 6,
+          "choice-preparation-committee-demand-tax-credit": 10,
+          "choice-preparation-committee-demand-tribal-consultation": 64,
+          "press-through-overload": 100,
+          "steady-coalition": 70,
+          "take-coalition-breather": 20
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 101,
+          "decline-forum": 144,
+          "decline-office-reset": 100,
+          "decline-service-clinic": 104,
+          "decline-shared-table": 76,
+          "defer-renter-calls": 196,
+          "let-cycle-pass": 91
+        }
+      },
+      "CA-22 | republican | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.778443113772454,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343964.0718562874,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.53293413173652,
+          "billMomentum": 25.293413173652695,
+          "policyIntegrity": 84,
+          "staffMorale": 64.8443113772455
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3303,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 67,
+          "choice-accept-renter-stability": 100,
+          "choice-preparation-committee-demand-local-control": 94,
+          "choice-preparation-committee-demand-permitting-path": 12,
+          "choice-preparation-committee-demand-rural-preservation": 12,
+          "choice-preparation-committee-demand-tax-credit": 21,
+          "choice-preparation-committee-demand-tribal-consultation": 28,
+          "press-through-overload": 100,
+          "steady-coalition": 70,
+          "take-coalition-breather": 20
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 101,
+          "decline-forum": 144,
+          "decline-office-reset": 100,
+          "decline-service-clinic": 104,
+          "decline-shared-table": 76,
+          "defer-renter-calls": 196,
+          "let-cycle-pass": 91
+        }
+      },
+      "GA-05 | democratic | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.724550898203596,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343137.7245508982,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.55089820359281,
+          "billMomentum": 25.191616766467067,
+          "policyIntegrity": 71.73652694610779,
+          "staffMorale": 64.94011976047904
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3294,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-renter-stability": 78,
+          "choice-preparation-committee-demand-local-control": 46,
+          "choice-preparation-committee-demand-permitting-path": 32,
+          "choice-preparation-committee-demand-preservation": 19,
+          "choice-preparation-committee-demand-rural-preservation": 10,
+          "choice-preparation-committee-demand-tax-credit": 17,
+          "choice-preparation-committee-demand-tribal-consultation": 43,
+          "press-through-overload": 106,
+          "steady-coalition": 55,
+          "take-coalition-breather": 21
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 94,
+          "decline-forum": 145,
+          "decline-office-reset": 120,
+          "decline-service-clinic": 101,
+          "decline-shared-table": 88,
+          "defer-renter-calls": 194,
+          "let-cycle-pass": 78
+        }
+      },
+      "GA-05 | republican | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.724550898203596,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343137.7245508982,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.55089820359281,
+          "billMomentum": 25.191616766467067,
+          "policyIntegrity": 71.73652694610779,
+          "staffMorale": 64.94011976047904
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3294,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-renter-stability": 78,
+          "choice-preparation-committee-demand-local-control": 68,
+          "choice-preparation-committee-demand-permitting-path": 37,
+          "choice-preparation-committee-demand-rural-preservation": 21,
+          "choice-preparation-committee-demand-tax-credit": 23,
+          "choice-preparation-committee-demand-tribal-consultation": 18,
+          "press-through-overload": 106,
+          "steady-coalition": 55,
+          "take-coalition-breather": 21
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 94,
+          "decline-forum": 145,
+          "decline-office-reset": 120,
+          "decline-service-clinic": 101,
+          "decline-shared-table": 88,
+          "defer-renter-calls": 194,
+          "let-cycle-pass": 78
+        }
+      },
+      "IA-04 | democratic | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.78443113772455,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343976.0479041916,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 58,
+          "staffMorale": 59
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.37724550898204,
+          "billMomentum": 25.347305389221557,
+          "policyIntegrity": 66,
+          "staffMorale": 65.04790419161677
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3304,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 99,
+          "choice-accept-renter-stability": 68,
+          "choice-preparation-committee-demand-local-control": 41,
+          "choice-preparation-committee-demand-preservation": 49,
+          "choice-preparation-committee-demand-rural-preservation": 26,
+          "choice-preparation-committee-demand-tax-credit": 11,
+          "choice-preparation-committee-demand-tribal-consultation": 40,
+          "press-through-overload": 82,
+          "steady-coalition": 72,
+          "take-coalition-breather": 16
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 95,
+          "decline-forum": 144,
+          "decline-office-reset": 112,
+          "decline-service-clinic": 107,
+          "decline-shared-table": 77,
+          "defer-renter-calls": 211,
+          "let-cycle-pass": 86
+        }
+      },
+      "IA-04 | republican | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.78443113772455,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343976.0479041916,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 58,
+          "staffMorale": 59
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.37724550898204,
+          "billMomentum": 25.347305389221557,
+          "policyIntegrity": 66,
+          "staffMorale": 65.04790419161677
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3304,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 99,
+          "choice-accept-renter-stability": 68,
+          "choice-preparation-committee-demand-local-control": 58,
+          "choice-preparation-committee-demand-permitting-path": 17,
+          "choice-preparation-committee-demand-preservation": 23,
+          "choice-preparation-committee-demand-rural-preservation": 35,
+          "choice-preparation-committee-demand-tax-credit": 24,
+          "choice-preparation-committee-demand-tribal-consultation": 10,
+          "press-through-overload": 82,
+          "steady-coalition": 72,
+          "take-coalition-breather": 16
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 95,
+          "decline-forum": 144,
+          "decline-office-reset": 112,
+          "decline-service-clinic": 107,
+          "decline-shared-table": 77,
+          "defer-renter-calls": 211,
+          "let-cycle-pass": 86
+        }
+      },
+      "NM-03 | democratic | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.77710843373494,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343819.2771084337,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.68072289156626,
+          "billMomentum": 25.204819277108435,
+          "policyIntegrity": 68,
+          "staffMorale": 64.78915662650603
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3283,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1826
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-committee-packet": 166,
+          "pattern-review-bill-preparation": 166,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 332,
+          "pattern-tactic-costly-drafting": 332,
+          "pattern-tactic-early-preparation": 332
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-renter-stability": 77,
+          "choice-preparation-committee-demand-local-control": 41,
+          "choice-preparation-committee-demand-permitting-path": 8,
+          "choice-preparation-committee-demand-preservation": 20,
+          "choice-preparation-committee-demand-rural-preservation": 7,
+          "choice-preparation-committee-demand-tax-credit": 21,
+          "choice-preparation-committee-demand-tribal-consultation": 69,
+          "press-through-overload": 99,
+          "steady-coalition": 65,
+          "take-coalition-breather": 15
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 80,
+          "decline-forum": 153,
+          "decline-office-reset": 96,
+          "decline-service-clinic": 117,
+          "decline-shared-table": 90,
+          "defer-renter-calls": 185,
+          "let-cycle-pass": 96
+        }
+      },
+      "NM-03 | republican | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.77710843373494,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343819.2771084337,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.68072289156626,
+          "billMomentum": 25.204819277108435,
+          "policyIntegrity": 68,
+          "staffMorale": 64.78915662650603
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3283,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1826
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-committee-packet": 166,
+          "pattern-review-bill-preparation": 166,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 332,
+          "pattern-tactic-costly-drafting": 332,
+          "pattern-tactic-early-preparation": 332
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-renter-stability": 77,
+          "choice-preparation-committee-demand-local-control": 83,
+          "choice-preparation-committee-demand-permitting-path": 16,
+          "choice-preparation-committee-demand-rural-preservation": 15,
+          "choice-preparation-committee-demand-tax-credit": 27,
+          "choice-preparation-committee-demand-tribal-consultation": 25,
+          "press-through-overload": 99,
+          "steady-coalition": 65,
+          "take-coalition-breather": 15
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 80,
+          "decline-forum": 153,
+          "decline-office-reset": 96,
+          "decline-service-clinic": 117,
+          "decline-shared-table": 90,
+          "defer-renter-calls": 185,
+          "let-cycle-pass": 96
+        }
+      },
+      "TX-24 | democratic | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.74698795180723,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343445.7831325301,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.43975903614458,
+          "billMomentum": 25.228915662650603,
+          "policyIntegrity": 75.51807228915662,
+          "staffMorale": 65.05421686746988
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3278,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1826
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-committee-packet": 166,
+          "pattern-review-bill-preparation": 166,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 332,
+          "pattern-tactic-costly-drafting": 332,
+          "pattern-tactic-early-preparation": 332
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 88,
+          "choice-accept-renter-stability": 78,
+          "choice-preparation-committee-demand-local-control": 31,
+          "choice-preparation-committee-demand-preservation": 41,
+          "choice-preparation-committee-demand-rural-preservation": 28,
+          "choice-preparation-committee-demand-tax-credit": 14,
+          "choice-preparation-committee-demand-tribal-consultation": 52,
+          "press-through-overload": 87,
+          "steady-coalition": 69,
+          "take-coalition-breather": 19
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 87,
+          "decline-forum": 137,
+          "decline-office-reset": 105,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 87,
+          "defer-renter-calls": 203,
+          "let-cycle-pass": 100
+        }
+      },
+      "TX-24 | republican | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.74698795180723,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343445.7831325301,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 60
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.43975903614458,
+          "billMomentum": 25.228915662650603,
+          "policyIntegrity": 75.51807228915662,
+          "staffMorale": 65.05421686746988
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3278,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1826
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 332,
+          "pattern-negotiate-committee-packet": 166,
+          "pattern-review-bill-preparation": 166,
+          "pattern-shared-interest-outreach": 166,
+          "pattern-summarize-evidence": 332,
+          "pattern-tactic-costly-drafting": 332,
+          "pattern-tactic-early-preparation": 332
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 88,
+          "choice-accept-renter-stability": 78,
+          "choice-preparation-committee-demand-local-control": 52,
+          "choice-preparation-committee-demand-permitting-path": 12,
+          "choice-preparation-committee-demand-preservation": 16,
+          "choice-preparation-committee-demand-rural-preservation": 45,
+          "choice-preparation-committee-demand-tax-credit": 27,
+          "choice-preparation-committee-demand-tribal-consultation": 14,
+          "press-through-overload": 87,
+          "steady-coalition": 69,
+          "take-coalition-breather": 19
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 87,
+          "decline-forum": 137,
+          "decline-office-reset": 105,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 87,
+          "defer-renter-calls": 203,
+          "let-cycle-pass": 100
+        }
+      },
+      "WI-04 | democratic | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.74850299401198,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343449.1017964072,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 59
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.33532934131736,
+          "billMomentum": 25.21556886227545,
+          "policyIntegrity": 68.1437125748503,
+          "staffMorale": 65.0059880239521
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3298,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 82,
+          "choice-accept-renter-stability": 85,
+          "choice-preparation-committee-demand-local-control": 55,
+          "choice-preparation-committee-demand-permitting-path": 33,
+          "choice-preparation-committee-demand-preservation": 15,
+          "choice-preparation-committee-demand-rural-preservation": 2,
+          "choice-preparation-committee-demand-tax-credit": 23,
+          "choice-preparation-committee-demand-tribal-consultation": 39,
+          "press-through-overload": 89,
+          "steady-coalition": 67,
+          "take-coalition-breather": 17
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 85,
+          "decline-forum": 144,
+          "decline-office-reset": 101,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 85,
+          "defer-renter-calls": 214,
+          "let-cycle-pass": 98
+        }
+      },
+      "WI-04 | republican | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 53.74850299401198,
+        "averageSpentPoliticalCapital": 6,
+        "averageEarnedPoliticalCapital": 5,
+        "averageIdleSimulationMs": 343449.1017964072,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 9,
+          "policyIntegrity": 60,
+          "staffMorale": 59
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2,
+          "districtTrust": 66.33532934131736,
+          "billMomentum": 25.21556886227545,
+          "policyIntegrity": 68.1437125748503,
+          "staffMorale": 65.0059880239521
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3298,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1837
+        },
+        "completedPatternFrequencies": {
+          "pattern-earn-district-endorsement": 334,
+          "pattern-negotiate-committee-packet": 167,
+          "pattern-review-bill-preparation": 167,
+          "pattern-shared-interest-outreach": 167,
+          "pattern-summarize-evidence": 334,
+          "pattern-tactic-costly-drafting": 334,
+          "pattern-tactic-early-preparation": 334
+        },
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "tacticFrequencies": {
+          "tactic-early-committee-consultation": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 82,
+          "choice-accept-renter-stability": 85,
+          "choice-preparation-committee-demand-local-control": 77,
+          "choice-preparation-committee-demand-permitting-path": 35,
+          "choice-preparation-committee-demand-rural-preservation": 9,
+          "choice-preparation-committee-demand-tax-credit": 30,
+          "choice-preparation-committee-demand-tribal-consultation": 16,
+          "press-through-overload": 89,
+          "steady-coalition": 67,
+          "take-coalition-breather": 17
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 85,
+          "decline-forum": 144,
+          "decline-office-reset": 101,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 85,
+          "defer-renter-calls": 214,
+          "let-cycle-pass": 98
+        }
+      }
+    },
+    "coalition-broker": {
+      "CA-22 | democratic | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 145,
+        "notReady": 22,
+        "failures": 0,
+        "averageCommands": 54.94011976047904,
+        "averageSpentPoliticalCapital": 5.730538922155689,
+        "averageEarnedPoliticalCapital": 5.179640718562874,
+        "averageIdleSimulationMs": 352910.17964071856,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.4491017964071857,
+          "districtTrust": 66.26946107784431,
+          "billMomentum": 22.718562874251496,
+          "policyIntegrity": 79.11377245508982,
+          "staffMorale": 75.57485029940119
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3375,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 386,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1907
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 185,
+          "pattern-shared-interest-outreach": 201,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 185
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 150
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 67,
+          "choice-accept-local-control": 86,
+          "choice-accept-permitting-path": 7,
+          "choice-accept-preservation": 58,
+          "choice-accept-renter-stability": 41,
+          "choice-accept-rural-preservation": 48,
+          "choice-accept-tax-credit": 15,
+          "choice-accept-tribal-consultation": 64,
+          "convene-shared-table": 111,
+          "protect-staff-time": 50,
+          "take-office-reset": 113
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 94,
+          "decline-forum": 165,
+          "decline-service-clinic": 112,
+          "defer-renter-calls": 228,
+          "let-cycle-pass": 129
+        }
+      },
+      "CA-22 | republican | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 145,
+        "notReady": 22,
+        "failures": 0,
+        "averageCommands": 54.94011976047904,
+        "averageSpentPoliticalCapital": 5.730538922155689,
+        "averageEarnedPoliticalCapital": 5.179640718562874,
+        "averageIdleSimulationMs": 352910.17964071856,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.4491017964071857,
+          "districtTrust": 66.26946107784431,
+          "billMomentum": 22.718562874251496,
+          "policyIntegrity": 79.11377245508982,
+          "staffMorale": 75.57485029940119
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3375,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 386,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1907
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 185,
+          "pattern-shared-interest-outreach": 201,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 185
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 150
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 58,
+          "choice-accept-local-control": 94,
+          "choice-accept-permitting-path": 8,
+          "choice-accept-preservation": 58,
+          "choice-accept-renter-stability": 41,
+          "choice-accept-rural-preservation": 48,
+          "choice-accept-tax-credit": 15,
+          "choice-accept-tribal-consultation": 64,
+          "convene-shared-table": 111,
+          "protect-staff-time": 50,
+          "take-office-reset": 113
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 94,
+          "decline-forum": 165,
+          "decline-service-clinic": 112,
+          "defer-renter-calls": 228,
+          "let-cycle-pass": 129
+        }
+      },
+      "GA-05 | democratic | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 133,
+        "notReady": 34,
+        "failures": 0,
+        "averageCommands": 54.31137724550898,
+        "averageSpentPoliticalCapital": 5.3053892215568865,
+        "averageEarnedPoliticalCapital": 4.904191616766467,
+        "averageIdleSimulationMs": 357089.82035928144,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.5988023952095807,
+          "districtTrust": 66.04191616766467,
+          "billMomentum": 22.664670658682635,
+          "policyIntegrity": 73.8443113772455,
+          "staffMorale": 75.97005988023952
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3341,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 352,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1870
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 182,
+          "pattern-shared-interest-outreach": 170,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 182
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 150
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 29,
+          "choice-accept-local-control": 59,
+          "choice-accept-permitting-path": 82,
+          "choice-accept-preservation": 56,
+          "choice-accept-rural-preservation": 58,
+          "choice-accept-tax-credit": 23,
+          "choice-accept-tribal-consultation": 45,
+          "convene-shared-table": 107,
+          "protect-staff-time": 47,
+          "take-office-reset": 131
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 99,
+          "decline-forum": 152,
+          "decline-service-clinic": 110,
+          "defer-renter-calls": 247,
+          "let-cycle-pass": 109
+        }
+      },
+      "GA-05 | republican | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 133,
+        "notReady": 34,
+        "failures": 0,
+        "averageCommands": 54.31137724550898,
+        "averageSpentPoliticalCapital": 5.3053892215568865,
+        "averageEarnedPoliticalCapital": 4.904191616766467,
+        "averageIdleSimulationMs": 357089.82035928144,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 58,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.5988023952095807,
+          "districtTrust": 66.04191616766467,
+          "billMomentum": 22.664670658682635,
+          "policyIntegrity": 73.8443113772455,
+          "staffMorale": 75.97005988023952
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3341,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 352,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1870
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 182,
+          "pattern-shared-interest-outreach": 170,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 182
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 150
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 26,
+          "choice-accept-local-control": 60,
+          "choice-accept-permitting-path": 84,
+          "choice-accept-preservation": 56,
+          "choice-accept-rural-preservation": 58,
+          "choice-accept-tax-credit": 23,
+          "choice-accept-tribal-consultation": 45,
+          "convene-shared-table": 107,
+          "protect-staff-time": 47,
+          "take-office-reset": 131
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 99,
+          "decline-forum": 152,
+          "decline-service-clinic": 110,
+          "defer-renter-calls": 247,
+          "let-cycle-pass": 109
+        }
+      },
+      "IA-04 | democratic | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 124,
+        "notReady": 43,
+        "failures": 0,
+        "averageCommands": 54.44311377245509,
+        "averageSpentPoliticalCapital": 5.401197604790419,
+        "averageEarnedPoliticalCapital": 4.832335329341317,
+        "averageIdleSimulationMs": 354485.02994011977,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.431137724550898,
+          "districtTrust": 66.08982035928143,
+          "billMomentum": 22.880239520958085,
+          "policyIntegrity": 74.562874251497,
+          "staffMorale": 75.7005988023952
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3347,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 349,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1889
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 204,
+          "pattern-shared-interest-outreach": 145,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 204
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 159
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 86,
+          "choice-accept-local-control": 53,
+          "choice-accept-permitting-path": 6,
+          "choice-accept-preservation": 77,
+          "choice-accept-rural-preservation": 59,
+          "choice-accept-tax-credit": 24,
+          "choice-accept-tribal-consultation": 44,
+          "convene-shared-table": 106,
+          "protect-staff-time": 39,
+          "take-office-reset": 129
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 113,
+          "decline-forum": 153,
+          "decline-service-clinic": 103,
+          "defer-renter-calls": 243,
+          "let-cycle-pass": 116
+        }
+      },
+      "IA-04 | republican | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 124,
+        "notReady": 43,
+        "failures": 0,
+        "averageCommands": 54.44311377245509,
+        "averageSpentPoliticalCapital": 5.401197604790419,
+        "averageEarnedPoliticalCapital": 4.832335329341317,
+        "averageIdleSimulationMs": 354485.02994011977,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.431137724550898,
+          "districtTrust": 66.08982035928143,
+          "billMomentum": 22.880239520958085,
+          "policyIntegrity": 74.562874251497,
+          "staffMorale": 75.7005988023952
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3347,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 349,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1889
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 204,
+          "pattern-shared-interest-outreach": 145,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 204
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 159
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 75,
+          "choice-accept-local-control": 64,
+          "choice-accept-permitting-path": 6,
+          "choice-accept-preservation": 77,
+          "choice-accept-rural-preservation": 59,
+          "choice-accept-tax-credit": 24,
+          "choice-accept-tribal-consultation": 44,
+          "convene-shared-table": 106,
+          "protect-staff-time": 39,
+          "take-office-reset": 129
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 113,
+          "decline-forum": 153,
+          "decline-service-clinic": 103,
+          "defer-renter-calls": 243,
+          "let-cycle-pass": 116
+        }
+      },
+      "NM-03 | democratic | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 141,
+        "notReady": 25,
+        "failures": 0,
+        "averageCommands": 54.897590361445786,
+        "averageSpentPoliticalCapital": 5.704819277108434,
+        "averageEarnedPoliticalCapital": 5.150602409638554,
+        "averageIdleSimulationMs": 352228.9156626506,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.4457831325301207,
+          "districtTrust": 66.25301204819277,
+          "billMomentum": 22.77710843373494,
+          "policyIntegrity": 69.19277108433735,
+          "staffMorale": 75.56024096385542
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3352,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 382,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1893
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-prepare-communication": 183,
+          "pattern-shared-interest-outreach": 199,
+          "pattern-summarize-evidence": 664,
+          "pattern-tactic-coordination": 183
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 148
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 74,
+          "choice-accept-local-control": 71,
+          "choice-accept-permitting-path": 54,
+          "choice-accept-preservation": 43,
+          "choice-accept-rural-preservation": 45,
+          "choice-accept-tax-credit": 26,
+          "choice-accept-tribal-consultation": 69,
+          "convene-shared-table": 109,
+          "protect-staff-time": 48,
+          "take-office-reset": 114
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 96,
+          "decline-forum": 167,
+          "decline-service-clinic": 115,
+          "defer-renter-calls": 228,
+          "let-cycle-pass": 119
+        }
+      },
+      "NM-03 | republican | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 141,
+        "notReady": 25,
+        "failures": 0,
+        "averageCommands": 54.897590361445786,
+        "averageSpentPoliticalCapital": 5.704819277108434,
+        "averageEarnedPoliticalCapital": 5.150602409638554,
+        "averageIdleSimulationMs": 352228.9156626506,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.4457831325301207,
+          "districtTrust": 66.25301204819277,
+          "billMomentum": 22.77710843373494,
+          "policyIntegrity": 69.19277108433735,
+          "staffMorale": 75.56024096385542
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3352,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 382,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1893
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-prepare-communication": 183,
+          "pattern-shared-interest-outreach": 199,
+          "pattern-summarize-evidence": 664,
+          "pattern-tactic-coordination": 183
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 148
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 64,
+          "choice-accept-local-control": 78,
+          "choice-accept-permitting-path": 57,
+          "choice-accept-preservation": 43,
+          "choice-accept-rural-preservation": 45,
+          "choice-accept-tax-credit": 26,
+          "choice-accept-tribal-consultation": 69,
+          "convene-shared-table": 109,
+          "protect-staff-time": 48,
+          "take-office-reset": 114
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 96,
+          "decline-forum": 167,
+          "decline-service-clinic": 115,
+          "defer-renter-calls": 228,
+          "let-cycle-pass": 119
+        }
+      },
+      "TX-24 | democratic | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 135,
+        "notReady": 31,
+        "failures": 0,
+        "averageCommands": 54.30120481927711,
+        "averageSpentPoliticalCapital": 5.331325301204819,
+        "averageEarnedPoliticalCapital": 4.903614457831325,
+        "averageIdleSimulationMs": 357885.5421686747,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.572289156626506,
+          "districtTrust": 66.144578313253,
+          "billMomentum": 22.698795180722893,
+          "policyIntegrity": 81.25301204819277,
+          "staffMorale": 75.77710843373494
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3315,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 347,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1866
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-prepare-communication": 191,
+          "pattern-shared-interest-outreach": 156,
+          "pattern-summarize-evidence": 664,
+          "pattern-tactic-coordination": 191
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 146
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 79,
+          "choice-accept-local-control": 16,
+          "choice-accept-permitting-path": 9,
+          "choice-accept-preservation": 65,
+          "choice-accept-renter-stability": 52,
+          "choice-accept-rural-preservation": 69,
+          "choice-accept-tax-credit": 13,
+          "choice-accept-tribal-consultation": 44,
+          "convene-shared-table": 107,
+          "protect-staff-time": 51,
+          "take-office-reset": 120
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 103,
+          "decline-forum": 145,
+          "decline-service-clinic": 109,
+          "defer-renter-calls": 237,
+          "let-cycle-pass": 124
+        }
+      },
+      "TX-24 | republican | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 135,
+        "notReady": 31,
+        "failures": 0,
+        "averageCommands": 54.30120481927711,
+        "averageSpentPoliticalCapital": 5.331325301204819,
+        "averageEarnedPoliticalCapital": 4.903614457831325,
+        "averageIdleSimulationMs": 357885.5421686747,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.572289156626506,
+          "districtTrust": 66.144578313253,
+          "billMomentum": 22.698795180722893,
+          "policyIntegrity": 81.25301204819277,
+          "staffMorale": 75.77710843373494
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 3315,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 347,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1866
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-prepare-communication": 191,
+          "pattern-shared-interest-outreach": 156,
+          "pattern-summarize-evidence": 664,
+          "pattern-tactic-coordination": 191
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 146
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 73,
+          "choice-accept-local-control": 22,
+          "choice-accept-permitting-path": 9,
+          "choice-accept-preservation": 65,
+          "choice-accept-renter-stability": 52,
+          "choice-accept-rural-preservation": 69,
+          "choice-accept-tax-credit": 13,
+          "choice-accept-tribal-consultation": 44,
+          "convene-shared-table": 107,
+          "protect-staff-time": 51,
+          "take-office-reset": 120
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 103,
+          "decline-forum": 145,
+          "decline-service-clinic": 109,
+          "defer-renter-calls": 237,
+          "let-cycle-pass": 124
+        }
+      },
+      "WI-04 | democratic | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 135,
+        "notReady": 32,
+        "failures": 0,
+        "averageCommands": 54.395209580838326,
+        "averageSpentPoliticalCapital": 5.37125748502994,
+        "averageEarnedPoliticalCapital": 4.922155688622754,
+        "averageIdleSimulationMs": 356712.5748502994,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.5508982035928143,
+          "districtTrust": 66.1377245508982,
+          "billMomentum": 22.604790419161677,
+          "policyIntegrity": 76,
+          "staffMorale": 75.82035928143712
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3344,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 353,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1880
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 191,
+          "pattern-shared-interest-outreach": 162,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 191
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 152
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 24,
+          "choice-accept-local-control": 65,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-preservation": 62,
+          "choice-accept-rural-preservation": 52,
+          "choice-accept-tax-credit": 30,
+          "choice-accept-tribal-consultation": 47,
+          "convene-shared-table": 112,
+          "protect-staff-time": 52,
+          "take-office-reset": 119
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 94,
+          "decline-forum": 151,
+          "decline-service-clinic": 98,
+          "defer-renter-calls": 239,
+          "let-cycle-pass": 137
+        }
+      },
+      "WI-04 | republican | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 135,
+        "notReady": 32,
+        "failures": 0,
+        "averageCommands": 54.395209580838326,
+        "averageSpentPoliticalCapital": 5.37125748502994,
+        "averageEarnedPoliticalCapital": 4.922155688622754,
+        "averageIdleSimulationMs": 356712.5748502994,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 0,
+          "politicalCapital": 1,
+          "districtTrust": 57,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 69
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 2.5508982035928143,
+          "districtTrust": 66.1377245508982,
+          "billMomentum": 22.604790419161677,
+          "policyIntegrity": 76,
+          "staffMorale": 75.82035928143712
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3344,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 353,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1880
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-prepare-communication": 191,
+          "pattern-shared-interest-outreach": 162,
+          "pattern-summarize-evidence": 668,
+          "pattern-tactic-coordination": 191
+        },
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
+        },
+        "tacticFrequencies": {
+          "tactic-bipartisan-working-group": 152
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 21,
+          "choice-accept-local-control": 67,
+          "choice-accept-permitting-path": 74,
+          "choice-accept-preservation": 62,
+          "choice-accept-rural-preservation": 52,
+          "choice-accept-tax-credit": 30,
+          "choice-accept-tribal-consultation": 47,
+          "convene-shared-table": 112,
+          "protect-staff-time": 52,
+          "take-office-reset": 119
+        },
+        "rejectedChoiceFrequencies": {
+          "decline-briefing-slot": 94,
+          "decline-forum": 151,
+          "decline-service-clinic": 98,
+          "defer-renter-calls": 239,
+          "let-cycle-pass": 137
+        }
+      }
+    },
+    "greedy-same-party": {
+      "CA-22 | democratic | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 379197.60479041917,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 58,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.59281437125749,
+          "billMomentum": 23.604790419161677,
+          "policyIntegrity": 74.31137724550898,
+          "staffMorale": 65.16766467065868
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 67,
+          "choice-accept-local-control": 94,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 100,
+          "press-through-overload": 102
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 72,
+          "decline-briefing-slot": 101,
+          "decline-coalition-breather": 1,
+          "decline-forum": 144,
+          "decline-office-reset": 110,
+          "decline-service-clinic": 104,
+          "decline-shared-table": 78,
+          "defer-renter-calls": 201,
+          "let-cycle-pass": 89
+        }
+      },
+      "CA-22 | republican | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 379197.60479041917,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 58,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.59281437125749,
+          "billMomentum": 23.604790419161677,
+          "policyIntegrity": 74.31137724550898,
+          "staffMorale": 65.16766467065868
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 67,
+          "choice-accept-local-control": 94,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 100,
+          "press-through-overload": 102
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 72,
+          "decline-briefing-slot": 101,
+          "decline-coalition-breather": 1,
+          "decline-forum": 144,
+          "decline-office-reset": 110,
+          "decline-service-clinic": 104,
+          "decline-shared-table": 78,
+          "defer-renter-calls": 201,
+          "let-cycle-pass": 89
+        }
+      },
+      "GA-05 | democratic | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378982.0359281437,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 58,
+          "billMomentum": 10,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.60479041916167,
+          "billMomentum": 23.87425149700599,
+          "policyIntegrity": 74.562874251497,
+          "staffMorale": 65.0059880239521
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 83,
+          "choice-accept-permitting-path": 84,
+          "choice-accept-renter-stability": 78,
+          "press-through-overload": 111
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 56,
+          "decline-briefing-slot": 94,
+          "decline-coalition-breather": 1,
+          "decline-forum": 145,
+          "decline-office-reset": 128,
+          "decline-service-clinic": 101,
+          "decline-shared-table": 90,
+          "defer-renter-calls": 200,
+          "let-cycle-pass": 76
+        }
+      },
+      "GA-05 | republican | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378982.0359281437,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 58,
+          "billMomentum": 10,
+          "policyIntegrity": 60,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.60479041916167,
+          "billMomentum": 23.87425149700599,
+          "policyIntegrity": 74.562874251497,
+          "staffMorale": 65.0059880239521
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 83,
+          "choice-accept-permitting-path": 84,
+          "choice-accept-renter-stability": 78,
+          "press-through-overload": 111
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 56,
+          "decline-briefing-slot": 94,
+          "decline-coalition-breather": 1,
+          "decline-forum": 145,
+          "decline-office-reset": 128,
+          "decline-service-clinic": 101,
+          "decline-shared-table": 90,
+          "defer-renter-calls": 200,
+          "let-cycle-pass": 76
+        }
+      },
+      "IA-04 | democratic | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378982.0359281437,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 56,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.48502994011976,
+          "billMomentum": 23.5748502994012,
+          "policyIntegrity": 64.08383233532935,
+          "staffMorale": 65.52694610778443
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 99,
+          "choice-accept-local-control": 82,
+          "choice-accept-permitting-path": 85,
+          "choice-accept-renter-stability": 68,
+          "press-through-overload": 82
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 74,
+          "decline-briefing-slot": 95,
+          "decline-coalition-breather": 3,
+          "decline-forum": 144,
+          "decline-office-reset": 120,
+          "decline-service-clinic": 107,
+          "decline-shared-table": 77,
+          "defer-renter-calls": 210,
+          "let-cycle-pass": 90
+        }
+      },
+      "IA-04 | republican | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378982.0359281437,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 56,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.48502994011976,
+          "billMomentum": 23.5748502994012,
+          "policyIntegrity": 64.08383233532935,
+          "staffMorale": 65.52694610778443
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 99,
+          "choice-accept-local-control": 82,
+          "choice-accept-permitting-path": 85,
+          "choice-accept-renter-stability": 68,
+          "press-through-overload": 82
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 74,
+          "decline-briefing-slot": 95,
+          "decline-coalition-breather": 3,
+          "decline-forum": 144,
+          "decline-office-reset": 120,
+          "decline-service-clinic": 107,
+          "decline-shared-table": 77,
+          "defer-renter-calls": 210,
+          "let-cycle-pass": 90
+        }
+      },
+      "NM-03 | democratic | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378819.2771084337,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 58,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.75903614457832,
+          "billMomentum": 23.602409638554217,
+          "policyIntegrity": 65.27710843373494,
+          "staffMorale": 65.21084337349397
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1660
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 77,
+          "press-through-overload": 99
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 66,
+          "decline-briefing-slot": 80,
+          "decline-coalition-breather": 2,
+          "decline-forum": 153,
+          "decline-office-reset": 103,
+          "decline-service-clinic": 117,
+          "decline-shared-table": 90,
+          "defer-renter-calls": 186,
+          "let-cycle-pass": 100
+        }
+      },
+      "NM-03 | republican | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378819.2771084337,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 58,
+          "staffMorale": 58
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.75903614457832,
+          "billMomentum": 23.602409638554217,
+          "policyIntegrity": 65.27710843373494,
+          "staffMorale": 65.21084337349397
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1660
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 77,
+          "press-through-overload": 99
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 66,
+          "decline-briefing-slot": 80,
+          "decline-coalition-breather": 2,
+          "decline-forum": 153,
+          "decline-office-reset": 103,
+          "decline-service-clinic": 117,
+          "decline-shared-table": 90,
+          "defer-renter-calls": 186,
+          "let-cycle-pass": 100
+        }
+      },
+      "TX-24 | democratic | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378963.8554216867,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.5421686746988,
+          "billMomentum": 23.566265060240966,
+          "policyIntegrity": 68,
+          "staffMorale": 65.3012048192771
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1660
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 88,
+          "choice-accept-local-control": 78,
+          "choice-accept-permitting-path": 88,
+          "choice-accept-renter-stability": 78,
+          "press-through-overload": 94
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 70,
+          "decline-briefing-slot": 87,
+          "decline-forum": 137,
+          "decline-office-reset": 113,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 91,
+          "defer-renter-calls": 204,
+          "let-cycle-pass": 98
+        }
+      },
+      "TX-24 | republican | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378963.8554216867,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 57,
+          "billMomentum": 10,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.5421686746988,
+          "billMomentum": 23.566265060240966,
+          "policyIntegrity": 68,
+          "staffMorale": 65.3012048192771
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "SUBMIT_WORK": 1660
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 332,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 664
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 88,
+          "choice-accept-local-control": 78,
+          "choice-accept-permitting-path": 88,
+          "choice-accept-renter-stability": 78,
+          "press-through-overload": 94
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 70,
+          "decline-briefing-slot": 87,
+          "decline-forum": 137,
+          "decline-office-reset": 113,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 91,
+          "defer-renter-calls": 204,
+          "let-cycle-pass": 98
+        }
+      },
+      "WI-04 | democratic | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378910.17964071856,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 58,
+          "billMomentum": 10,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.40119760479043,
+          "billMomentum": 23.5748502994012,
+          "policyIntegrity": 72.35928143712574,
+          "staffMorale": 65.38323353293413
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 82,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 74,
+          "choice-accept-renter-stability": 85,
+          "press-through-overload": 90
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 70,
+          "decline-briefing-slot": 85,
+          "decline-coalition-breather": 3,
+          "decline-forum": 144,
+          "decline-office-reset": 108,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 85,
+          "defer-renter-calls": 217,
+          "let-cycle-pass": 98
+        }
+      },
+      "WI-04 | republican | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 378910.17964071856,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 58,
+          "billMomentum": 10,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 66.40119760479043,
+          "billMomentum": 23.5748502994012,
+          "policyIntegrity": 72.35928143712574,
+          "staffMorale": 65.38323353293413
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "SUBMIT_WORK": 1670
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 334,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 668
+        },
+        "activatedTacticFrequencies": {},
+        "tacticFrequencies": {},
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "choice-accept-fair-access": 82,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 74,
+          "choice-accept-renter-stability": 85,
+          "press-through-overload": 90
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 70,
+          "decline-briefing-slot": 85,
+          "decline-coalition-breather": 3,
+          "decline-forum": 144,
+          "decline-office-reset": 108,
+          "decline-service-clinic": 102,
+          "decline-shared-table": 85,
+          "defer-renter-calls": 217,
+          "let-cycle-pass": 98
+        }
+      }
+    },
+    "district-reward": {
+      "CA-22 | democratic | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390311.377245509,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 76.10179640718563,
+          "billMomentum": 16.87425149700599,
+          "policyIntegrity": 74.31137724550898,
+          "staffMorale": 72.48502994011976
+        },
+        "uniqueTraceHashes": 165,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 215,
+          "choice-accept-fair-access": 67,
+          "choice-accept-local-control": 94,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 100,
+          "convene-shared-table": 95,
+          "hold-service-clinic": 24,
+          "join-forum": 159,
+          "protect-staff-time": 65,
+          "take-office-reset": 157
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 83,
+          "decline-briefing-slot": 97,
+          "decline-coalition-breather": 4,
+          "let-cycle-pass": 103
+        }
+      },
+      "CA-22 | republican | Fair Access + Local Control | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390311.377245509,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 76.10179640718563,
+          "billMomentum": 16.87425149700599,
+          "policyIntegrity": 74.31137724550898,
+          "staffMorale": 72.48502994011976
+        },
+        "uniqueTraceHashes": 165,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 215,
+          "choice-accept-fair-access": 67,
+          "choice-accept-local-control": 94,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 100,
+          "convene-shared-table": 95,
+          "hold-service-clinic": 24,
+          "join-forum": 159,
+          "protect-staff-time": 65,
+          "take-office-reset": 157
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 83,
+          "decline-briefing-slot": 97,
+          "decline-coalition-breather": 4,
+          "let-cycle-pass": 103
+        }
+      },
+      "GA-05 | democratic | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 389640.71856287424,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 76.17365269461078,
+          "billMomentum": 16.982035928143713,
+          "policyIntegrity": 72.02395209580838,
+          "staffMorale": 72.67664670658682
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 222,
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 83,
+          "choice-accept-permitting-path": 84,
+          "choice-accept-renter-stability": 78,
+          "convene-shared-table": 96,
+          "hold-service-clinic": 22,
+          "join-forum": 161,
+          "protect-staff-time": 63,
+          "take-office-reset": 168
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 65,
+          "decline-briefing-slot": 96,
+          "decline-coalition-breather": 3,
+          "let-cycle-pass": 106
+        }
+      },
+      "GA-05 | republican | Tenant Stability + Housing Supply | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 389640.71856287424,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 76.17365269461078,
+          "billMomentum": 16.982035928143713,
+          "policyIntegrity": 72.02395209580838,
+          "staffMorale": 72.67664670658682
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 222,
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 83,
+          "choice-accept-permitting-path": 84,
+          "choice-accept-renter-stability": 78,
+          "convene-shared-table": 96,
+          "hold-service-clinic": 22,
+          "join-forum": 161,
+          "protect-staff-time": 63,
+          "take-office-reset": 168
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 65,
+          "decline-briefing-slot": 96,
+          "decline-coalition-breather": 3,
+          "let-cycle-pass": 106
+        }
+      },
+      "IA-04 | democratic | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390646.70658682636,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 56,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.76646706586827,
+          "billMomentum": 16.694610778443113,
+          "policyIntegrity": 61.616766467065865,
+          "staffMorale": 72.95808383233533
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 207,
+          "choice-accept-fair-access": 99,
+          "choice-accept-local-control": 82,
+          "choice-accept-permitting-path": 85,
+          "choice-accept-renter-stability": 68,
+          "convene-shared-table": 88,
+          "hold-service-clinic": 24,
+          "join-forum": 149,
+          "protect-staff-time": 51,
+          "take-office-reset": 181
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 88,
+          "decline-briefing-slot": 101,
+          "decline-coalition-breather": 3,
+          "let-cycle-pass": 110
+        }
+      },
+      "IA-04 | republican | Public Investment + Fiscal Stewardship | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390646.70658682636,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 56,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.76646706586827,
+          "billMomentum": 16.694610778443113,
+          "policyIntegrity": 61.616766467065865,
+          "staffMorale": 72.95808383233533
+        },
+        "uniqueTraceHashes": 167,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 207,
+          "choice-accept-fair-access": 99,
+          "choice-accept-local-control": 82,
+          "choice-accept-permitting-path": 85,
+          "choice-accept-renter-stability": 68,
+          "convene-shared-table": 88,
+          "hold-service-clinic": 24,
+          "join-forum": 149,
+          "protect-staff-time": 51,
+          "take-office-reset": 181
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 88,
+          "decline-briefing-slot": 101,
+          "decline-coalition-breather": 3,
+          "let-cycle-pass": 110
+        }
+      },
+      "NM-03 | democratic | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390879.5180722892,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.87349397590361,
+          "billMomentum": 16.795180722891565,
+          "policyIntegrity": 65.46987951807229,
+          "staffMorale": 72.8132530120482
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1494
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 166,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 498,
+          "pattern-tactic-costly-drafting": 166
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 202,
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 77,
+          "convene-shared-table": 101,
+          "hold-service-clinic": 21,
+          "join-forum": 158,
+          "protect-staff-time": 65,
+          "take-office-reset": 158
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 81,
+          "decline-briefing-slot": 91,
+          "decline-coalition-breather": 6,
+          "let-cycle-pass": 113
+        }
+      },
+      "NM-03 | republican | Local Control + Market Competition | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390879.5180722892,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 58,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.87349397590361,
+          "billMomentum": 16.795180722891565,
+          "policyIntegrity": 65.46987951807229,
+          "staffMorale": 72.8132530120482
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1494
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 166,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 498,
+          "pattern-tactic-costly-drafting": 166
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 202,
+          "choice-accept-fair-access": 89,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 73,
+          "choice-accept-renter-stability": 77,
+          "convene-shared-table": 101,
+          "hold-service-clinic": 21,
+          "join-forum": 158,
+          "protect-staff-time": 65,
+          "take-office-reset": 158
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 81,
+          "decline-briefing-slot": 91,
+          "decline-coalition-breather": 6,
+          "let-cycle-pass": 113
+        }
+      },
+      "TX-24 | democratic | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390204.8192771084,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.83734939759036,
+          "billMomentum": 16.825301204819276,
+          "policyIntegrity": 68,
+          "staffMorale": 72.57228915662651
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1494
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 166,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 498,
+          "pattern-tactic-costly-drafting": 166
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 214,
+          "choice-accept-fair-access": 88,
+          "choice-accept-local-control": 78,
+          "choice-accept-permitting-path": 88,
+          "choice-accept-renter-stability": 78,
+          "convene-shared-table": 93,
+          "hold-service-clinic": 27,
+          "join-forum": 143,
+          "protect-staff-time": 52,
+          "take-office-reset": 164
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 81,
+          "decline-briefing-slot": 99,
+          "decline-coalition-breather": 5,
+          "let-cycle-pass": 118
+        }
+      },
+      "TX-24 | republican | Environmental Resilience + Tenant Stability | standard": {
+        "runs": 166,
+        "complete": 166,
+        "ready": 166,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390204.8192771084,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.83734939759036,
+          "billMomentum": 16.825301204819276,
+          "policyIntegrity": 68,
+          "staffMorale": 72.57228915662651
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 830,
+          "CONCLUDE_SESSION": 166,
+          "DOCKET_PROVISION": 332,
+          "DRAW_STORY_EVENT": 166,
+          "FAST_FORWARD": 2988,
+          "OPEN_PACK": 830,
+          "RESOLVE_DECISION": 332,
+          "RESOLVE_STORY": 996,
+          "START_ASSIGNMENT": 166,
+          "SUBMIT_WORK": 1494
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 166,
+          "pattern-earn-district-endorsement": 332,
+          "pattern-shared-interest-outreach": 332,
+          "pattern-summarize-evidence": 498,
+          "pattern-tactic-costly-drafting": 166
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 166,
+          "obligation-tribal-consultation:pack:week:5": 166
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 214,
+          "choice-accept-fair-access": 88,
+          "choice-accept-local-control": 78,
+          "choice-accept-permitting-path": 88,
+          "choice-accept-renter-stability": 78,
+          "convene-shared-table": 93,
+          "hold-service-clinic": 27,
+          "join-forum": 143,
+          "protect-staff-time": 52,
+          "take-office-reset": 164
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 81,
+          "decline-briefing-slot": 99,
+          "decline-coalition-breather": 5,
+          "let-cycle-pass": 118
+        }
+      },
+      "WI-04 | democratic | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390311.377245509,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.81437125748504,
+          "billMomentum": 16.91616766467066,
+          "policyIntegrity": 67.08982035928143,
+          "staffMorale": 72.65868263473054
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 219,
+          "choice-accept-fair-access": 82,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 74,
+          "choice-accept-renter-stability": 85,
+          "convene-shared-table": 99,
+          "hold-service-clinic": 20,
+          "join-forum": 150,
+          "protect-staff-time": 53,
+          "take-office-reset": 168
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 77,
+          "decline-briefing-slot": 97,
+          "decline-coalition-breather": 5,
+          "let-cycle-pass": 114
+        }
+      },
+      "WI-04 | republican | Housing Supply + Market Competition | standard": {
+        "runs": 167,
+        "complete": 167,
+        "ready": 167,
+        "notReady": 0,
+        "failures": 0,
+        "averageCommands": 50,
+        "averageSpentPoliticalCapital": 4,
+        "averageEarnedPoliticalCapital": 6,
+        "averageIdleSimulationMs": 390311.377245509,
+        "missedMandatoryOccurrences": 0,
+        "minimumResources": {
+          "staffAttention": 1,
+          "politicalCapital": 0,
+          "districtTrust": 60,
+          "billMomentum": 8,
+          "policyIntegrity": 60,
+          "staffMorale": 61
+        },
+        "averageFinalResources": {
+          "staffAttention": 3,
+          "politicalCapital": 5,
+          "districtTrust": 75.81437125748504,
+          "billMomentum": 16.91616766467066,
+          "policyIntegrity": 67.08982035928143,
+          "staffMorale": 72.65868263473054
+        },
+        "uniqueTraceHashes": 166,
+        "commandFrequencies": {
+          "ADVANCE_WEEK": 835,
+          "CONCLUDE_SESSION": 167,
+          "DOCKET_PROVISION": 334,
+          "DRAW_STORY_EVENT": 167,
+          "FAST_FORWARD": 3006,
+          "OPEN_PACK": 835,
+          "RESOLVE_DECISION": 334,
+          "RESOLVE_STORY": 1002,
+          "START_ASSIGNMENT": 167,
+          "SUBMIT_WORK": 1503
+        },
+        "completedPatternFrequencies": {
+          "pattern-draft-policy": 167,
+          "pattern-earn-district-endorsement": 334,
+          "pattern-shared-interest-outreach": 334,
+          "pattern-summarize-evidence": 501,
+          "pattern-tactic-costly-drafting": 167
+        },
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "tacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
+        },
+        "fulfilledObligationFrequencies": {
+          "obligation-renter-response:pack:week:2": 167,
+          "obligation-tribal-consultation:pack:week:5": 167
+        },
+        "missedObligationFrequencies": {},
+        "acceptedChoiceFrequencies": {
+          "answer-renter-calls": 219,
+          "choice-accept-fair-access": 82,
+          "choice-accept-local-control": 93,
+          "choice-accept-permitting-path": 74,
+          "choice-accept-renter-stability": 85,
+          "convene-shared-table": 99,
+          "hold-service-clinic": 20,
+          "join-forum": 150,
+          "protect-staff-time": 53,
+          "take-office-reset": 168
+        },
+        "rejectedChoiceFrequencies": {
+          "accept-friction": 77,
+          "decline-briefing-slot": 97,
+          "decline-coalition-breather": 5,
+          "let-cycle-pass": 114
+        }
+      }
+    }
+  },
+  "baselineDominance": [
+    {
+      "baselinePolicyId": "greedy-same-party",
+      "comparedPolicyId": "district-advocate",
+      "dominated": false,
+      "baselineReady": 2000,
+      "comparedReady": 1602,
+      "reason": "Counterexample seed 1/democratic: idle simulation, minimum staffAttention, minimum politicalCapital, final districtTrust, final staffMorale, minimum staffMorale; final PC 5 vs 2, spent 4 vs 6, idle 370.0s vs 329.0s; traces 3b551aeab57e vs a865fa5b6d4a."
+    },
+    {
+      "baselinePolicyId": "greedy-same-party",
+      "comparedPolicyId": "committee-specialist",
+      "dominated": false,
+      "baselineReady": 2000,
+      "comparedReady": 2000,
+      "reason": "Counterexample seed 1/democratic: idle simulation, minimum politicalCapital, final billMomentum, final staffMorale; final PC 5 vs 2, spent 4 vs 6, idle 370.0s vs 344.0s; traces 3b551aeab57e vs d672c3b97b90."
+    },
+    {
+      "baselinePolicyId": "greedy-same-party",
+      "comparedPolicyId": "coalition-broker",
+      "dominated": false,
+      "baselineReady": 2000,
+      "comparedReady": 1626,
+      "reason": "Counterexample seed 1/democratic: idle simulation, minimum politicalCapital, final billMomentum, final staffMorale, minimum staffMorale; final PC 5 vs 3, spent 4 vs 5, idle 370.0s vs 350.0s; traces 3b551aeab57e vs afd79c04fd6d."
+    },
+    {
+      "baselinePolicyId": "district-reward",
+      "comparedPolicyId": "district-advocate",
+      "dominated": false,
+      "baselineReady": 2000,
+      "comparedReady": 1602,
+      "reason": "Counterexample seed 1/democratic: idle simulation, minimum staffAttention, minimum politicalCapital, final districtTrust, final billMomentum, final staffMorale, minimum staffMorale; final PC 5 vs 2, spent 4 vs 6, idle 394.0s vs 329.0s; traces 86d3248acf93 vs a865fa5b6d4a."
+    },
+    {
+      "baselinePolicyId": "district-reward",
+      "comparedPolicyId": "committee-specialist",
+      "dominated": false,
+      "baselineReady": 2000,
+      "comparedReady": 2000,
+      "reason": "Counterexample seed 1/democratic: idle simulation, minimum politicalCapital, final billMomentum; final PC 5 vs 2, spent 4 vs 6, idle 394.0s vs 344.0s; traces 86d3248acf93 vs d672c3b97b90."
+    },
+    {
+      "baselinePolicyId": "district-reward",
+      "comparedPolicyId": "coalition-broker",
+      "dominated": false,
+      "baselineReady": 2000,
+      "comparedReady": 1626,
+      "reason": "Counterexample seed 1/democratic: idle simulation, minimum politicalCapital, final billMomentum, final staffMorale, minimum staffMorale; final PC 5 vs 3, spent 4 vs 5, idle 394.0s vs 350.0s; traces 86d3248acf93 vs afd79c04fd6d."
+    }
+  ],
+  "failures": [],
+  "traceIndexFile": "trace-index.json"
+}

@@ -1,6 +1,9 @@
-import { computeEffectiveTags } from '@/domain/recipes';
+import { previewBillChange } from '@/domain/bill';
+import { effectiveCard } from '@/domain/instanceForms';
+import { computeEffectiveTags, effectiveRule } from '@/domain/recipes';
 import type {
   CardKind,
+  GoverningValue,
   Resources,
   ScenarioDefinition,
   SourceClass,
@@ -56,6 +59,8 @@ export interface CardDetail {
   /** Uses the player has already discovered. Never anything they have not. */
   knownUses: string[];
   noUsesYetNote?: string;
+  /** Contributions this policy would make to the player's selected values. */
+  valueContributions: { value: GoverningValue; delta: number }[];
 }
 
 const FAMILY_LABELS: Record<CardKind, string> = {
@@ -128,8 +133,12 @@ export function describeCard(
 
   const definition = scenario.cards.find((card) => card.id === instance.definitionId);
   if (!definition) return undefined;
+  const effective = effectiveCard(instance, scenario);
 
-  const effectiveTags = computeEffectiveTags(definition, state.player.party);
+  const effectiveTags = Array.from(new Set([
+    ...effective.effectiveTags,
+    ...computeEffectiveTags(definition, state.player.party),
+  ]));
 
   // Which discovered rules can this card actually take part in?
   const knownUses: string[] = [];
@@ -139,27 +148,18 @@ export function describeCard(
     if (!state.discoveredPatternIds.includes(pattern.id)) continue;
 
     const activeIds = state.unlockedSlotExpansions[pattern.id] ?? [];
-    const slots = pattern.slots.map((slot, index) => {
-      let widened = { ...slot };
-      for (const expansion of scenario.tacticExpansions) {
-        if (!activeIds.includes(expansion.id)) continue;
-        if (expansion.effect.kind !== 'widen-slot') continue;
-        if (expansion.effect.slotIndex !== index) continue;
-        widened = {
-          ...widened,
-          anyTags: Array.from(
-            new Set([...(widened.anyTags ?? []), ...(expansion.effect.addAnyTags ?? [])]),
-          ),
-        };
-      }
-      return widened;
-    });
+    const rule = effectiveRule(pattern, activeIds, scenario.tacticExpansions).pattern;
+    if (rule.eligibleStages && !rule.eligibleStages.includes(state.bill.stage)) continue;
+    const slots = rule.slots;
 
     const fits = slots.some((slot) => {
       if (slot.kind && slot.kind !== definition.kind) return false;
       if (slot.requiredTags?.some((tag) => !effectiveTags.includes(tag))) return false;
       if (slot.anyTags && !slot.anyTags.some((tag) => effectiveTags.includes(tag))) return false;
-      if (slot.sourceClasses && !slot.sourceClasses.includes(definition.sourceClass)) return false;
+      if (slot.sourceClasses && !slot.sourceClasses.includes(effective.effectiveSourceClass)) return false;
+      if (slot.forms && !slot.forms.includes(instance.form)) return false;
+      if (slot.originExplanationKeys
+        && !slot.originExplanationKeys.includes(effective.provenance.explanationKey ?? '')) return false;
       return true;
     });
     if (!fits) continue;
@@ -170,9 +170,10 @@ export function describeCard(
         : (pattern.output.parameters?.outputDefinitionId as string | undefined);
     const outputTitle = scenario.cards.find((card) => card.id === outputId)?.title ?? 'a new card';
 
-    knownUses.push(`Part of a rule your office knows: it helps make ${outputTitle}.`);
+    const knownUse = `Part of a rule your office knows: it helps make ${outputTitle}.`;
+    if (!knownUses.includes(knownUse)) knownUses.push(knownUse);
 
-    for (const cost of describeCost(pattern.resourceCost)) {
+    for (const cost of describeCost(rule.resourceCost)) {
       if (seenCosts.has(cost.short)) continue;
       seenCosts.add(cost.short);
       costs.push(cost);
@@ -202,18 +203,23 @@ export function describeCard(
     };
   }
 
+  const policyId = instance.policyDefinitionId ?? (definition.kind === 'policy' ? definition.id : undefined);
+  const valueContributions = policyId
+    ? previewBillChange(state, scenario, [policyId]).contributions.map(({ value, delta }) => ({ value, delta }))
+    : [];
+
   return {
     definitionId: definition.id,
-    title: definition.title,
+    title: instance.form === 'drafted' ? `Drafted ${definition.title}` : definition.title,
     familyLabel: FAMILY_LABELS[definition.kind],
-    sourceLabel: SOURCE_LABELS[definition.sourceClass],
+    sourceLabel: SOURCE_LABELS[effective.effectiveSourceClass],
     contextualSubtitle: definition.contextualSubtitle,
     plainLanguage: definition.plainLanguage,
     simulatedNote:
-      definition.sourceClass === 'simulated'
+      effective.effectiveSourceClass === 'simulated'
         ? 'In this simulation. This exists only inside your run — it is not a claim about anyone real.'
         : undefined,
-    sourceExplainer: SOURCE_EXPLAINERS[definition.sourceClass],
+    sourceExplainer: SOURCE_EXPLAINERS[effective.effectiveSourceClass],
     practicePlaceholderNote:
       !instance.origin &&
       definition.sourceClass !== 'simulated' &&
@@ -227,5 +233,6 @@ export function describeCard(
       knownUses.length === 0
         ? 'Your office has not found a use for this yet. Try it with something — a combination that does not work costs you nothing.'
         : undefined,
+    valueContributions,
   };
 }

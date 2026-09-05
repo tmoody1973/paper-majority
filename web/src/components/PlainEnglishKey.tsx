@@ -32,9 +32,8 @@ const CLASSES: [string, string][] = [
   ['Simulated', 'Invented for your run. Not a claim about anyone real.'],
 ];
 
-const METERS: [string, string][] = [
+const BASE_METERS: [string, string][] = [
   ['Staff Attention', 'How many jobs your office can do at once. It comes back when a job ends.'],
-  ['Political Capital', 'Favours and goodwill you can spend. Once spent, it is gone.'],
   ['District Trust', 'How well the people back home think you are representing them.'],
   ['Bill Momentum', 'How much your bill is actually moving.'],
   ['Policy Integrity', 'How close your bill still is to what you promised.'],
@@ -54,7 +53,14 @@ function Glossary({ items, testId }: { items: [string, string][]; testId: string
   );
 }
 
-export function PlainEnglishKey() {
+export function PlainEnglishKey({ session = false }: { session?: boolean }) {
+  const meters: [string, string][] = [
+    BASE_METERS[0],
+    ['Political Capital', session
+      ? 'Goodwill you spend and can earn once from distinct commitments. A new week restores a floor of 1, up to the cap of 9.'
+      : 'Favours and goodwill you can spend. Once spent, it is gone.'],
+    ...BASE_METERS.slice(1),
+  ];
   return (
     // Open by default. A meaning hidden behind a click is a meaning most players
     // never see.
@@ -68,7 +74,7 @@ export function PlainEnglishKey() {
       <Glossary items={CLASSES} testId="key-classes" />
 
       <h3 className="key__heading">The numbers up top</h3>
-      <Glossary items={METERS} testId="key-meters" />
+      <Glossary items={meters} testId="key-meters" />
     </details>
   );
 }

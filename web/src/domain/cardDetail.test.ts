@@ -188,6 +188,9 @@ describe('describeCard', () => {
           y: 500,
           remainingMs: 0,
           status: 'idle' as const,
+          form: 'raw',
+          location: 'desk',
+          sourceDefinitionIds: ['evidence-tenant-survey'],
           origin: {
             explanationKey: 'result.summary.district-relevance',
             inputDefinitionIds: ['evidence-tenant-survey', 'staff-policy-aide'],

@@ -67,6 +67,19 @@ export function CardInspector({
         </p>
       )}
 
+      {detail.valueContributions.length > 0 && (
+        <div className="inspector__values" data-testid="inspector-values">
+          <h3>Policy Integrity if docketed</h3>
+          <ul>
+            {detail.valueContributions.map((contribution) => (
+              <li key={contribution.value}>
+                {contribution.value} {contribution.delta > 0 ? '+' : ''}{contribution.delta}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="inspector__uses" data-testid="inspector-uses">
         <h3>What your office can do with it</h3>
         {detail.knownUses.length > 0 ? (

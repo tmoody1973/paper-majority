@@ -1,5 +1,7 @@
 # 018 — Where Political Capital comes from
 
+**2026-09-04 execution disposition:** Adopted for Session implementation through Tarik’s instruction to execute the replayable Session plan; see that addendum for exact rules. Outcome evidence remains pending.
+
 **Status:** Proposed by Claude on 2026-09-01. Decision pending Tarik. This one is a genuine open question in the spec, not a correction.
 
 - **Decision (proposed)** — Political Capital is earned by visible acts the player performs during the term, chiefly answering district concerns and completing procedural milestones, plus a small weekly floor. It is never converted from District Trust or Policy Integrity, and it is never granted for time passing alone.

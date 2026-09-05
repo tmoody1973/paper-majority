@@ -1,5 +1,45 @@
 # Handoff — Paper Majority, Phase 1
 
+> **Checkpoint 2 final-fix candidate — 2026-09-05:** The six-week Session implementation is on `codex/replayable-session`, with the consolidated final fix based on `38ea14d59ffb6c71f71ab366fbfa011b0c505330`. The frozen candidate is `housing-session-2026-09-04-candidate`, rules version 2, hash `52221d76ef034c5cab06d8d7066f575be0771ff80ff5de69f4d8cd1d3e9c739e`. The final-fix commit is identified by message `fix: complete Session strategy routes and authoritative previews` in this branch's history. The scoped review addressed the four original findings and identified one residual overlapping-outreach save-integrity defect. The follow-up commit is identified by message `fix: reserve office outreach and recover overlapping saves`; the controller's narrow I1 verification remains next.
+>
+> The final automated manifest covers seeds 1–1000, both parties, five policies, standard pace and the exact six-district/value rotation in `web/reports/session-balance/manifest.json`. Generated 2026-09-05T17:45:50.025Z: all 10,000 runs completed, zero harness failures. Ready outcomes: district advocate 1,602/2,000; committee specialist 2,000/2,000; coalition broker 1,626/2,000; greedy same-party 2,000/2,000; district reward 2,000/2,000. The 398 district and 374 coalition not-ready endings remain in the denominator. No failed seed was replaced or filtered.
+>
+> District advocates complete 3,518 endorsement deliveries and accept their authored preparation alternatives. Committee specialists complete 4,000 early packets, 2,000 provision reviews and 2,000 packet negotiations/accepted alternatives; all 2,000 runs apply the learned early-preparation rule. Coalition brokers prepare exactly 2,272 useful assets and complete 2,272 widened coordination jobs; 1,810 runs apply the Tactic, while 190 learn it without a completed use. District reward applies cost sharing in all 2,000 runs. The ordinary greedy baseline remains a credible route. Exact action/resource frequencies and paired comparisons are in `web/reports/session-balance/report.md`; bot outcomes do not prove human-perceived variety or fun.
+>
+> Preparation acceptance uses consumed-artifact receipts binding the real producer/source to the recipient, authored concern/demand and bill revision. Existing bill-tag offers remain available. WorkMat shares the engine's actual output identity/form. Session summaries use explicit relevance parameters (committee priority, district fallback, neutral otherwise), preserving legacy provenance behavior and rejecting historical candidate save/challenge hashes. Timed Session study is required; work/study/counters that cannot finish by the final boundary reject without charge, with exact-boundary completion allowed.
+>
+> Residual I1 correction: shared preview/start now reserves the recipient office definition across active approaches. Already-valid overlapping saves return the later job’s actual inputs and capped captured payment through an authenticated recovery event, without fake delivery, support or reward. The original 43-command failure, accepted envelope and correction evidence survive in `web/.ingest-staging/housing-2026-09-05-final-fix/verification/`; the accepted envelope plus historical order variants are also a tracked test fixture.
+>
+> Current gates: **447 unit tests / 52 files pass with explicit `--maxWorkers=1 --testTimeout=30000`; four affected browser tests pass (archived recovery and all three routes); standard lint, typecheck and production build pass**. The prior full 54-browser receipt covers unchanged flows; it is not relabeled as a new full-suite run. The retained full cohort is unchanged: all policy outreach is already serialized, and 30 representative reruns match exact retained trace hashes/outcomes with no recovery. Earlier 5s unit timeouts and the production-target browser adapter mismatch are preserved and explained in `verification/overlap-fix-report.md`. Legacy and Session density, candidate validation, raw 21-input audit and normalized candidate checks pass. All three actual-control Session routes include axe, frozen export and exact reload. Historical failed gate logs and the prior full cohort survive outside plan scratch in `web/.ingest-staging/housing-2026-09-05-final-fix/verification/`; preserve that archive during SDD cleanup. One early 20-run unsafe-counter development trace was overwritten and is unavailable; the canonical boundary regression is independent verification, not a replacement labeled as that original trace.
+>
+> **Checkpoint 2 is not accepted.** Source/editorial review, the MOO-746 reviewed eight-card art pilot and eight consented participant sessions remain pending. `docs/playtests/session-replay-results.md` remains `NOT RUN`. Sources are still candidate/human-review-pending. No 24-week or 77-card work is authorized before explicit acceptance.
+
+The production review build is verified as **Paper Majority — A Congressional Strategy Game** at [http://127.0.0.1:3100](http://127.0.0.1:3100), listener PID **50042**. It serves the passing production build from this worktree. If it has ended, restart with the command below and verify its title before review.
+
+## Current Session startup
+
+```bash
+npm --prefix /Users/tarikmoody/Projects/paper-majority/.worktrees/replayable-session/web run start -- --hostname 127.0.0.1 --port 3100
+```
+
+## Current Session commands
+
+```bash
+npm --prefix web run lint
+npm --prefix web run typecheck
+npm --prefix web run test:run
+npm --prefix web run report:patterns
+npm --prefix web run report:patterns:session
+npm --prefix web run validate:content
+npm --prefix web run balance -- --mode session --seeds 1000 --parties both --pace standard
+npm --prefix web run test:e2e
+npm --prefix web run build
+```
+
+Playwright owns `http://127.0.0.1:3100` for its suite. If a verified Paper Majority server is already running there, use `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`; never reuse ports 3000/3001 without checking the page title.
+
+> **Replayable Session implementation — 2026-09-05:** Tarik authorized the [replayable Session plan](superpowers/plans/2026-09-04-replayable-session.md). The implementation is on `codex/replayable-session`; current automated evidence is in `web/reports/session-balance/` and the Session command block above. The historical Phase 1 report below remains evidence of that earlier build. Its old stop instruction does not override the completed six-week implementation; human replay, content and art acceptance remain pending.
+
 **Written:** 2026-08-26 · **HEAD:** `776b295` · **Branch:** `main`
 
 Read this first if you are picking the project up cold. It is the shortest path to

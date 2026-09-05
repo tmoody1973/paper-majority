@@ -1,6 +1,7 @@
 import type {
   ElectionEffectEntry,
   ElectionForecast,
+  InstanceForm,
   ProcedureStage,
   ReelectionResult,
   Resources,
@@ -28,6 +29,14 @@ export type RejectionReason =
   | 'malformed-command'
   | 'invalid-stage'
   | 'clock-not-expired'
+  | 'stale-decision'
+  | 'unknown-decision'
+  | 'unknown-choice'
+  | 'duplicate-outreach'
+  | 'pending-decision'
+  | 'duplicate-provision'
+  | 'invalid-card-form'
+  | 'run-complete'
   /** A real command that this build does not serve yet. Never a content or player error. */
   | 'unsupported-command';
 
@@ -74,6 +83,16 @@ export type GameEvent =
        */
       returnedCardIds: string[];
       outputDefinitionId: string;
+      outputForm?: InstanceForm;
+      producerPatternId?: string;
+      outputSlotIndex?: number;
+      outputSourceCardId?: string;
+      outputSourceDefinitionId?: string;
+      outputSourceForm?: InstanceForm;
+      inputDefinitionIds?: string[];
+      consumedDefinitionIds?: string[];
+      authoredConcernId?: string;
+      authoredConcernOfficeDefinitionId?: string;
       explanationKey: string;
     }
   | { type: 'PATTERN_DISCOVERED'; patternId: string }
@@ -83,12 +102,49 @@ export type GameEvent =
       tacticDefinitionId: string;
       targetPatternId: string;
     }
-  | { type: 'RESOURCE_CHANGED'; changes: Partial<Resources>; reason: string }
+  | {
+      type: 'RESOURCE_CHANGED';
+      /** Signed differences actually applied after resource bounds are enforced. */
+      changes: Partial<Resources>;
+      reason: string;
+    }
   | { type: 'ELECTION_EFFECT_ADDED'; effect: ElectionEffectEntry }
   | { type: 'ELECTION_OUTLOOK_UPDATED'; forecast: ElectionForecast }
   | { type: 'PAUSE_CHANGED'; paused: boolean }
-  | { type: 'EVENT_TRIGGERED'; storyEventId: string; whyRules: string[] }
+  | { type: 'EVENT_TRIGGERED'; storyEventId: string; occurrenceId: string; whyRules: string[] }
+  | { type: 'STORY_DECISION_PRESENTED'; decisionId: string; storyEventId: string; occurrenceId: string; choiceIds: string[] }
+  | { type: 'STORY_DECISION_RESOLVED'; decisionId: string; storyEventId: string; choiceId: string; occurrenceId: string }
   | { type: 'WEEK_RESOLVED'; week: number; summary: string[] }
+  | { type: 'OBLIGATION_STATUS_CHANGED'; obligationId: string; status: 'fulfilled' | 'missed' | 'declined' }
+  | {
+      type: 'OBLIGATION_CREATED';
+      obligationId: string;
+      sourceId: string;
+      occurrenceId: string;
+      sourceCardInstanceId?: string;
+    }
+  | { type: 'WORK_RECOVERED'; workId: string; cardIds: string[]; reason: 'office-offer-unavailable'; refundedCost: Partial<Resources> }
+  | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
+  | {
+      type: 'PATTERN_COMPLETED';
+      delivery?: import('@/domain/types').PreparationDelivery;
+      workId: string;
+      patternId: string;
+      inputCardIds?: string[];
+      inputDefinitionIds?: string[];
+      consumedDefinitionIds?: string[];
+      authoredConcernId?: string;
+    }
+  | { type: 'PROVISION_DOCKETED'; cardId: string; provisionId: string; revision: number }
+  | { type: 'PROVISION_NEGOTIATED'; decisionId: string; occurrenceId: string; provisionId: string; change: 'added' | 'removed'; revision: number }
+  | { type: 'DECISION_PRESENTED'; decisionId: string; sourceId: string; occurrenceId: string; choiceIds: string[] }
+  | { type: 'DECISION_RESOLVED'; decisionId: string; choiceId: string; occurrenceId: string }
+  | { type: 'PROMISE_CHANGED'; promiseOccurrenceId: string; status: 'open' | 'fulfilled' | 'broken' }
+  | { type: 'OPPORTUNITY_DECLINED'; occurrenceId: string; sourceId: string }
+  | { type: 'PACK_OPENED'; packOccurrenceId: string; categoryId: string; cardDefinitionIds: string[] }
+  | { type: 'CARD_LOCATION_CHANGED'; cardId: string; location: 'desk' | 'filed' | 'archived' }
+  | { type: 'READINESS_MILESTONE_REWARDED'; rewardId: string; appliedCapital: number }
+  | { type: 'SESSION_CONCLUDED'; outcome: 'ready' | 'not-ready' }
   | { type: 'VOTE_RESOLVED'; stage: ProcedureStage; passed: boolean; tally: VoteTally }
   | { type: 'REELECTION_RESOLVED'; result: ReelectionResult }
   | {

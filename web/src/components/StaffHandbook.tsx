@@ -35,13 +35,17 @@ function Silhouette() {
 }
 
 function Entry({ entry }: { entry: HandbookEntry }) {
+  const label = entry.remembered ? 'Remembered' : STATE_LABELS[entry.state];
+  const blurb = entry.remembered
+    ? 'Remembered from an earlier session. This explains the rule without changing this run.'
+    : STATE_BLURBS[entry.state];
   return (
     <li className="handbook-entry" data-testid={`handbook-entry-${entry.patternId}`}>
       <p className="handbook-entry__state">
         <span className={`handbook-badge handbook-badge--${entry.state}`}>
-          {STATE_LABELS[entry.state]}
+          {label}
         </span>
-        <span className="handbook-entry__blurb">{STATE_BLURBS[entry.state]}</span>
+        <span className="handbook-entry__blurb">{blurb}</span>
       </p>
 
       <p className="handbook-entry__hint">{entry.hint}</p>

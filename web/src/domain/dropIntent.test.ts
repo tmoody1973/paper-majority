@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { createFixtureState, getFixtureScenario } from '@/content/fixtures/loadFixture';
-import { resolveDropIntent, wouldDropBeAccepted } from '@/domain/dropIntent';
+import {
+  BILL_DOCKET_TARGET_ID,
+  resolveDropIntent,
+  wouldDropBeAccepted,
+} from '@/domain/dropIntent';
 import type { TermState } from '@/domain/types';
 
 const scenario = getFixtureScenario();
@@ -95,6 +99,22 @@ describe('resolveDropIntent', () => {
   it('returns nothing for an unknown card or stack', () => {
     expect(resolveDropIntent(state, scenario, 'nope', stackOf('staff-policy-aide'))).toBeUndefined();
     expect(resolveDropIntent(state, scenario, cardId('staff-policy-aide'), 'nope')).toBeUndefined();
+  });
+
+  it('maps the Session Docket destination to the canonical bill command', async () => {
+    const { createRun } = await import('@/domain/initialState');
+    const { sessionScenario, sessionSetup } = await import('@/test/fixtures/session');
+    const run = createRun({ ...sessionSetup, mode: 'session' });
+    const policy = run.cards.find((card) => card.definitionId === 'policy-housing-choice-voucher')!;
+    const drafted = { ...policy, form: 'drafted' as const };
+    const ready = { ...run, cards: run.cards.map((card) => card.id === policy.id ? drafted : card) };
+
+    expect(resolveDropIntent(ready, sessionScenario, drafted.id, BILL_DOCKET_TARGET_ID)).toEqual({
+      type: 'DOCKET_PROVISION',
+      cardId: drafted.id,
+    });
+    expect(wouldDropBeAccepted(ready, sessionScenario, drafted.id, BILL_DOCKET_TARGET_ID)).toBe(true);
+    expect(wouldDropBeAccepted(run, sessionScenario, policy.id, BILL_DOCKET_TARGET_ID)).toBe(false);
   });
 });
 

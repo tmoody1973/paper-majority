@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Raw inputs and preserved verification scripts are evidence, not application source.
+    ".ingest-staging/**",
   ]),
 ]);
 

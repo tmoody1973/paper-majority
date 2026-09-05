@@ -141,9 +141,11 @@ export class CardView extends Phaser.GameObjects.Container {
     // only visible reason one office accepts your bill and another refuses it.
     // Deliberately ink-coloured rather than red/blue: the letter carries the meaning,
     // so party never becomes a dominant colour area or a second family system.
-    if (options.definition.officeParty) {
-      const letter = options.definition.officeParty === 'democratic' ? 'D' : 'R';
-      const word = options.definition.officeParty === 'democratic' ? 'Democratic' : 'Republican';
+    const officeParty =
+      options.definition.kind === 'coalition' ? options.definition.officialRecord.party : undefined;
+    if (officeParty) {
+      const letter = officeParty === 'democratic' ? 'D' : 'R';
+      const word = officeParty === 'democratic' ? 'Democratic' : 'Republican';
 
       const badge = scene.add.graphics();
       badge.fillStyle(PAPER, 1);
@@ -267,6 +269,7 @@ export class CardView extends Phaser.GameObjects.Container {
     definition: CardDefinition,
     costLine = '',
     originLine = '',
+    deadlineLine = '',
   ): void {
     this.instance = instance;
     this.definition = definition;
@@ -275,7 +278,10 @@ export class CardView extends Phaser.GameObjects.Container {
     this.originText.setText(originLine);
 
     const remainingSeconds = Math.ceil(instance.remainingMs / 1000);
-    if (instance.status === 'expired') {
+    if (deadlineLine) {
+      this.deadline.setText(deadlineLine);
+      this.setAlpha(1);
+    } else if (instance.status === 'expired') {
       this.deadline.setText('Missed');
       this.setAlpha(0.55);
     } else if (instance.status !== 'working' && instance.remainingMs > 0) {

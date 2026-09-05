@@ -26,9 +26,24 @@ export type GameCommand =
   | { type: 'SET_PAUSED'; paused: boolean }
   | { type: 'FILE_CARD'; cardId: string }
   | { type: 'ARCHIVE_CARD'; cardId: string }
+  | { type: 'UNFILE_CARD'; cardId: string }
+  | { type: 'SUBMIT_WORK'; cardIds: string[] }
+  | { type: 'DOCKET_PROVISION'; cardId: string }
+  | {
+      type: 'RESOLVE_DECISION';
+      decisionId: string;
+      choiceId: string;
+      expectedBillRevision: number;
+    }
+  | { type: 'OPEN_PACK'; packOccurrenceId: string; categoryId: string }
+  | { type: 'DRAW_STORY_EVENT' }
+  | { type: 'RESOLVE_STORY'; decisionId: string; choiceId: string }
+  | { type: 'FAST_FORWARD' }
+  | { type: 'CONCLUDE_SESSION' }
   | { type: 'ACCEPT_AMENDMENT'; memberId: string; provisionId: string }
   | { type: 'REJECT_AMENDMENT'; memberId: string }
-  | { type: 'ADVANCE_WEEK'; confirmEarly?: boolean }
+  | { type: 'ADVANCE_WEEK'; confirmEarly: true; expectedWeek: number }
+  | { type: 'ADVANCE_WEEK'; confirmEarly?: false; expectedWeek?: never }
   | { type: 'RESOLVE_VOTE' };
 
 export type GameCommandType = GameCommand['type'];

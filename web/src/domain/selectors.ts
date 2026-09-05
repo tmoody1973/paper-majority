@@ -1,9 +1,31 @@
+import { sessionCompletionRejection } from '@/domain/work';
 import type {
   CardKind,
+  Obligation,
   RecipeSlot,
   ScenarioDefinition,
   TermState,
 } from '@/domain/types';
+import { effectiveRule } from '@/domain/recipes';
+
+/** Stable pending order for modal presentation and replay screenshots. */
+export function nextPendingDecision(state: TermState) {
+  return state.pendingDecisions
+    .filter((decision) => decision.status === 'pending')
+    .sort((a, b) => a.id.localeCompare(b.id))[0];
+}
+
+/** Stable, canonical order shared by the weekly review and filing cabinet. */
+export function openObligations(state: TermState, mandatoryOnly = false): Obligation[] {
+  return state.obligations
+    .filter((obligation) => obligation.status === 'open')
+    .filter((obligation) => !mandatoryOnly || obligation.mandatory)
+    .sort((a, b) =>
+      a.due.week - b.due.week
+      || a.due.offsetMs - b.due.offsetMs
+      || a.id.localeCompare(b.id),
+    );
+}
 
 /**
  * Staff Handbook state, derived — never stored.
@@ -31,6 +53,8 @@ export interface HandbookExample {
 export interface HandbookEntry {
   patternId: string;
   state: HandbookState;
+  /** Knowledge retained from another run; never copied into canonical rules state. */
+  remembered: boolean;
   hint: string;
   outputDefinitionId?: string;
   outputTitle?: string;
@@ -66,12 +90,14 @@ export function describeStudyOption(
   const tactic = state.cards.find((card) => card.id === tacticCardId);
   if (!staff || !tactic) return { isTactic: false, canStudy: false };
 
-  const expansion = scenario.tacticExpansions.find(
+  const authoredExpansions = scenario.tacticExpansions.filter(
     (candidate) => candidate.tacticDefinitionId === tactic.definitionId,
-  );
-  if (!expansion) return { isTactic: false, canStudy: false };
+  ).sort((a, b) => a.id.localeCompare(b.id));
+  if (authoredExpansions.length === 0) return { isTactic: false, canStudy: false };
 
-  if ((state.unlockedSlotExpansions[expansion.targetPatternId] ?? []).includes(expansion.id)) {
+  const expansions = authoredExpansions.filter((expansion) =>
+    !(state.unlockedSlotExpansions[expansion.targetPatternId] ?? []).includes(expansion.id));
+  if (expansions.length === 0) {
     return { isTactic: true, canStudy: false, blockedReason: 'Your office has already learned this.' };
   }
 
@@ -79,14 +105,17 @@ export function describeStudyOption(
     return { isTactic: true, canStudy: false, blockedReason: 'That Tactic is already being studied.' };
   }
 
-  const wanted = expansion.eligibleStaffTags.map(describeTag).join(' or ');
+  const eligibleTags = Array.from(new Set(expansions.flatMap((expansion) => expansion.eligibleStaffTags)));
+  const wanted = eligibleTags.map(describeTag).join(' or ');
   const onTheDesk = state.cards
     .filter((card) => {
       if (card.status !== 'idle') return false;
       const definition = scenario.cards.find((entry) => entry.id === card.definitionId);
       return (
         definition?.kind === 'staff' &&
-        expansion.eligibleStaffTags.some((tag) => definition.tags.includes(tag))
+        expansions.every((expansion) =>
+          expansion.eligibleStaffTags.some((tag) => definition.tags.includes(tag)),
+        )
       );
     })
     .map(
@@ -114,7 +143,9 @@ export function describeStudyOption(
     };
   }
 
-  if (!expansion.eligibleStaffTags.some((tag) => staffDefinition.tags.includes(tag))) {
+  if (!expansions.every((expansion) =>
+    expansion.eligibleStaffTags.some((tag) => staffDefinition.tags.includes(tag)),
+  )) {
     return {
       isTactic: true,
       canStudy: false,
@@ -122,7 +153,7 @@ export function describeStudyOption(
     };
   }
 
-  if (state.resources.staffAttention < expansion.studyCost) {
+  if (state.resources.staffAttention < Math.max(...expansions.map((expansion) => expansion.studyCost))) {
     return {
       isTactic: true,
       canStudy: false,
@@ -130,6 +161,8 @@ export function describeStudyOption(
     };
   }
 
+  const timingRejection = sessionCompletionRejection(state, Math.max(1, ...expansions.map((expansion) => expansion.studyDurationMs)));
+  if (timingRejection) return { isTactic: true, canStudy: false, blockedReason: timingRejection };
   return { isTactic: true, canStudy: true };
 }
 
@@ -245,9 +278,15 @@ function successfulExamples(
   return examples;
 }
 
-export function buildHandbook(state: TermState, scenario: ScenarioDefinition): HandbookView {
+export function buildHandbook(
+  state: TermState,
+  scenario: ScenarioDefinition,
+  lifetimeDiscoveredPatternIds: readonly string[] = [],
+): HandbookView {
   const entries: HandbookEntry[] = scenario.patterns.map((pattern) => {
-    const discovered = state.discoveredPatternIds.includes(pattern.id);
+    const discoveredThisRun = state.discoveredPatternIds.includes(pattern.id);
+    const remembered = !discoveredThisRun && lifetimeDiscoveredPatternIds.includes(pattern.id);
+    const discovered = discoveredThisRun || remembered;
     const activeIds = state.unlockedSlotExpansions[pattern.id] ?? [];
     const expansions = scenario.tacticExpansions
       .filter((expansion) => activeIds.includes(expansion.id))
@@ -259,33 +298,15 @@ export function buildHandbook(state: TermState, scenario: ScenarioDefinition): H
       return {
         patternId: pattern.id,
         state: 'teased',
+        remembered: false,
         hint: pattern.discoveryHint,
         successfulExamples: [],
         expansions: [],
       };
     }
 
-    const effectiveSlots = pattern.slots.map((slot) => {
-      let widened = { ...slot };
-      for (const expansion of scenario.tacticExpansions) {
-        if (!activeIds.includes(expansion.id)) continue;
-        if (expansion.effect.kind !== 'widen-slot') continue;
-        if (pattern.slots[expansion.effect.slotIndex] !== slot) continue;
-        widened = {
-          ...widened,
-          anyTags: Array.from(
-            new Set([...(widened.anyTags ?? []), ...(expansion.effect.addAnyTags ?? [])]),
-          ),
-          sourceClasses: Array.from(
-            new Set([
-              ...(widened.sourceClasses ?? []),
-              ...(expansion.effect.addSourceClasses ?? []),
-            ]),
-          ),
-        };
-      }
-      return widened;
-    });
+    const effective = effectiveRule(pattern, activeIds, scenario.tacticExpansions);
+    const effectiveSlots = effective.pattern.slots;
 
     const outputDefinitionId =
       pattern.output.mode === 'fixed'
@@ -295,6 +316,7 @@ export function buildHandbook(state: TermState, scenario: ScenarioDefinition): H
     return {
       patternId: pattern.id,
       state: expansions.length > 0 ? 'expanded' : 'discovered',
+      remembered,
       hint: pattern.discoveryHint,
       outputDefinitionId,
       outputTitle: scenario.cards.find((card) => card.id === outputDefinitionId)?.title,
