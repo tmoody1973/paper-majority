@@ -75,6 +75,24 @@ describe('parseScenario', () => {
     expect(() => parseScenario(reference)).toThrow();
   });
 
+  it('requires simulated fixture offices to use the simulated source class', () => {
+    const invalid = copy();
+    const office = (invalid.cards as Array<Record<string, unknown>>).find(
+      (card) => card.id === 'coalition-office-hillcrest',
+    );
+    if (!office) throw new Error('missing fixture office');
+    office.sourceClass = 'derived';
+    office.citations = [
+      {
+        title: 'A record cannot verify a fictional office',
+        url: 'https://example.com/record',
+        retrievedAt: '2026-09-04',
+      },
+    ];
+
+    expect(() => parseScenario(invalid)).toThrow(/simulated/i);
+  });
+
   it('rejects patterns outside the two-to-four input boundary', () => {
     const invalid = copy();
     (invalid.patterns as Array<Record<string, unknown>>)[0].slots = [
@@ -102,5 +120,14 @@ describe('parseScenario', () => {
     const resultCard = upgraded.cards.find((card) => card.id === 'coalition-outreach-result');
     if (!resultCard) throw new Error('missing legacy output card');
     expect(computeEffectiveTags(resultCard, 'democratic')).not.toContain('same-party');
+  });
+
+  it('rejects a non-simulated legacy coalition card instead of inventing verified facts', () => {
+    const legacy = structuredClone(spike.scenario);
+    const office = legacy.cards.find((card) => card.id === 'coalition-office-hillcrest');
+    if (!office) throw new Error('missing legacy office');
+    office.sourceClass = 'official';
+
+    expect(() => upgradeLegacyScenario(legacy)).toThrow(/legacy coalition/i);
   });
 });

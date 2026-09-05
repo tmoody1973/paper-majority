@@ -437,10 +437,10 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
       }
       if (
         card.kind === 'coalition' &&
-        card.sourceClass === 'official' &&
-        card.officialRecord.provenance !== 'official'
+        card.officialRecord.provenance === 'simulated-fixture' &&
+        card.sourceClass !== 'simulated'
       ) {
-        addReferenceIssue(ctx, 'Official coalition cards require an official record', [
+        addReferenceIssue(ctx, 'Simulated fixture offices require the simulated source class', [
           'cards',
           index,
           'officialRecord',
@@ -542,6 +542,11 @@ function upgradeLegacyCard(
   card: z.infer<typeof legacyCardSchema>,
   frozenAt: string,
 ): CardDefinition {
+  if (card.kind === 'coalition' && card.sourceClass !== 'simulated') {
+    throw new Error(
+      `Cannot upgrade legacy coalition card "${card.id}": its legacy coalition classification is not simulated and the record lacks verified official facts`,
+    );
+  }
   const shared = { ...card };
   delete (shared as { officeParty?: unknown }).officeParty;
 
