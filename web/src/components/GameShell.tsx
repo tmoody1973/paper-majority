@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AccessibleCardControls } from '@/components/AccessibleCardControls';
 import { BillDocket } from '@/components/BillDocket';
 import { CardInspector } from '@/components/CardInspector';
+import { DecisionModal } from '@/components/DecisionModal';
 import { Hud } from '@/components/Hud';
 import { OfficeBrief } from '@/components/OfficeBrief';
 import { PlainEnglishKey } from '@/components/PlainEnglishKey';
@@ -101,6 +102,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const detail = shownCardId ? describeCard(state, scenario, shownCardId) : undefined;
 
   const handbook = useMemo(() => buildHandbook(state, scenario), [state, scenario]);
+  const pendingDecisionId = state.pendingDecisions.find((decision) => decision.status === 'pending')?.id;
 
   return (
     <main className="shell">
@@ -112,6 +114,9 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
         onToggleHandbook={() => setHandbookOpen((open) => !open)}
         onToggleReducedMotion={() => session.setReducedMotion(!state.settings.reducedMotion)}
       />
+      {pendingDecisionId && (
+        <DecisionModal key={pendingDecisionId} session={session} state={state} onResult={onResult} />
+      )}
 
       <div className="shell__body">
         <section

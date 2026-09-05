@@ -145,7 +145,9 @@ export function WorkMat({
         <ul className="work-mat__active" aria-label="Active work">
           {state.activeWork.map((work) => (
             <li key={work.id} data-testid={`work-mat-active-${work.id}`}>
-              <span>{work.kind === 'study' ? 'Studying tactic' : 'Work in progress'} · {Math.ceil(remainingWorkMs(state, work.cardIds[0]) / 1000)}s</span>
+              <span>{work.kind === 'study'
+                ? 'Studying tactic'
+                : work.decisionOrigin ? 'Counteroffer in progress' : 'Work in progress'} · {Math.ceil(remainingWorkMs(state, work.cardIds[0]) / 1000)}s</span>
               <button
                 type="button"
                 data-testid={`work-mat-cancel-${work.id}`}

@@ -6,6 +6,13 @@ import type {
 } from '@/domain/types';
 import { effectiveRule } from '@/domain/recipes';
 
+/** Stable pending order for modal presentation and replay screenshots. */
+export function nextPendingDecision(state: TermState) {
+  return state.pendingDecisions
+    .filter((decision) => decision.status === 'pending')
+    .sort((a, b) => a.id.localeCompare(b.id))[0];
+}
+
 /**
  * Staff Handbook state, derived — never stored.
  *

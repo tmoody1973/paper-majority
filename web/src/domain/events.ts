@@ -31,6 +31,8 @@ export type RejectionReason =
   | 'stale-decision'
   | 'unknown-decision'
   | 'unknown-choice'
+  | 'duplicate-outreach'
+  | 'pending-decision'
   | 'duplicate-provision'
   | 'invalid-card-form'
   | 'run-complete'
@@ -102,7 +104,8 @@ export type GameEvent =
   | { type: 'WEEK_RESOLVED'; week: number; summary: string[] }
   | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
   | { type: 'PROVISION_DOCKETED'; cardId: string; provisionId: string; revision: number }
-  | { type: 'DECISION_PRESENTED'; decisionId: string; sourceId: string; choiceIds: string[] }
+  | { type: 'PROVISION_NEGOTIATED'; decisionId: string; occurrenceId: string; provisionId: string; change: 'added' | 'removed'; revision: number }
+  | { type: 'DECISION_PRESENTED'; decisionId: string; sourceId: string; occurrenceId: string; choiceIds: string[] }
   | { type: 'DECISION_RESOLVED'; decisionId: string; choiceId: string; occurrenceId: string }
   | { type: 'PROMISE_CHANGED'; promiseOccurrenceId: string; status: 'open' | 'fulfilled' | 'broken' }
   | { type: 'OPPORTUNITY_DECLINED'; occurrenceId: string; sourceId: string }

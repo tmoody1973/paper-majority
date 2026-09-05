@@ -71,7 +71,7 @@ export const sessionScenario: ScenarioDefinition = {
       sourceClass: 'official',
       citations: [SOURCE],
       plainLanguage: 'A housing supply policy used as drafting precedent.',
-      valueEffects: { 'Housing Supply': 1, 'Local Control': -1 },
+      valueEffects: { 'Housing Supply': 1, 'Local Control': -1, 'Tenant Stability': -1 },
       committeeJurisdiction: 'Financial Services',
       precedentIds: [],
       editorialReviewDate: '2026-09-04',
@@ -122,6 +122,9 @@ export const sessionScenario: ScenarioDefinition = {
         'coalition-expansion',
       ]),
     },
+    {
+      ...base('political-outreach-note', 'Coalition Outreach Note', 'political', ['outreach']),
+    },
   ] as CardDefinition[],
   startingCardDefinitionIds: [
     'staff-policy-aide',
@@ -129,6 +132,8 @@ export const sessionScenario: ScenarioDefinition = {
     'staff-district-director',
     'evidence-rent-burden-report',
     'policy-housing-choice-voucher',
+    'coalition-office-hillcrest',
+    'coalition-office-ridgeline',
   ],
   tagTaxonomy: [
     'policy-focused',
@@ -146,6 +151,7 @@ export const sessionScenario: ScenarioDefinition = {
     'evidence-summary',
     'drafted',
     'prepared',
+    'outreach',
   ],
   patterns: [
     {
@@ -215,6 +221,39 @@ export const sessionScenario: ScenarioDefinition = {
       priority: 10,
       discoveryHint: 'District staff can prepare a district or committee packet from a relevant summary.',
     },
+    {
+      id: 'pattern-coalition-outreach',
+      slots: [
+        { kind: 'staff', requiredTags: ['policy-focused'], quantity: 1, consumed: false },
+        { kind: 'coalition', requiredTags: ['housing-interest'], quantity: 1, consumed: false },
+      ],
+      output: {
+        mode: 'derived',
+        resolverId: 'resolve-outreach-v1',
+        parameters: { outputDefinitionId: 'political-outreach-note' },
+      },
+      durationMs: 25_000,
+      resourceCost: { staffAttention: 1 },
+      priority: 10,
+      discoveryHint: 'Policy staff can approach an office with a shared housing interest.',
+    },
+    {
+      id: 'pattern-counter-office-concern',
+      slots: [
+        { kind: 'staff', requiredTags: ['district-focused'], quantity: 1, consumed: false },
+        { kind: 'evidence', forms: ['prepared'], requiredTags: ['committee-relevant'], quantity: 1 },
+        { kind: 'coalition', requiredTags: ['housing-interest'], quantity: 1, consumed: false },
+      ],
+      output: {
+        mode: 'derived',
+        resolverId: 'prepare-evidence-packet-v1',
+        parameters: { preserveInputDefinition: true },
+      },
+      durationMs: 30_000,
+      resourceCost: { staffAttention: 1 },
+      priority: 11,
+      discoveryHint: 'District staff can turn a prepared office answer into a narrower counteroffer.',
+    },
   ],
   tacticExpansions: [
     {
@@ -258,23 +297,68 @@ export const sessionScenario: ScenarioDefinition = {
   demandDefinitions: [
     {
       id: 'demand-renter-protection',
-      title: 'Include renter protection',
+      title: 'Prioritize a local supply incentive',
       officeDefinitionId: 'coalition-office-hillcrest',
+      condition: { kind: 'bill-has-tag', tag: 'supply' },
+      choiceIds: [
+        'choice-accept-renter-protection',
+        'choice-refuse-renter-protection',
+        'choice-counter-renter-protection',
+      ],
+    },
+    {
+      id: 'demand-rural-supply',
+      title: 'Include rental assistance',
+      officeDefinitionId: 'coalition-office-ridgeline',
       condition: { kind: 'bill-has-tag', tag: 'renter-focused' },
-      choiceIds: ['choice-accept-demand', 'choice-refuse-demand'],
+      choiceIds: ['choice-accept-rural-supply', 'choice-refuse-rural-supply'],
     },
   ],
   decisionChoices: [
     {
-      id: 'choice-accept-demand',
-      label: 'Accept',
+      id: 'choice-accept-renter-protection',
+      label: 'Accept the supply provision',
       action: 'accept',
       requirements: [],
-      effects: [{ kind: 'relationship-support', support: 'conditional' }],
+      effects: [
+        { kind: 'resource', resource: 'politicalCapital', delta: -1 },
+        { kind: 'bill-remove-provision', provisionId: 'policy-housing-choice-voucher' },
+        { kind: 'bill-add-provision', provisionId: 'policy-zoning-incentive' },
+        { kind: 'relationship-support', support: 'conditional' },
+      ],
     },
     {
-      id: 'choice-refuse-demand',
-      label: 'Refuse',
+      id: 'choice-refuse-renter-protection',
+      label: 'Refuse the demand',
+      action: 'reject',
+      requirements: [],
+      effects: [{ kind: 'relationship-support', support: 'refused' }],
+    },
+    {
+      id: 'choice-counter-renter-protection',
+      label: 'Counter with prepared evidence',
+      action: 'counter',
+      requirements: [],
+      effects: [
+        { kind: 'promise-condition', condition: { kind: 'prepared-evidence-tag', tag: 'committee-relevant' } },
+        { kind: 'relationship-support', support: 'conditional' },
+      ],
+      requiredWorkPatternId: 'pattern-counter-office-concern',
+    },
+    {
+      id: 'choice-accept-rural-supply',
+      label: 'Accept the rental assistance provision',
+      action: 'accept',
+      requirements: [],
+      effects: [
+        { kind: 'resource', resource: 'politicalCapital', delta: -1 },
+        { kind: 'bill-add-provision', provisionId: 'policy-housing-choice-voucher' },
+        { kind: 'relationship-support', support: 'conditional' },
+      ],
+    },
+    {
+      id: 'choice-refuse-rural-supply',
+      label: 'Refuse the demand',
       action: 'reject',
       requirements: [],
       effects: [{ kind: 'relationship-support', support: 'refused' }],

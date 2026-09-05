@@ -61,7 +61,12 @@ export function Hud({
         </ul>
 
         <div className="hud__controls">
-          <button type="button" onClick={onTogglePause} data-testid="hud-pause">
+          <button
+            type="button"
+            onClick={onTogglePause}
+            data-testid="hud-pause"
+            disabled={state.pendingDecisions.some((decision) => decision.status === 'pending')}
+          >
             {state.paused ? 'Resume' : 'Pause'}
           </button>
           <button

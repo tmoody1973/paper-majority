@@ -240,15 +240,25 @@ export interface BillState {
   revision: number;
 }
 
-export interface BillProvisionReceipt {
+interface BillProvisionReceiptBase {
   provisionId: string;
-  draftedCardId: string;
   sourceDefinitionIds: string[];
   docketedAtRevision: number;
   plainLanguage: string;
   form: 'drafted';
   sourceClass: 'simulated';
 }
+
+/** Negotiated language keeps its real decision provenance instead of inventing a draft card. */
+export type BillProvisionReceipt = BillProvisionReceiptBase & (
+  | { origin: 'draft'; draftedCardId: string }
+  | {
+      origin: 'decision';
+      decisionId: string;
+      sourceId: string;
+      occurrenceId: string;
+    }
+);
 
 export type RelationshipCondition =
   | { kind: 'bill-has-tag'; tag: string }
@@ -280,6 +290,13 @@ export interface WorkReservation {
   effectiveRuleVersion: string;
   consumedCardIds: string[];
   returnedCardIds: string[];
+  /** Present only when a resolved counteroffer reserved this canonical work item. */
+  decisionOrigin?: {
+    decisionId: string;
+    choiceId: string;
+    occurrenceId: string;
+    officeDefinitionId: string;
+  };
 }
 
 export type ActiveWork = WorkReservation &
@@ -305,6 +322,10 @@ export interface Obligation {
 export interface PendingDecision {
   id: string;
   sourceId: string;
+  occurrenceId: string;
+  officeDefinitionId: string;
+  /** Revision actually examined by outreach, retained if completion revalidated later. */
+  approachedBillRevision: number;
   expectedBillRevision: number;
   choiceIds: string[];
   status: 'pending' | 'resolved';
@@ -537,7 +558,10 @@ export interface DemandDefinition {
 export type DecisionChoiceEffect =
   | { kind: 'resource'; resource: keyof Resources; delta: number }
   | { kind: 'create-obligation'; obligationDefinitionId: string }
-  | { kind: 'relationship-support'; support: SupportState };
+  | { kind: 'relationship-support'; support: SupportState }
+  | { kind: 'promise-condition'; condition: DemandConditionDefinition }
+  | { kind: 'bill-add-provision'; provisionId: string }
+  | { kind: 'bill-remove-provision'; provisionId: string };
 
 export interface DecisionChoiceDefinition {
   id: string;
@@ -545,6 +569,8 @@ export interface DecisionChoiceDefinition {
   action: 'accept' | 'reject' | 'counter';
   requirements: DemandConditionDefinition[];
   effects: DecisionChoiceEffect[];
+  /** A counteroffer reserves the exact currently eligible inputs for this authored pattern. */
+  requiredWorkPatternId?: string;
 }
 
 export interface ModeObjectiveDefinition {

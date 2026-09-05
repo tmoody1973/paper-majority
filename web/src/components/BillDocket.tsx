@@ -98,7 +98,9 @@ export function BillDocket({ session, state, onResult }: BillDocketProps) {
             return (
               <li key={provisionId} data-testid={`bill-docket-provision-${provisionId}`}>
                 <strong>{titleOf(scenario, provisionId)}</strong>
-                <span className="bill-docket__provision-class">Drafted · Simulated</span>
+                <span className="bill-docket__provision-class">
+                  {receipt?.origin === 'decision' ? 'Negotiated' : 'Drafted'} · Simulated
+                </span>
                 <span>{receipt?.plainLanguage ?? 'No plain-language provision content recorded'}</span>
                 <span>
                   Source context: {receipt?.sourceDefinitionIds.length
@@ -115,6 +117,25 @@ export function BillDocket({ session, state, onResult }: BillDocketProps) {
           })}
         </ol>
       )}
+
+      <section className="bill-docket__support" aria-label="Simulated coalition support">
+        <h3>Coalition promises</h3>
+        <ul>
+          {state.relationships.map((relationship) => {
+            const office = scenario.cards.find((card) => card.id === relationship.memberId);
+            return (
+              <li key={relationship.memberId} data-testid={`coalition-status-${relationship.memberId}`}>
+                <strong>{titleOf(scenario, relationship.memberId)}</strong>{' '}
+                <span>{relationship.support}</span>
+                {office?.kind === 'coalition' && office.officialRecord.party
+                  ? ` · ${office.officialRecord.party}`
+                  : ''}
+                {' · Simulated support'}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       <div className="bill-docket__action">
         <label>
@@ -160,6 +181,15 @@ export function BillDocket({ session, state, onResult }: BillDocketProps) {
         </div>
       )}
       <p className="bill-docket__feedback" aria-live="polite" data-testid="bill-docket-feedback">{feedback}</p>
+      {state.eventLog.some((event) => event.type === 'PROMISE_CHANGED') && (
+        <p className="bill-docket__feedback" data-testid="bill-docket-support-change">
+          {state.eventLog
+            .filter((event) => event.type === 'PROMISE_CHANGED')
+            .slice(-2)
+            .map((event) => `${event.status === 'fulfilled' ? 'Support gained' : event.status === 'broken' ? 'Support lost' : 'Promise open'}: ${event.promiseOccurrenceId}`)
+            .join(' · ')}
+        </p>
+      )}
       <p className="bill-docket__next" data-testid="bill-docket-next">{nextRequirement(state, scenario)}</p>
     </section>
   );

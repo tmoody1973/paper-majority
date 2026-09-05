@@ -123,6 +123,7 @@ describe('DOCKET_PROVISION', () => {
     expect(first.state.bill.provisionIds).toEqual(['policy-housing-choice-voucher']);
     expect(first.state.bill.provisionReceipts).toEqual([
       {
+        origin: 'draft',
         provisionId: 'policy-housing-choice-voucher',
         draftedCardId: drafted!.id,
         sourceDefinitionIds: ['evidence-rent-burden-report'],

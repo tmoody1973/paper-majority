@@ -30,10 +30,26 @@ export default function SessionWorkbenchPage() {
     location: 'desk',
     sourceDefinitionIds: [],
   };
+  const concern: CardInstance = {
+    id: 'card-workbench-renter-concern',
+    definitionId: 'constituency-renter-concern',
+    stackId: 'stack-workbench-renter-concern',
+    x: 1_020,
+    y: 360,
+    remainingMs: 0,
+    status: 'idle',
+    form: 'raw',
+    location: 'desk',
+    sourceDefinitionIds: [],
+  };
   const initialState = {
     ...baseState,
-    cards: [...baseState.cards, tactic],
-    stacks: [...baseState.stacks, { id: tactic.stackId, cardIds: [tactic.id] }],
+    cards: [...baseState.cards, tactic, concern],
+    stacks: [
+      ...baseState.stacks,
+      { id: tactic.stackId, cardIds: [tactic.id] },
+      { id: concern.stackId, cardIds: [concern.id] },
+    ],
   };
 
   return <GameShell scenario={scenario} initialState={initialState} />;

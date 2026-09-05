@@ -79,6 +79,7 @@ describe('BillDocket', () => {
         provisionIds: ['policy-housing-choice-voucher'],
         revision: 1,
         provisionReceipts: [{
+          origin: 'draft',
           provisionId: 'policy-housing-choice-voucher',
           draftedCardId: 'old-card',
           sourceDefinitionIds: ['evidence-rent-burden-report'],

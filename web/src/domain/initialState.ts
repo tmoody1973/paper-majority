@@ -136,7 +136,18 @@ function buildInitialState(
       outcome: 'active',
       revision: 0,
     },
-    relationships: [],
+    relationships: mode === 'interaction-spike' ? [] : scenario.cards
+      .filter((card) => card.kind === 'coalition')
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((office) => ({
+        memberId: office.id,
+        support: scenario.demandDefinitions.some((demand) => demand.officeDefinitionId === office.id)
+          || office.tags.includes('housing-interest') ? 'interested' as const : 'unavailable' as const,
+        demandProvisionId: scenario.demandDefinitions.find((demand) => demand.officeDefinitionId === office.id)?.id,
+        promiseOccurrenceIds: [],
+        conditions: [],
+        evaluatedRevision: 0,
+      })),
     staffCapacity: 3,
     activeWork: [],
     obligations: [],

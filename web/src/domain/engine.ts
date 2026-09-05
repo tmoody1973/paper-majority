@@ -1,5 +1,7 @@
 import type { GameCommand, GameCommandType } from '@/domain/commands';
-import { previewDocketProvision } from '@/domain/bill';
+import { previewBillChange, previewDocketProvision } from '@/domain/bill';
+import { evaluateRelationships, promiseChangeEvents } from '@/domain/coalition';
+import { findRequiredDecisionWorkPlan, previewDecision } from '@/domain/decisions';
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
@@ -101,6 +103,7 @@ function authoredConcernFor(
   scenario: ScenarioDefinition,
 ) {
   const references = cards.flatMap((card) => {
+    if (card.origin?.authoredConcern) return [card.origin.authoredConcern];
     const definition = scenario.cards.find((candidate) => candidate.id === card.definitionId);
     return definition?.kind === 'constituency' && definition.authoredConcern
       ? [definition.authoredConcern]
@@ -201,6 +204,27 @@ function startSessionPattern(
   const planned = planWork(state, services.scenario, cardIds);
   if (!('preview' in planned)) {
     return sessionRejection(state, commandType, cardIds, planned.reason, targetStackId);
+  }
+
+  if (
+    planned.effectivePattern.output.mode === 'derived'
+    && planned.effectivePattern.output.resolverId === 'resolve-outreach-v1'
+  ) {
+    const office = cardIds
+      .map((id) => findCard(state, id))
+      .find((card) => services.scenario.cards.find((definition) => definition.id === card?.definitionId)?.kind === 'coalition');
+    const demand = services.scenario.demandDefinitions.find(
+      (candidate) => candidate.officeDefinitionId === office?.definitionId,
+    );
+    if (!office || !demand) {
+      return rejectCommand(state, commandType, 'no-matching-pattern', 'That office has no authored offer in this scenario.');
+    }
+    const occurrenceId = `${demand.id}:revision:${state.bill.revision}`;
+    const alreadyApproached = state.pendingDecisions.some((decision) => decision.occurrenceId === occurrenceId)
+      || state.eventLog.some((event) => event.type === 'DECISION_PRESENTED' && event.occurrenceId === occurrenceId);
+    if (alreadyApproached) {
+      return rejectCommand(state, commandType, 'duplicate-outreach', 'This office has already answered outreach on the current bill revision.');
+    }
   }
 
   const workId = nextWorkId(state);
@@ -751,6 +775,60 @@ function completeSessionWork(
     };
   }
 
+  if (
+    work.effectivePattern.output.mode === 'derived'
+    && work.effectivePattern.output.resolverId === 'resolve-outreach-v1'
+  ) {
+    const memberCards = work.cardIds
+      .map((id) => findCard(state, id))
+      .filter((card): card is CardInstance => card !== undefined);
+    const office = memberCards.find((card) =>
+      services.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'coalition',
+    );
+    const demand = services.scenario.demandDefinitions.find(
+      (candidate) => candidate.officeDefinitionId === office?.definitionId,
+    );
+    const occurrenceId = demand ? `${demand.id}:revision:${state.bill.revision}` : undefined;
+    const alreadyPresented = occurrenceId && (
+      state.pendingDecisions.some((decision) => decision.occurrenceId === occurrenceId)
+      || state.eventLog.some((event) => event.type === 'DECISION_PRESENTED' && event.occurrenceId === occurrenceId)
+    );
+    const events: GameEvent[] = [];
+    if (attention > 0) {
+      events.push({ type: 'RESOURCE_CHANGED', changes: release.applied, reason: `pattern-complete:${work.patternId}` });
+    }
+    const pending = demand && office && occurrenceId && !alreadyPresented ? {
+      id: `decision:${occurrenceId}`,
+      sourceId: demand.id,
+      occurrenceId,
+      officeDefinitionId: office.definitionId,
+      approachedBillRevision: work.billRevision ?? state.bill.revision,
+      expectedBillRevision: state.bill.revision,
+      choiceIds: [...demand.choiceIds],
+      status: 'pending' as const,
+    } : undefined;
+    if (pending) {
+      events.push({
+        type: 'DECISION_PRESENTED',
+        decisionId: pending.id,
+        sourceId: pending.sourceId,
+        occurrenceId: pending.occurrenceId,
+        choiceIds: [...pending.choiceIds],
+      });
+    }
+    const next = {
+      ...state,
+      paused: pending ? true : state.paused,
+      resources: release.resources,
+      cards: state.cards.map((card) => work.cardIds.includes(card.id)
+        ? { ...card, status: 'idle' as const, remainingMs: 0 }
+        : card),
+      activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
+      pendingDecisions: pending ? [...state.pendingDecisions, pending] : state.pendingDecisions,
+    };
+    return { state: { ...next, relationships: evaluateRelationships(next, services.scenario) }, events };
+  }
+
   const memberCards = work.cardIds
     .map((id) => findCard(state, id))
     .filter((card): card is CardInstance => card !== undefined);
@@ -809,16 +887,16 @@ function completeSessionWork(
     { id: producedStackId, cardIds: [producedId] },
   ];
 
-  return {
-    state: {
+  const completedState: TermState = {
       ...state,
       cardSeq: seq,
       resources: change.resources,
       cards,
       stacks,
       activeWork: state.activeWork.filter((candidate) => candidate.id !== work.id),
-    },
-    events: [
+  };
+  const relationships = evaluateRelationships(completedState, services.scenario);
+  const events: GameEvent[] = [
       {
         type: 'CARD_TRANSFORMED',
         stackId: anchor.stackId,
@@ -829,8 +907,9 @@ function completeSessionWork(
         explanationKey: resolved.explanationKey,
       },
       { type: 'RESOURCE_CHANGED', changes: change.applied, reason: `pattern-complete:${work.patternId}` },
-    ],
-  };
+  ];
+  events.push(...promiseChangeEvents(state.relationships, relationships));
+  return { state: { ...completedState, relationships }, events };
 }
 
 /**
@@ -1264,6 +1343,7 @@ export function executeCommand(
           provisionReceipts: [
             ...state.bill.provisionReceipts,
             {
+              origin: 'draft',
               provisionId: preview.provisionId,
               draftedCardId: command.cardId,
               sourceDefinitionIds: preview.sourceDefinitionIds,
@@ -1300,7 +1380,162 @@ export function executeCommand(
         provisionId: preview.provisionId,
         revision: preview.nextRevision,
       });
-      return accept(state, next, events);
+      const relationships = evaluateRelationships(next, services.scenario);
+      events.push(...promiseChangeEvents(state.relationships, relationships));
+      return accept(state, { ...next, relationships }, events);
+    }
+
+    case 'RESOLVE_DECISION': {
+      const pending = state.pendingDecisions.find(
+        (decision) => decision.id === command.decisionId && decision.status === 'pending',
+      );
+      if (!pending) {
+        return rejectCommand(state, command.type, 'unknown-decision', 'That offer is no longer pending.');
+      }
+      if (
+        command.expectedBillRevision !== pending.expectedBillRevision
+        || command.expectedBillRevision !== state.bill.revision
+      ) {
+        return rejectCommand(state, command.type, 'stale-decision', 'The bill changed after this offer was presented.');
+      }
+      const preview = previewDecision(state, services.scenario, command.decisionId, command.choiceId);
+      if (!preview.accepted) {
+        const reason: RejectionReason = preview.reason === 'missing-prerequisites'
+          ? 'no-matching-pattern'
+          : preview.reason;
+        return rejectCommand(state, command.type, reason, preview.message);
+      }
+      const choice = services.scenario.decisionChoices.find((candidate) => candidate.id === command.choiceId)!;
+      let workEvents: GameEvent[] = [];
+      let next = state;
+      if (preview.requiredWork) {
+        const required = findRequiredDecisionWorkPlan(
+          state,
+          services.scenario,
+          command.decisionId,
+          command.choiceId,
+        );
+        if (!required) {
+          return rejectCommand(state, command.type, 'no-matching-pattern', 'The required counteroffer work is no longer available.');
+        }
+        const started = startSessionPattern(
+          state,
+          services,
+          command.type,
+          required.cardIds,
+        );
+        if (started.events.some((event) => event.type === 'COMMAND_REJECTED')) return started;
+        workEvents = started.events;
+        const priorWorkIds = new Set(state.activeWork.map((work) => work.id));
+        next = {
+          ...started.state,
+          activeWork: started.state.activeWork.map((work) => priorWorkIds.has(work.id) ? work : {
+            ...work,
+            decisionOrigin: {
+              decisionId: command.decisionId,
+              choiceId: command.choiceId,
+              occurrenceId: pending.occurrenceId,
+              officeDefinitionId: pending.officeDefinitionId,
+            },
+          }),
+        };
+      }
+
+      const oldProvisionIds = new Set(state.bill.provisionIds);
+      const nextProvisionIds = [...preview.nextProvisionIds];
+      const nextProvisionSet = new Set(nextProvisionIds);
+      const billChanged = nextProvisionIds.length !== state.bill.provisionIds.length
+        || nextProvisionIds.some((id, index) => id !== state.bill.provisionIds[index]);
+      const nextRevision = state.bill.revision + (billChanged ? 1 : 0);
+      const retainedReceipts = state.bill.provisionReceipts.filter((receipt) => nextProvisionSet.has(receipt.provisionId));
+      const addedReceipts = nextProvisionIds
+        .filter((provisionId) => !oldProvisionIds.has(provisionId))
+        .flatMap((provisionId) => {
+          const policy = services.scenario.cards.find((card) => card.id === provisionId);
+          if (policy?.kind !== 'policy') return [];
+          return [{
+            origin: 'decision' as const,
+            decisionId: command.decisionId,
+            sourceId: pending.sourceId,
+            occurrenceId: pending.occurrenceId,
+            provisionId,
+            sourceDefinitionIds: [provisionId],
+            docketedAtRevision: nextRevision,
+            plainLanguage: policy.plainLanguage,
+            form: 'drafted' as const,
+            sourceClass: 'simulated' as const,
+          }];
+        });
+      const billPreview = previewBillChange(state, services.scenario, nextProvisionIds);
+      const resourceRequest: Partial<Resources> = {
+        policyIntegrity: billPreview.integrity - next.resources.policyIntegrity,
+      };
+      for (const effect of choice.effects) {
+        if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity') {
+          resourceRequest[effect.resource] = (resourceRequest[effect.resource] ?? 0) + effect.delta;
+        }
+      }
+      const resourceChange = applyResourceDelta(next.resources, resourceRequest);
+      const nextBill = {
+        ...next.bill,
+        provisionIds: nextProvisionIds,
+        provisionReceipts: [...retainedReceipts, ...addedReceipts],
+        revision: nextRevision,
+      };
+      const withResolution: TermState = {
+        ...next,
+        resources: resourceChange.resources,
+        bill: nextBill,
+        obligations: [
+          ...next.obligations,
+          ...preview.newObligations.filter((obligation) =>
+            !next.obligations.some((existing) => existing.id === obligation.id),
+          ),
+        ],
+        pendingDecisions: next.pendingDecisions.map((decision) =>
+          decision.id === command.decisionId ? { ...decision, status: 'resolved' as const } : decision,
+        ),
+        rewardedOccurrenceIds: choice.action === 'reject'
+          ? next.rewardedOccurrenceIds
+          : Array.from(new Set([...next.rewardedOccurrenceIds, pending.occurrenceId])).sort(),
+        relationships: preview.nextRelationships,
+      };
+      const relationships = evaluateRelationships(withResolution, services.scenario);
+      const decisionEvents: GameEvent[] = [{
+        type: 'DECISION_RESOLVED',
+        decisionId: command.decisionId,
+        choiceId: command.choiceId,
+        occurrenceId: pending.occurrenceId,
+      }];
+      if (choice.action === 'reject') {
+        decisionEvents.push({
+          type: 'OPPORTUNITY_DECLINED',
+          occurrenceId: pending.occurrenceId,
+          sourceId: pending.sourceId,
+        });
+      }
+      if (Object.values(resourceChange.applied).some((amount) => amount !== 0)) {
+        decisionEvents.push({
+          type: 'RESOURCE_CHANGED',
+          changes: resourceChange.applied,
+          reason: `decision:${pending.occurrenceId}`,
+        });
+      }
+      if (billChanged) {
+        for (const provisionId of state.bill.provisionIds.filter((id) => !nextProvisionSet.has(id))) {
+          decisionEvents.push({ type: 'PROVISION_NEGOTIATED', decisionId: command.decisionId, occurrenceId: pending.occurrenceId, provisionId, change: 'removed', revision: nextRevision });
+        }
+        for (const provisionId of nextProvisionIds.filter((id) => !oldProvisionIds.has(id))) {
+          decisionEvents.push({ type: 'PROVISION_NEGOTIATED', decisionId: command.decisionId, occurrenceId: pending.occurrenceId, provisionId, change: 'added', revision: nextRevision });
+        }
+      }
+      decisionEvents.push(...promiseChangeEvents(state.relationships, relationships));
+      const resolvedState = { ...withResolution, relationships };
+      if (workEvents.length === 0) return accept(state, resolvedState, decisionEvents);
+      return {
+        state: { ...resolvedState, eventLog: [...resolvedState.eventLog, ...decisionEvents] },
+        events: [...workEvents, ...decisionEvents],
+      };
     }
 
     case 'ACTIVATE_TACTIC': {
@@ -1374,6 +1609,7 @@ export function executeCommand(
           const completed = completeSessionWork(next, work, services);
           next = completed.state;
           events.push(...completed.events);
+          if (next.pendingDecisions.some((decision) => decision.status === 'pending')) break;
         }
         if (events.length === 0) return { state: next, events: [] };
         return { state: { ...next, eventLog: [...next.eventLog, ...events] }, events };
@@ -1422,10 +1658,53 @@ export function executeCommand(
     }
 
     case 'SET_PAUSED': {
+      if (!command.paused && state.pendingDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending coalition decision before resuming time.');
+      }
       if (state.paused === command.paused) return { state, events: [] };
       return accept(state, { ...state, paused: command.paused }, [
         { type: 'PAUSE_CHANGED', paused: command.paused },
       ]);
+    }
+
+    case 'ACCEPT_AMENDMENT': {
+      const matches = state.pendingDecisions.flatMap((decision) => {
+        if (decision.status !== 'pending' || decision.officeDefinitionId !== command.memberId) return [];
+        return decision.choiceIds.flatMap((choiceId) => {
+          const choice = services.scenario.decisionChoices.find((candidate) => candidate.id === choiceId);
+          return choice?.action === 'accept' && choice.effects.some(
+            (effect) => effect.kind === 'bill-add-provision' && effect.provisionId === command.provisionId,
+          ) ? [{ decision, choiceId }] : [];
+        });
+      });
+      if (matches.length !== 1) {
+        return rejectCommand(state, command.type, 'malformed-command', 'That amendment does not identify one exact pending offer.');
+      }
+      return executeCommand(state, {
+        type: 'RESOLVE_DECISION',
+        decisionId: matches[0].decision.id,
+        choiceId: matches[0].choiceId,
+        expectedBillRevision: matches[0].decision.expectedBillRevision,
+      }, services);
+    }
+
+    case 'REJECT_AMENDMENT': {
+      const matches = state.pendingDecisions.flatMap((decision) => {
+        if (decision.status !== 'pending' || decision.officeDefinitionId !== command.memberId) return [];
+        return decision.choiceIds.flatMap((choiceId) => {
+          const choice = services.scenario.decisionChoices.find((candidate) => candidate.id === choiceId);
+          return choice?.action === 'reject' ? [{ decision, choiceId }] : [];
+        });
+      });
+      if (matches.length !== 1) {
+        return rejectCommand(state, command.type, 'malformed-command', 'That refusal does not identify one exact pending offer.');
+      }
+      return executeCommand(state, {
+        type: 'RESOLVE_DECISION',
+        decisionId: matches[0].decision.id,
+        choiceId: matches[0].choiceId,
+        expectedBillRevision: matches[0].decision.expectedBillRevision,
+      }, services);
     }
 
     default:

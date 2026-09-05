@@ -117,6 +117,23 @@ describe('parseScenario', () => {
     expect(() => parseScenario(wrongRecipient)).toThrow(/recipient must match/i);
   });
 
+  it('keeps decision bill, promise, and work effects inside bounded references', () => {
+    const unknownProvision = copy();
+    const choices = unknownProvision.decisionChoices as Array<Record<string, unknown>>;
+    choices[0].effects = [{ kind: 'bill-add-provision', provisionId: 'policy-missing' }];
+    expect(() => parseScenario(unknownProvision)).toThrow(/unknown decision provision/i);
+
+    const unknownWork = copy();
+    (unknownWork.decisionChoices as Array<Record<string, unknown>>)[0].requiredWorkPatternId = 'pattern-missing';
+    expect(() => parseScenario(unknownWork)).toThrow(/unknown decision work pattern/i);
+
+    const derivedIntegrity = copy();
+    (derivedIntegrity.decisionChoices as Array<Record<string, unknown>>)[0].effects = [
+      { kind: 'resource', resource: 'policyIntegrity', delta: 10 },
+    ];
+    expect(() => parseScenario(derivedIntegrity)).toThrow(/derived from bill provisions/i);
+  });
+
   it('rejects patterns outside the two-to-four input boundary', () => {
     const invalid = copy();
     (invalid.patterns as Array<Record<string, unknown>>)[0].slots = [

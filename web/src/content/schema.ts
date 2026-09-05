@@ -288,11 +288,16 @@ const obligationFulfillmentSchema = z.discriminatedUnion('kind', [
 const decisionChoiceEffectSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('resource'),
-    resource: z.enum(RESOURCE_KEYS),
+    resource: z.enum(RESOURCE_KEYS).refine((resource) => resource !== 'policyIntegrity', {
+      message: 'Policy Integrity is derived from bill provisions and governing values',
+    }),
     delta: z.number().finite(),
   }),
   z.strictObject({ kind: z.literal('create-obligation'), obligationDefinitionId: idSchema }),
   z.strictObject({ kind: z.literal('relationship-support'), support: z.enum(SUPPORT_STATES) }),
+  z.strictObject({ kind: z.literal('promise-condition'), condition: relationshipConditionSchema }),
+  z.strictObject({ kind: z.literal('bill-add-provision'), provisionId: idSchema }),
+  z.strictObject({ kind: z.literal('bill-remove-provision'), provisionId: idSchema }),
 ]);
 
 const packPoolSchema = z.strictObject({
@@ -369,6 +374,7 @@ const rawScenarioSchema = z.strictObject({
     action: z.enum(['accept', 'reject', 'counter']),
     requirements: z.array(relationshipConditionSchema),
     effects: z.array(decisionChoiceEffectSchema),
+    requiredWorkPatternId: idSchema.optional(),
   })),
   modeObjectives: z.array(z.strictObject({
     id: idSchema,
@@ -518,7 +524,10 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
     }
     for (const [index, choice] of scenario.decisionChoices.entries()) {
       for (const effect of choice.effects) if (effect.kind === 'create-obligation' && !obligations.has(effect.obligationDefinitionId)) addReferenceIssue(ctx, `Unknown obligation effect: ${effect.obligationDefinitionId}`, ['decisionChoices', index, 'effects']);
+      for (const effect of choice.effects) if ((effect.kind === 'bill-add-provision' || effect.kind === 'bill-remove-provision') && cards.get(effect.provisionId)?.kind !== 'policy') addReferenceIssue(ctx, `Unknown decision provision: ${effect.provisionId}`, ['decisionChoices', index, 'effects']);
+      for (const effect of choice.effects) if (effect.kind === 'promise-condition' && 'tag' in effect.condition && !tags.has(effect.condition.tag)) addReferenceIssue(ctx, `Unknown promise condition tag: ${effect.condition.tag}`, ['decisionChoices', index, 'effects']);
       for (const requirement of choice.requirements) if ('tag' in requirement && !tags.has(requirement.tag)) addReferenceIssue(ctx, `Unknown choice requirement tag: ${requirement.tag}`, ['decisionChoices', index, 'requirements']);
+      if (choice.requiredWorkPatternId && !patterns.has(choice.requiredWorkPatternId)) addReferenceIssue(ctx, `Unknown decision work pattern: ${choice.requiredWorkPatternId}`, ['decisionChoices', index, 'requiredWorkPatternId']);
     }
     for (const [weekIndex, pack] of scenario.weeklyPacks.entries()) {
       for (const definitionId of pack.guaranteedDefinitionIds) if (!cards.has(definitionId)) addReferenceIssue(ctx, `Unknown guaranteed card: ${definitionId}`, ['weeklyPacks', weekIndex]);

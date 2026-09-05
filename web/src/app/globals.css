@@ -280,6 +280,23 @@ select:focus-visible {
   color: var(--ink-soft);
 }
 
+.bill-docket__support {
+  margin-top: 10px;
+  border-top: 1px solid var(--rule);
+  padding-top: 8px;
+}
+
+.bill-docket__support h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+.bill-docket__support ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 11px;
+}
+
 .work-mat {
   border: 2px solid var(--family-staff);
   border-radius: 10px;
@@ -347,6 +364,80 @@ select:focus-visible {
 .work-mat__preview--ready {
   color: #276139;
   font-weight: 700;
+}
+
+/* ------------------------------------------------------ coalition decision */
+
+.decision-modal {
+  width: min(920px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.decision-modal::backdrop {
+  background: rgb(20 24 32 / 68%);
+}
+
+.decision-modal__paper {
+  padding: 20px;
+  overflow: auto;
+}
+
+.decision-modal__paper > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.decision-modal__paper h2,
+.decision-modal__paper h3,
+.decision-modal__paper p {
+  margin: 0 0 8px;
+}
+
+.decision-modal__badge {
+  color: #8a4a00;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.decision-modal__identity {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.decision-modal__choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.decision-modal__choice {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.decision-modal__choice ul {
+  flex: 1;
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 12px;
+}
+
+.decision-modal__choice button {
+  width: 100%;
 }
 
 /* ---------------------------------------------------------- office brief */
