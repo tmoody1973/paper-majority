@@ -152,6 +152,8 @@ const recipeOutputSchema = z.discriminatedUnion('mode', [
     resolverId: z.enum([
       'summarize-evidence-v1',
       'draft-provision-v1',
+      'answer-office-concern-v1',
+      'prepare-evidence-packet-v1',
       'resolve-outreach-v1',
       'strengthen-provision-v1',
     ]),

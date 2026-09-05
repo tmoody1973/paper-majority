@@ -1,8 +1,11 @@
 import type { GameCommand } from '@/domain/commands';
+import { previewDocketProvision } from '@/domain/bill';
 import { buildMatchInputs, matchPattern } from '@/domain/recipes';
 import { describeStudyOption } from '@/domain/selectors';
 import { previewWork } from '@/domain/work';
 import type { CardInstance, Resources, ScenarioDefinition, TermState } from '@/domain/types';
+
+export const BILL_DOCKET_TARGET_ID = 'bill-docket';
 
 /**
  * What does dropping this card on that stack mean?
@@ -21,8 +24,14 @@ export function resolveDropIntent(
   targetStackId: string,
 ): GameCommand | undefined {
   const moving = state.cards.find((card) => card.id === cardId);
+  if (!moving) return undefined;
+  if (targetStackId === BILL_DOCKET_TARGET_ID) {
+    return state.mode === 'interaction-spike'
+      ? undefined
+      : { type: 'DOCKET_PROVISION', cardId };
+  }
   const targetStack = state.stacks.find((stack) => stack.id === targetStackId);
-  if (!moving || !targetStack || targetStack.cardIds.includes(cardId)) return undefined;
+  if (!targetStack || targetStack.cardIds.includes(cardId)) return undefined;
 
   const plainStack: GameCommand = { type: 'STACK_CARD', cardId, targetStackId };
 
@@ -77,6 +86,9 @@ export function wouldDropBeAccepted(
   cardId: string,
   targetStackId: string,
 ): boolean {
+  if (targetStackId === BILL_DOCKET_TARGET_ID) {
+    return previewDocketProvision(state, scenario, cardId).accepted;
+  }
   const stack = state.stacks.find((candidate) => candidate.id === targetStackId);
   if (!stack) return false;
 

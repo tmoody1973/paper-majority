@@ -131,6 +131,7 @@ function buildInitialState(
       issueId: scenario.issue.id,
       title: scenario.issue.title,
       provisionIds: [],
+      provisionReceipts: [],
       stage: 'draft',
       outcome: 'active',
       revision: 0,

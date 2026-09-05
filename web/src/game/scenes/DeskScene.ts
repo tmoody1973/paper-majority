@@ -2,7 +2,11 @@ import Phaser from 'phaser';
 
 import { rejectionPhrase, resultPhrase, STUDY_PHRASES } from '@/content/i18n/en';
 import { describeCard } from '@/domain/cardDetail';
-import { resolveDropIntent, wouldDropBeAccepted } from '@/domain/dropIntent';
+import {
+  BILL_DOCKET_TARGET_ID,
+  resolveDropIntent,
+  wouldDropBeAccepted,
+} from '@/domain/dropIntent';
 import { remainingWorkMs } from '@/domain/work';
 import type { CardDefinition, CardInstance } from '@/domain/types';
 import { resolveDropTarget, type DropTarget } from '@/game/input/dropResolver';
@@ -20,6 +24,10 @@ const REJECT_MS = 160;
 const TRANSFORM_MS = 260;
 
 const STACK_OFFSET_Y = 34;
+const DOCKET_X = 1_080;
+const DOCKET_Y = 315;
+const DOCKET_WIDTH = 250;
+const DOCKET_HEIGHT = 300;
 
 export interface DeskSceneData {
   session: GameSession;
@@ -36,6 +44,8 @@ export class DeskScene extends Phaser.Scene {
   private onSelect!: (cardId: string) => void;
   private onHover!: (cardId: string | undefined) => void;
   private views = new Map<string, CardView>();
+  private docketBackground?: Phaser.GameObjects.Rectangle;
+  private docketRevision?: Phaser.GameObjects.Text;
   private dragOrigin = { x: 0, y: 0 };
   /**
    * The card the pointer is currently holding.
@@ -65,6 +75,7 @@ export class DeskScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#e9e2d3');
     this.drawDeskSurface();
+    if (this.session.getState().mode !== 'interaction-spike') this.drawBillDocket();
 
     this.syncViews();
     this.frameDesk();
@@ -87,6 +98,7 @@ export class DeskScene extends Phaser.Scene {
             getViewY: (cardId: string) => number | undefined;
             getProgress: (cardId: string) => number | undefined;
             getScreenPoint: (cardId: string) => { x: number; y: number } | undefined;
+            getDocketScreenPoint: () => { x: number; y: number } | undefined;
           };
         }
       ).__congressGameCamera = {
@@ -102,6 +114,14 @@ export class DeskScene extends Phaser.Scene {
           return {
             x: (view.x - camera.worldView.x) * camera.zoom,
             y: (view.y - camera.worldView.y) * camera.zoom,
+          };
+        },
+        getDocketScreenPoint: () => {
+          if (!this.docketBackground) return undefined;
+          const camera = this.cameras.main;
+          return {
+            x: (DOCKET_X - camera.worldView.x) * camera.zoom,
+            y: (DOCKET_Y - camera.worldView.y) * camera.zoom,
           };
         },
       };
@@ -132,10 +152,10 @@ export class DeskScene extends Phaser.Scene {
     const cards = state.cards.filter((card) => card.location === 'desk');
     if (cards.length === 0) return;
 
-    const left = Math.min(...cards.map((card) => card.x)) - CARD_WIDTH / 2;
-    const right = Math.max(...cards.map((card) => card.x)) + CARD_WIDTH / 2;
-    const top = Math.min(...cards.map((card) => card.y)) - CARD_HEIGHT / 2;
-    const bottom = Math.max(...cards.map((card) => card.y)) + CARD_HEIGHT / 2;
+    const left = Math.min(...cards.map((card) => card.x), ...(this.docketBackground ? [DOCKET_X] : [])) - CARD_WIDTH / 2;
+    const right = Math.max(...cards.map((card) => card.x), ...(this.docketBackground ? [DOCKET_X + DOCKET_WIDTH / 2] : [])) + CARD_WIDTH / 2;
+    const top = Math.min(...cards.map((card) => card.y), ...(this.docketBackground ? [DOCKET_Y] : [])) - CARD_HEIGHT / 2;
+    const bottom = Math.max(...cards.map((card) => card.y), ...(this.docketBackground ? [DOCKET_Y + DOCKET_HEIGHT / 2] : [])) + CARD_HEIGHT / 2;
 
     const camera = this.cameras.main;
     const margin = 24;
@@ -162,6 +182,40 @@ export class DeskScene extends Phaser.Scene {
     surface.setDepth(-100);
   }
 
+  private drawBillDocket(): void {
+    this.docketBackground = this.add.rectangle(
+      DOCKET_X,
+      DOCKET_Y,
+      DOCKET_WIDTH,
+      DOCKET_HEIGHT,
+      0xfff8e8,
+      0.96,
+    );
+    this.docketBackground.setStrokeStyle(4, 0xb6503a, 1).setDepth(-10);
+    this.add.text(DOCKET_X - DOCKET_WIDTH / 2 + 18, DOCKET_Y - DOCKET_HEIGHT / 2 + 18, 'BILL DOCKET', {
+      color: '#203b49',
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '22px',
+      fontStyle: 'bold',
+    }).setDepth(-9);
+    this.add.text(
+      DOCKET_X - DOCKET_WIDTH / 2 + 18,
+      DOCKET_Y - 45,
+      'Drop finished\ndrafted language here',
+      { color: '#4a5c68', fontFamily: 'system-ui, sans-serif', fontSize: '16px', lineSpacing: 6 },
+    ).setDepth(-9);
+    this.docketRevision = this.add.text(
+      DOCKET_X - DOCKET_WIDTH / 2 + 18,
+      DOCKET_Y + DOCKET_HEIGHT / 2 - 48,
+      'Revision 0 · 0 provisions',
+      { color: '#b6503a', fontFamily: 'system-ui, sans-serif', fontSize: '15px', fontStyle: 'bold' },
+    ).setDepth(-9);
+  }
+
+  private setDocketHighlight(valid: boolean): void {
+    this.docketBackground?.setStrokeStyle(valid ? 7 : 4, valid ? 0x2878a8 : 0xb6503a, 1);
+  }
+
   private definitionFor(instance: CardInstance): CardDefinition {
     const definition = this.session
       .getScenario()
@@ -174,6 +228,9 @@ export class DeskScene extends Phaser.Scene {
   private syncViews(): void {
     const state = this.session.getState();
     const seen = new Set<string>();
+    this.docketRevision?.setText(
+      `Revision ${state.bill.revision} · ${state.bill.provisionIds.length} provision${state.bill.provisionIds.length === 1 ? '' : 's'}`,
+    );
 
     for (const stack of state.stacks) {
       stack.cardIds.forEach((cardId, indexInStack) => {
@@ -251,7 +308,7 @@ export class DeskScene extends Phaser.Scene {
 
   private dropTargets(excludeCardId: string): DropTarget[] {
     const state = this.session.getState();
-    return state.stacks
+    const stackTargets = state.stacks
       .filter((stack) => !stack.cardIds.includes(excludeCardId))
       .map((stack, index) => {
         const view = this.views.get(stack.cardIds[0]);
@@ -266,6 +323,17 @@ export class DeskScene extends Phaser.Scene {
         };
       })
       .filter((target): target is DropTarget => target !== undefined);
+    if (state.mode !== 'interaction-spike') {
+      stackTargets.push({
+        stackId: BILL_DOCKET_TARGET_ID,
+        x: DOCKET_X - DOCKET_WIDTH / 2,
+        y: DOCKET_Y - DOCKET_HEIGHT / 2,
+        width: DOCKET_WIDTH,
+        height: DOCKET_HEIGHT,
+        z: 10_000,
+      });
+    }
+    return stackTargets;
   }
 
   /**
@@ -309,7 +377,13 @@ export class DeskScene extends Phaser.Scene {
           if (cardId === view.cardId) continue;
           candidate.setHighlight('none');
         }
+        this.setDocketHighlight(false);
         if (!targetId) return;
+
+        if (targetId === BILL_DOCKET_TARGET_ID) {
+          this.setDocketHighlight(this.wouldAccept(view.cardId, targetId));
+          return;
+        }
 
         const stack = this.session.getState().stacks.find((s) => s.id === targetId);
         const head = stack ? this.views.get(stack.cardIds[0]) : undefined;
@@ -319,6 +393,7 @@ export class DeskScene extends Phaser.Scene {
 
     this.input.on('dragend', (_pointer: Phaser.Input.Pointer, view: CardView) => {
       for (const candidate of this.views.values()) candidate.setHighlight('none');
+      this.setDocketHighlight(false);
 
       const targetId = resolveDropTarget({ x: view.x, y: view.y }, this.dropTargets(view.cardId));
       if (!targetId) {
@@ -359,6 +434,11 @@ export class DeskScene extends Phaser.Scene {
       );
       if (rejected) {
         this.bounceBack(view);
+        return;
+      }
+      if (targetId === BILL_DOCKET_TARGET_ID) {
+        this.draggingCardId = undefined;
+        this.syncViews();
         return;
       }
       this.snap(view);

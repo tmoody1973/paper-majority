@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AccessibleCardControls } from '@/components/AccessibleCardControls';
+import { BillDocket } from '@/components/BillDocket';
 import { CardInspector } from '@/components/CardInspector';
 import { Hud } from '@/components/Hud';
 import { OfficeBrief } from '@/components/OfficeBrief';
@@ -128,13 +129,16 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
 
         <aside className="shell__side">
           {state.mode !== 'interaction-spike' && (
-            <WorkMat
-              session={session}
-              state={state}
-              selectedCardIds={workMatCardIds}
-              onSelectedCardIdsChange={setWorkMatCardIds}
-              onResult={onResult}
-            />
+            <>
+              <BillDocket session={session} state={state} onResult={onResult} />
+              <WorkMat
+                session={session}
+                state={state}
+                selectedCardIds={workMatCardIds}
+                onSelectedCardIdsChange={setWorkMatCardIds}
+                onResult={onResult}
+              />
+            </>
           )}
           {detail ? (
             <CardInspector detail={detail} onClose={() => setSelectedCardId(undefined)} />

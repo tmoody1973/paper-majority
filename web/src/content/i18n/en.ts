@@ -11,6 +11,9 @@ export const RESULT_PHRASES: Record<string, string> = {
   'result.summary.district-relevance':
     'Your aide turned local survey answers into a summary that speaks for the district.',
   'result.provision.drafted': 'That summary is now bill language.',
+  'result.provision.docketed': 'The drafted provision is now in the bill.',
+  'result.evidence.office-concern-answered': 'The office concern now has a sourced response.',
+  'result.evidence.district-packet-prepared': 'The district packet is prepared from that summary.',
   'result.provision.strengthened': 'The provision holds up better now.',
   'result.outreach.support': 'The office is on board, in this simulation.',
   'result.outreach.counteroffer':
@@ -47,6 +50,9 @@ export function rejectionPhrase(reason: string, message?: string): string {
   // Naming the Tactic that would unblock a stack can only be worked out where the
   // rules live, so for that one reason the engine's sentence is the copy. Every
   // other refusal reads from the table above.
-  if (reason === 'needs-tactic' && message) return message;
+  if (
+    (reason === 'needs-tactic' || reason === 'duplicate-provision' || reason === 'invalid-card-form') &&
+    message
+  ) return message;
   return REJECTION_PHRASES[reason] ?? 'That did not work. Nothing was spent.';
 }

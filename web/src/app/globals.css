@@ -189,6 +189,97 @@ select:focus-visible {
 
 /* --------------------------------------------------------------- work mat */
 
+.bill-docket {
+  border: 2px solid var(--family-policy);
+  border-radius: 10px;
+  background: #fff8e8;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.bill-docket__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bill-docket__header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.bill-docket__header span,
+.bill-docket__values,
+.bill-docket__empty,
+.bill-docket__feedback,
+.bill-docket__next {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.bill-docket__values,
+.bill-docket__empty,
+.bill-docket__feedback,
+.bill-docket__next,
+.bill-docket__integrity {
+  margin: 5px 0;
+}
+
+.bill-docket__provisions {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.bill-docket__provisions li {
+  font-size: 12px;
+}
+
+.bill-docket__provisions span {
+  display: block;
+  color: var(--ink-soft);
+}
+
+.bill-docket__action {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.bill-docket__action label {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.bill-docket__action select {
+  min-width: 0;
+  padding: 6px;
+}
+
+.bill-docket__next {
+  border-top: 1px solid var(--rule);
+  padding-top: 7px;
+  font-weight: 700;
+}
+
+.bill-docket__candidate {
+  margin-top: 8px;
+  padding: 7px 8px;
+  border: 1px dashed var(--family-policy);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.bill-docket__candidate p {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+}
+
 .work-mat {
   border: 2px solid var(--family-staff);
   border-radius: 10px;
@@ -401,7 +492,8 @@ select:focus-visible {
   padding-left: 7px;
 }
 
-.inspector__uses h3 {
+.inspector__uses h3,
+.inspector__values h3 {
   margin: 10px 0 4px;
   font-size: 12px;
   text-transform: uppercase;
@@ -409,7 +501,8 @@ select:focus-visible {
   color: var(--ink-soft);
 }
 
-.inspector__uses ul {
+.inspector__uses ul,
+.inspector__values ul {
   margin: 0;
   padding-left: 18px;
   font-size: 12.5px;

@@ -139,6 +139,7 @@ describe('createRun', () => {
     expect(state.cards.some((card) => card.definitionId.startsWith('evidence-'))).toBe(true);
     expect(state.cards.some((card) => card.definitionId.startsWith('policy-'))).toBe(true);
     expect(state.bill.provisionIds).toEqual([]);
+    expect(state.bill.provisionReceipts).toEqual([]);
     expect(state.bill.revision).toBe(0);
     expect(state.activeWork).toEqual([]);
   });

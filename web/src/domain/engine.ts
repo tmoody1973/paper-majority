@@ -1,4 +1,5 @@
 import type { GameCommand, GameCommandType } from '@/domain/commands';
+import { previewDocketProvision } from '@/domain/bill';
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
@@ -78,6 +79,21 @@ function accept(state: TermState, next: TermState, events: GameEvent[]): EngineR
 
 function findCard(state: TermState, cardId: string): CardInstance | undefined {
   return state.cards.find((card) => card.id === cardId);
+}
+
+function sourceDefinitionIdsFor(
+  cards: CardInstance[],
+  scenario: ScenarioDefinition,
+): string[] {
+  return cards
+    .flatMap((card) => {
+      if (card.sourceDefinitionIds.length > 0) return card.sourceDefinitionIds;
+      return scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'evidence'
+        ? [card.definitionId]
+        : [];
+    })
+    .filter((id, index, all) => all.indexOf(id) === index)
+    .sort();
 }
 
 function canAfford(resources: Resources, cost: Partial<Resources>): boolean {
@@ -620,18 +636,9 @@ function completeAction(
         y: anchor.y,
         remainingMs: 0,
         status: 'idle',
-        form: 'raw',
+        form: resolved.form ?? 'raw',
         location: 'desk',
-        sourceDefinitionIds: memberCards
-          .filter((card) =>
-            services.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind ===
-            'evidence',
-          )
-          .flatMap((card) =>
-            card.sourceDefinitionIds.length > 0 ? card.sourceDefinitionIds : [card.definitionId],
-          )
-          .filter((id, index, all) => all.indexOf(id) === index)
-          .sort(),
+        sourceDefinitionIds: sourceDefinitionIdsFor(memberCards, services.scenario),
         policyDefinitionId:
           services.scenario.cards.find((definition) => definition.id === resolved.definitionId)?.kind ===
           'policy'
@@ -761,11 +768,7 @@ function completeSessionWork(
     status: 'idle',
     form: resolved.form ?? 'raw',
     location: 'desk',
-    sourceDefinitionIds: memberCards
-      .filter((card) => services.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'evidence')
-      .flatMap((card) => card.sourceDefinitionIds.length > 0 ? card.sourceDefinitionIds : [card.definitionId])
-      .filter((id, index, all) => all.indexOf(id) === index)
-      .sort(),
+    sourceDefinitionIds: sourceDefinitionIdsFor(memberCards, services.scenario),
     policyDefinitionId: outputDefinition?.kind === 'policy'
       ? resolved.definitionId
       : memberCards.find((card) => card.policyDefinitionId)?.policyDefinitionId,
@@ -802,7 +805,7 @@ function completeSessionWork(
     events: [
       {
         type: 'CARD_TRANSFORMED',
-        stackId: work.id,
+        stackId: anchor.stackId,
         consumedCardIds: [...work.consumedCardIds],
         producedCardIds: [producedId],
         returnedCardIds: [...work.returnedCardIds],
@@ -1216,6 +1219,70 @@ export function executeCommand(
         return rejectCommand(state, command.type, 'unsupported-command', 'The Work Mat is available in Session mode.');
       }
       return startSessionPattern(state, services, command.type, command.cardIds);
+
+    case 'DOCKET_PROVISION': {
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'The Bill Docket is available in Session mode.');
+      }
+      const preview = previewDocketProvision(state, services.scenario, command.cardId);
+      if (!preview.accepted) {
+        return rejectCommand(state, command.type, preview.reason, preview.message);
+      }
+      const drafted = findCard(state, command.cardId)!;
+      const integrityChange = applyResourceDelta(state.resources, {
+        policyIntegrity: preview.bill.integrity - state.resources.policyIntegrity,
+      });
+      const next: TermState = {
+        ...state,
+        resources: integrityChange.resources,
+        cards: state.cards.filter((card) => card.id !== command.cardId),
+        stacks: state.stacks
+          .map((stack) => ({
+            ...stack,
+            cardIds: stack.cardIds.filter((cardId) => cardId !== command.cardId),
+          }))
+          .filter((stack) => stack.cardIds.length > 0),
+        bill: {
+          ...state.bill,
+          provisionIds: [...state.bill.provisionIds, preview.provisionId],
+          provisionReceipts: [
+            ...state.bill.provisionReceipts,
+            {
+              provisionId: preview.provisionId,
+              draftedCardId: command.cardId,
+              sourceDefinitionIds: preview.sourceDefinitionIds,
+              docketedAtRevision: preview.nextRevision,
+            },
+          ],
+          revision: preview.nextRevision,
+        },
+      };
+      const events: GameEvent[] = [
+        {
+          type: 'CARD_TRANSFORMED',
+          stackId: drafted.stackId,
+          consumedCardIds: [command.cardId],
+          producedCardIds: [],
+          returnedCardIds: [],
+          outputDefinitionId: preview.provisionId,
+          explanationKey: 'result.provision.docketed',
+        },
+      ];
+      if ((integrityChange.applied.policyIntegrity ?? 0) !== 0) {
+        events.push({
+          type: 'RESOURCE_CHANGED',
+          changes: integrityChange.applied,
+          reason: `bill-revision:${preview.nextRevision}`,
+        });
+      }
+      events.push({
+        type: 'PROVISION_DOCKETED',
+        cardId: command.cardId,
+        provisionId: preview.provisionId,
+        revision: preview.nextRevision,
+      });
+      return accept(state, next, events);
+    }
 
     case 'ACTIVATE_TACTIC': {
       const tactic = findCard(state, command.tacticCardId);

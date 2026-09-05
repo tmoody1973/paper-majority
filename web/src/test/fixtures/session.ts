@@ -177,6 +177,39 @@ export const sessionScenario: ScenarioDefinition = {
       priority: 10,
       discoveryHint: 'Counsel turns a policy and a summary into proposed language.',
     },
+    {
+      id: 'pattern-answer-office-concern',
+      slots: [
+        { kind: 'staff', requiredTags: ['district-focused'], quantity: 1, consumed: false },
+        { kind: 'evidence', forms: ['summary'], requiredTags: ['committee-relevant'], quantity: 1 },
+        { kind: 'coalition', requiredTags: ['housing-interest'], quantity: 1, consumed: false },
+      ],
+      output: {
+        mode: 'derived',
+        resolverId: 'answer-office-concern-v1',
+        parameters: { preserveInputDefinition: true },
+      },
+      durationMs: 35_000,
+      resourceCost: { staffAttention: 1 },
+      priority: 10,
+      discoveryHint: 'District staff can answer an authored office concern with a relevant summary.',
+    },
+    {
+      id: 'pattern-prepare-evidence-packet',
+      slots: [
+        { kind: 'staff', requiredTags: ['district-focused'], quantity: 1, consumed: false },
+        { kind: 'evidence', forms: ['summary'], requiredTags: ['district-relevant'], quantity: 1 },
+      ],
+      output: {
+        mode: 'derived',
+        resolverId: 'prepare-evidence-packet-v1',
+        parameters: { preserveInputDefinition: true },
+      },
+      durationMs: 30_000,
+      resourceCost: { staffAttention: 1 },
+      priority: 10,
+      discoveryHint: 'District staff can prepare a district or committee packet from a relevant summary.',
+    },
   ],
   tacticExpansions: [
     {

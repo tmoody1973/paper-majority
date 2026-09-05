@@ -219,9 +219,18 @@ export interface BillState {
   issueId: 'housing-affordability';
   title: string;
   provisionIds: string[];
+  /** Durable provenance retained after the drafted card is consumed by the Docket. */
+  provisionReceipts: BillProvisionReceipt[];
   stage: ProcedureStage;
   outcome: LegislativeOutcome;
   revision: number;
+}
+
+export interface BillProvisionReceipt {
+  provisionId: string;
+  draftedCardId: string;
+  sourceDefinitionIds: string[];
+  docketedAtRevision: number;
 }
 
 export type RelationshipCondition =
@@ -360,6 +369,8 @@ export interface RecipeSlot {
 export type DerivedResolverId =
   | 'summarize-evidence-v1'
   | 'draft-provision-v1'
+  | 'answer-office-concern-v1'
+  | 'prepare-evidence-packet-v1'
   | 'resolve-outreach-v1'
   | 'strengthen-provision-v1';
 

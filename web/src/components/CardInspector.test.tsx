@@ -5,6 +5,8 @@ import { CardInspector } from '@/components/CardInspector';
 import { createFixtureState, getFixtureScenario } from '@/content/fixtures/loadFixture';
 import { describeCard } from '@/domain/cardDetail';
 import type { TermState } from '@/domain/types';
+import { createRun } from '@/domain/initialState';
+import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 
 const scenario = getFixtureScenario();
 const fresh = createFixtureState('interaction-spike');
@@ -122,5 +124,45 @@ describe('CardInspector', () => {
 
     await userEvent.setup().click(screen.getByTestId('inspector-close'));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('shows drafted language as simulated with its selected-value contributions', () => {
+    const run = createRun({ ...sessionSetup, mode: 'session' });
+    const policy = run.cards.find((card) => card.definitionId === 'policy-housing-choice-voucher')!;
+    const drafted: TermState = {
+      ...run,
+      cards: run.cards.map((card) => card.id === policy.id
+        ? {
+            ...card,
+            form: 'drafted' as const,
+            sourceDefinitionIds: ['evidence-rent-burden-report'],
+            origin: {
+              explanationKey: 'result.provision.drafted',
+              inputDefinitionIds: [
+                'staff-legislative-counsel',
+                'evidence-rent-burden-report',
+                'policy-housing-choice-voucher',
+              ],
+              consumedDefinitionIds: [
+                'evidence-rent-burden-report',
+                'policy-housing-choice-voucher',
+              ],
+            },
+          }
+        : card),
+    };
+
+    render(
+      <CardInspector
+        detail={describeCard(drafted, sessionScenario, policy.id)!}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Drafted Housing Choice Voucher' })).toBeInTheDocument();
+    expect(screen.getByText('Simulated')).toBeInTheDocument();
+    expect(screen.getByTestId('inspector-values')).toHaveTextContent('Tenant Stability +8');
+    expect(screen.getByTestId('inspector-values')).toHaveTextContent('Fair Access +8');
+    expect(screen.getByTestId('inspector-origin')).toHaveTextContent('Rent Burden Report');
   });
 });

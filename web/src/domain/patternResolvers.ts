@@ -82,6 +82,18 @@ const draftProvision: PatternResolver = (context) => ({
   explanationKey: 'result.provision.drafted',
 });
 
+const answerOfficeConcern: PatternResolver = (context) => ({
+  ...outputForSessionForm(context, 1, 'prepared'),
+  effects: { billMomentum: 1 },
+  explanationKey: 'result.evidence.office-concern-answered',
+});
+
+const prepareEvidencePacket: PatternResolver = (context) => ({
+  ...outputForSessionForm(context, 1, 'prepared'),
+  effects: { districtTrust: 2 },
+  explanationKey: 'result.evidence.district-packet-prepared',
+});
+
 const resolveOutreach: PatternResolver = (context) => {
   const office = inputForSlot(context, 1);
   const opposing = office.effectiveTags.includes('opposing-party');
@@ -108,6 +120,8 @@ const strengthenProvision: PatternResolver = (context) => ({
 export const DERIVED_RESOLVERS: Record<DerivedResolverId, PatternResolver> = {
   'summarize-evidence-v1': summarizeEvidence,
   'draft-provision-v1': draftProvision,
+  'answer-office-concern-v1': answerOfficeConcern,
+  'prepare-evidence-packet-v1': prepareEvidencePacket,
   'resolve-outreach-v1': resolveOutreach,
   'strengthen-provision-v1': strengthenProvision,
 };
