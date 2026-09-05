@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { getCandidateScenario } from '@/content/loadScenario';
 import { createRun } from '@/domain/runSetup';
 import { drawStoryEvent, eligibleStoryEvents, resolveStoryEvent } from '@/domain/storyDirector';
+import { executeCommand } from '@/domain/engine';
 
 describe('Story Director', () => {
   const scenario = getCandidateScenario();
@@ -56,6 +57,23 @@ describe('Story Director', () => {
     expect(rejected.events).toContainEqual(expect.objectContaining({
       type: 'COMMAND_REJECTED', reason: 'insufficient-resources',
     }));
+    const resolved = resolveStoryEvent(empty, scenario, pending.id, fallback!.id);
+    expect(resolved.state.pendingStoryDecisions[0].status).toBe('resolved');
+  });
+
+  it('blocks resume and ticks while a Story decision is pending', () => {
+    const drawn = drawStoryEvent(makeState(), scenario).state;
+    const resumed = executeCommand(drawn, { type: 'SET_PAUSED', paused: false }, { scenario });
+    expect(resumed.state).toBe(drawn);
+    expect(resumed.events).toContainEqual(expect.objectContaining({ reason: 'pending-decision' }));
+    const tampered = { ...drawn, paused: false };
+    expect(executeCommand(tampered, { type: 'TICK', deltaMs: 100 }, { scenario }).state).toBe(tampered);
+  });
+
+  it('authors an always-affordable resolution for every Story event', () => {
+    for (const event of scenario.storyEvents) {
+      expect(event.choices.some((choice) => Object.values(choice.cost).every((amount) => amount === 0))).toBe(true);
+    }
   });
 
   it('forces recovery after two pressure/consequence occurrences and avoids a repeated pressure category', () => {

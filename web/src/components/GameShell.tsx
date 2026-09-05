@@ -63,7 +63,9 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const [workMatCardIds, setWorkMatCardIds] = useState<string[]>([]);
   const [profilePatternIds, setProfilePatternIds] = useState<string[]>([]);
   const [dismissedDecisionId, setDismissedDecisionId] = useState<string | undefined>();
+  const [dismissedStoryDecisionId, setDismissedStoryDecisionId] = useState<string | undefined>();
   const decisionTriggerRef = useRef<HTMLButtonElement>(null);
+  const storyTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Recover first. A saved reduced-motion choice is canonical setup and must not
   // be silently rewritten by the operating-system preference during hydration.
@@ -135,6 +137,8 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   );
   const pendingDecision = nextPendingDecision(state);
   const decisionOpen = Boolean(pendingDecision && dismissedDecisionId !== pendingDecision.id);
+  const pendingStoryDecision = state.pendingStoryDecisions.find((decision) => decision.status === 'pending');
+  const storyOpen = Boolean(pendingStoryDecision && dismissedStoryDecisionId !== pendingStoryDecision.id);
   const persistenceNotice = session.getPersistenceNotice();
   const currentPack = scenario.weeklyPacks.find((pack) => pack.week === state.week);
   const currentPackOpened = state.revealedPacks.some((pack) => pack.packOccurrenceId === `pack:week:${state.week}`);
@@ -161,6 +165,16 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
           }}
         >
           {pendingDecision ? 'Review pending coalition decision' : 'No pending coalition decisions'}
+        </button>
+        <button
+          ref={storyTriggerRef}
+          type="button"
+          data-testid="story-decision-trigger"
+          aria-haspopup="dialog"
+          aria-disabled={!pendingStoryDecision}
+          onClick={() => { if (pendingStoryDecision) setDismissedStoryDecisionId(undefined); }}
+        >
+          {pendingStoryDecision ? 'Review pending Story choice' : 'No pending Story choices'}
         </button>
         {state.mode === 'session' && currentPack && !currentPackOpened && currentPack.pools.map((pool) => (
           <button
@@ -198,7 +212,14 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
           onResult={onResult}
         />
       )}
-      <StoryDecisionModal session={session} state={state} onResult={onResult} />
+      <StoryDecisionModal
+        session={session}
+        state={state}
+        open={storyOpen}
+        onOpenChange={(open) => setDismissedStoryDecisionId(open ? undefined : pendingStoryDecision?.id)}
+        returnFocusRef={storyTriggerRef}
+        onResult={onResult}
+      />
 
       <div className="shell__body">
         <section

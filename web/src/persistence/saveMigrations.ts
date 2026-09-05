@@ -154,9 +154,9 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
   STORY_DECISION_RESOLVED: ['type', 'decisionId', 'storyEventId', 'choiceId', 'occurrenceId'],
   WEEK_RESOLVED: ['type', 'week', 'summary'],
   OBLIGATION_STATUS_CHANGED: ['type', 'obligationId', 'status'],
-  OBLIGATION_CREATED: ['type', 'obligationId', 'sourceId', 'occurrenceId'],
+  OBLIGATION_CREATED: ['type', 'obligationId', 'sourceId', 'occurrenceId', 'sourceCardInstanceId'],
   WORK_SUBMITTED: ['type', 'workId', 'cardIds', 'completesAtSimulationMs'],
-  PATTERN_COMPLETED: ['type', 'workId', 'patternId'],
+  PATTERN_COMPLETED: ['type', 'workId', 'patternId', 'inputCardIds', 'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId'],
   PROVISION_DOCKETED: ['type', 'cardId', 'provisionId', 'revision'],
   PROVISION_NEGOTIATED: ['type', 'decisionId', 'occurrenceId', 'provisionId', 'change', 'revision'],
   DECISION_PRESENTED: ['type', 'decisionId', 'sourceId', 'occurrenceId', 'choiceIds'],
@@ -171,10 +171,14 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
   COMMAND_REJECTED: ['type', 'commandType', 'reason', 'message'],
 };
 
-const OPTIONAL_EVENT_FIELDS = new Set(['patternId', 'assignmentKind', 'targetStackId']);
+const OPTIONAL_EVENT_FIELDS = new Set([
+  'patternId', 'assignmentKind', 'targetStackId', 'sourceCardInstanceId', 'inputCardIds',
+  'inputDefinitionIds', 'consumedDefinitionIds', 'authoredConcernId',
+]);
 const EVENT_STRING_ARRAY_FIELDS = new Set([
   'cardIds', 'definitionIds', 'consumedCardIds', 'producedCardIds', 'returnedCardIds',
-  'whyRules', 'summary', 'choiceIds', 'cardDefinitionIds',
+  'whyRules', 'summary', 'choiceIds', 'cardDefinitionIds', 'inputCardIds', 'inputDefinitionIds',
+  'consumedDefinitionIds',
 ]);
 const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision']);
 const EVENT_OBJECT_FIELDS = new Set(['changes', 'effect', 'forecast', 'tally', 'result']);
@@ -259,7 +263,12 @@ function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
       return scenario.cards.some((card) => card.id === value.outputDefinitionId);
     case 'PATTERN_DISCOVERED':
     case 'PATTERN_COMPLETED':
-      return scenario.patterns.some((pattern) => pattern.id === value.patternId);
+      return scenario.patterns.some((pattern) => pattern.id === value.patternId)
+        && (value.inputDefinitionIds === undefined || (value.inputDefinitionIds as string[])
+          .every((id) => scenario.cards.some((card) => card.id === id)))
+        && (value.consumedDefinitionIds === undefined || (value.consumedDefinitionIds as string[])
+          .every((id) => scenario.cards.some((card) => card.id === id)))
+        && (value.authoredConcernId === undefined || scenario.demandDefinitions.some((demand) => demand.id === value.authoredConcernId));
     case 'TACTIC_EXPANSION_ACTIVATED':
       return scenario.tacticExpansions.some((expansion) => expansion.id === value.expansionId
         && expansion.tacticDefinitionId === value.tacticDefinitionId
@@ -475,6 +484,7 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     'weekPhase', 'weekLengthMs', 'paused', 'settings', 'player', 'cards', 'cardSeq', 'stacks', 'resources',
     'bill', 'relationships', 'staffCapacity', 'activeWork', 'obligations', 'pendingDecisions',
     'pendingStoryDecisions', 'revealedPacks',
+    'runVariation',
     'rewardedOccurrenceIds', 'resolvedWeekIds', 'runStatus', 'sessionRecord', 'discoveredPatternIds',
     'unlockedSlotExpansions', 'electionEffects', 'storyHistory', 'objectives', 'eventLog',
   ])) return false;
@@ -485,6 +495,28 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   if ((input.elapsedMs as number) > (input.weekLengthMs as number)) return false;
   if (!['active', 'boundary'].includes(input.weekPhase as string) || typeof input.paused !== 'boolean') return false;
   if (!validSettings(input.settings) || !isInteger(input.cardSeq, 0) || !validResourceTotals(input.resources)) return false;
+
+  if (!isRecord(input.runVariation)
+    || !hasOnlyKeys(input.runVariation, ['selectedDemandIdsByOffice', 'obligationDueByDefinitionId'])
+    || !isRecord(input.runVariation.selectedDemandIdsByOffice)
+    || !isRecord(input.runVariation.obligationDueByDefinitionId)) return false;
+  const demandPools = new Map<string, string[]>();
+  for (const demand of scenario.demandDefinitions) {
+    demandPools.set(demand.officeDefinitionId, [...(demandPools.get(demand.officeDefinitionId) ?? []), demand.id]);
+  }
+  const selectedDemandIds = input.runVariation.selectedDemandIdsByOffice;
+  if (canonicalJson(Object.keys(selectedDemandIds).sort()) !== canonicalJson([...demandPools.keys()].sort())
+    || [...demandPools].some(([officeId, ids]) => typeof selectedDemandIds[officeId] !== 'string'
+      || !ids.includes(selectedDemandIds[officeId] as string))) return false;
+  const dueSelections = input.runVariation.obligationDueByDefinitionId;
+  if (canonicalJson(Object.keys(dueSelections).sort())
+    !== canonicalJson(scenario.obligationDefinitions.map((definition) => definition.id).sort())) return false;
+  for (const definition of scenario.obligationDefinitions) {
+    const due = dueSelections[definition.id];
+    if (!isRecord(due) || !hasOnlyKeys(due, ['week', 'offsetMs'])
+      || !(definition.dueOptions ?? [definition.due]).some((option) =>
+        option.week === due.week && option.offsetMs === due.offsetMs)) return false;
+  }
 
   const player = input.player;
   if (!isRecord(player) || !hasOnlyKeys(player, ['districtId', 'party', 'values', 'election'])
@@ -538,6 +570,8 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     && isInteger(relationship.evaluatedRevision, 0))) return false;
   const relationships = input.relationships as TermState['relationships'];
   if (!unique(relationships.map((relationship) => relationship.memberId))) return false;
+  if (relationships.some((relationship) => relationship.demandProvisionId
+    !== selectedDemandIds[relationship.memberId])) return false;
   if (relationships.some((relationship) => relationship.evaluatedRevision > (bill.revision as number))) return false;
   if (!isInteger(input.staffCapacity, 0)) return false;
   if (!isRecord(input.unlockedSlotExpansions) || !Object.entries(input.unlockedSlotExpansions).every(([patternId, expansionIds]) =>
@@ -589,19 +623,25 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   if (work.some((entry) => [...entry.consumedCardIds, ...entry.returnedCardIds].some((id) => !entry.cardIds.includes(id)))) return false;
 
   if (!Array.isArray(input.obligations) || !input.obligations.every((obligation) => isRecord(obligation)
-    && hasOnlyKeys(obligation, ['id', 'sourceId', 'due', 'mandatory', 'status', 'rewardCapital', 'trustPenalty'])
+    && hasOnlyKeys(obligation, ['id', 'sourceId', 'sourceCardInstanceId', 'due', 'mandatory', 'status', 'rewardCapital', 'trustPenalty'])
     && typeof obligation.id === 'string' && typeof obligation.sourceId === 'string'
     && scenario.obligationDefinitions.some((definition) => definition.id === obligation.sourceId
-      && definition.due.week === (obligation.due as RecordValue)?.week
-      && definition.due.offsetMs === (obligation.due as RecordValue)?.offsetMs
+      && (definition.dueOptions ?? [definition.due]).some((due) =>
+        due.week === (obligation.due as RecordValue)?.week && due.offsetMs === (obligation.due as RecordValue)?.offsetMs)
       && definition.mandatory === obligation.mandatory
       && definition.rewardCapital === obligation.rewardCapital
       && definition.trustPenalty === obligation.trustPenalty)
     && isRecord(obligation.due) && hasOnlyKeys(obligation.due, ['week', 'offsetMs'])
+    && (obligation.sourceCardInstanceId === undefined || typeof obligation.sourceCardInstanceId === 'string')
     && isInteger(obligation.due.week, 1, 6) && isInteger(obligation.due.offsetMs, 0)
     && typeof obligation.mandatory === 'boolean' && ['open', 'fulfilled', 'missed', 'declined'].includes(obligation.status as string)
     && isFiniteNumber(obligation.rewardCapital) && isFiniteNumber(obligation.trustPenalty))) return false;
-  if (!unique((input.obligations as TermState['obligations']).map((obligation) => obligation.id))) return false;
+  const obligations = input.obligations as TermState['obligations'];
+  if (!unique(obligations.map((obligation) => obligation.id))) return false;
+  if (obligations.some((obligation) => {
+    const selected = dueSelections[obligation.sourceId];
+    return !isRecord(selected) || selected.week !== obligation.due.week || selected.offsetMs !== obligation.due.offsetMs;
+  })) return false;
 
   if (!Array.isArray(input.pendingDecisions) || !input.pendingDecisions.every((decision) => isRecord(decision)
     && hasOnlyKeys(decision, ['id', 'sourceId', 'occurrenceId', 'officeDefinitionId', 'approachedBillRevision', 'expectedBillRevision', 'choiceIds', 'status'])
@@ -611,6 +651,7 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
       && strings(decision.choiceIds)
       && decision.choiceIds.length === demand.choiceIds.length
       && decision.choiceIds.every((id, index) => id === demand.choiceIds[index]))
+    && selectedDemandIds[decision.officeDefinitionId as string] === decision.sourceId
     && typeof decision.officeDefinitionId === 'string' && scenario.cards.some((card) => card.id === decision.officeDefinitionId && card.kind === 'coalition')
     && isInteger(decision.approachedBillRevision, 0) && isInteger(decision.expectedBillRevision, 0)
     && strings(decision.choiceIds) && decision.choiceIds.every((id) => scenario.decisionChoices.some((choice) => choice.id === id))
@@ -666,28 +707,45 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   if (!unique((input.electionEffects as TermState['electionEffects']).map((effect) => effect.id))) return false;
   if (!Array.isArray(input.eventLog) || !input.eventLog.every((event) => validEvent(event, scenario))) return false;
   const eventLog = input.eventLog as TermState['eventLog'];
-  if (storyDecisions.some((decision) => !eventLog.some((event) =>
-    event.type === 'STORY_DECISION_PRESENTED'
-      && event.decisionId === decision.id
-      && event.storyEventId === decision.storyEventId
-      && event.occurrenceId === decision.occurrenceId
-      && canonicalJson(event.choiceIds) === canonicalJson(decision.choiceIds),
-  ))) return false;
-  if (storyDecisions.some((decision) => decision.status === 'resolved' && !eventLog.some((event) =>
-    event.type === 'STORY_DECISION_RESOLVED'
-      && event.decisionId === decision.id
-      && event.storyEventId === decision.storyEventId
-      && event.occurrenceId === decision.occurrenceId,
-  ))) return false;
-  if ((input.storyHistory as string[]).some((occurrenceId) => !eventLog.some((event) =>
-    event.type === 'EVENT_TRIGGERED' && event.occurrenceId === occurrenceId,
-  ))) return false;
-  if (packs.some((pack) => !eventLog.some((event) =>
-    event.type === 'PACK_OPENED'
-      && event.packOccurrenceId === pack.packOccurrenceId
-      && event.categoryId === pack.categoryId
-      && canonicalJson(event.cardDefinitionIds) === canonicalJson(pack.cardDefinitionIds),
-  ))) return false;
+  const presentedStories = eventLog.filter((event) => event.type === 'STORY_DECISION_PRESENTED');
+  const resolvedStories = eventLog.filter((event) => event.type === 'STORY_DECISION_RESOLVED');
+  const triggeredStories = eventLog.filter((event) => event.type === 'EVENT_TRIGGERED');
+  if (presentedStories.length !== storyDecisions.length || resolvedStories.length !== storyDecisions.filter((d) => d.status === 'resolved').length
+    || triggeredStories.length !== (input.storyHistory as string[]).length) return false;
+  for (const decision of storyDecisions) {
+    if (decision.id !== `story-decision:${decision.occurrenceId}`
+      || decision.occurrenceId !== `${decision.storyEventId}:${decision.occurrenceId.slice(decision.storyEventId.length + 1)}`
+      || !/^.+:week:[1-6]:draw:[1-9][0-9]*$/.test(decision.occurrenceId)) return false;
+    const presented = presentedStories.filter((event) => event.decisionId === decision.id
+      && event.storyEventId === decision.storyEventId && event.occurrenceId === decision.occurrenceId
+      && canonicalJson(event.choiceIds) === canonicalJson(decision.choiceIds));
+    const resolved = resolvedStories.filter((event) => event.decisionId === decision.id
+      && event.storyEventId === decision.storyEventId && event.occurrenceId === decision.occurrenceId);
+    if (presented.length !== 1 || resolved.length !== (decision.status === 'resolved' ? 1 : 0)) return false;
+  }
+  for (const occurrenceId of input.storyHistory as string[]) {
+    if (triggeredStories.filter((event) => event.occurrenceId === occurrenceId).length !== 1
+      || !storyDecisions.some((decision) => decision.occurrenceId === occurrenceId)) return false;
+  }
+  const packEvents = eventLog.filter((event) => event.type === 'PACK_OPENED');
+  if (packEvents.length !== packs.length) return false;
+  for (const pack of packs) {
+    if (pack.packOccurrenceId !== `pack:week:${pack.week}` || packEvents.filter((event) =>
+      event.packOccurrenceId === pack.packOccurrenceId && event.categoryId === pack.categoryId
+      && canonicalJson(event.cardDefinitionIds) === canonicalJson(pack.cardDefinitionIds)).length !== 1) return false;
+  }
+  const createdEvents = eventLog.filter((event) => event.type === 'OBLIGATION_CREATED');
+  for (const obligation of input.obligations as TermState['obligations']) {
+    const sourceDefinition = scenario.obligationDefinitions.find((definition) => definition.id === obligation.sourceId);
+    if (sourceDefinition?.fulfillment.kind === 'completed-pattern' && sourceDefinition.fulfillment.requireSourceCardOccurrence) {
+      const occurrences = createdEvents.filter((event) => event.obligationId === obligation.id
+        && event.sourceId === obligation.sourceId && event.sourceCardInstanceId === obligation.sourceCardInstanceId);
+      if (!obligation.sourceCardInstanceId || occurrences.length !== 1) return false;
+    }
+  }
+  if (createdEvents.some((event) => !(input.obligations as TermState['obligations']).some((obligation) =>
+    obligation.id === event.obligationId && obligation.sourceId === event.sourceId
+      && obligation.sourceCardInstanceId === event.sourceCardInstanceId))) return false;
   if (!['active', 'complete'].includes(input.runStatus as string)) return false;
   if (input.sessionRecord !== undefined && !validSessionRecord(input.sessionRecord)) return false;
   if (input.weekPhase === 'boundary' && input.paused !== true) return false;
@@ -736,6 +794,12 @@ function adaptV1State(value: unknown, scenario: ScenarioDefinition): unknown {
     pendingDecisions: value.pendingDecisions ?? [],
     pendingStoryDecisions: value.pendingStoryDecisions ?? [],
     revealedPacks: value.revealedPacks ?? [],
+    runVariation: value.runVariation ?? {
+      selectedDemandIdsByOffice: Object.fromEntries(Array.from(new Set(scenario.demandDefinitions.map((demand) => demand.officeDefinitionId))).sort()
+        .map((officeId) => [officeId, scenario.demandDefinitions.filter((demand) => demand.officeDefinitionId === officeId)
+          .sort((a, b) => a.id.localeCompare(b.id))[0]?.id])),
+      obligationDueByDefinitionId: Object.fromEntries(scenario.obligationDefinitions.map((definition) => [definition.id, definition.due])),
+    },
     rewardedOccurrenceIds: value.rewardedOccurrenceIds ?? [],
     resolvedWeekIds: value.resolvedWeekIds ?? [],
     runStatus: value.runStatus ?? 'active',

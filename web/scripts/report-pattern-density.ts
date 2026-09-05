@@ -30,7 +30,7 @@ if (process.argv.includes('--mode') && process.argv[process.argv.indexOf('--mode
   let failed = false;
   for (const party of ['democratic', 'republican'] as const) {
     const base = analyzeCatalog(session, party, []);
-    console.log(`${party}: definition sets=${base.definitionSetCount}; form-aware matches=${base.formAwareMatchCount}; distinct outcomes=${base.distinctOutcomes.length}`);
+    console.log(`${party}: definition sets=${base.definitionSetCount}; theoretical slot/origin-compatible assignments=${base.formAwareMatchCount}; distinct outcomes=${base.distinctOutcomes.length}`);
     console.log(`  by pattern: ${Object.entries(base.byPattern).map(([id, count]) => `${id}=${count}`).join(', ')}`);
     console.log(`  by family: ${Object.entries(base.byFamilyCombination).map(([id, count]) => `${id}=${count}`).join(', ')}`);
     for (const subset of tacticSubsets(session)) {

@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 import type { TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
 
-export function StoryDecisionModal({ session, state, onResult }: {
+export function StoryDecisionModal({ session, state, open, onOpenChange, returnFocusRef, onResult }: {
   session: GameSession;
   state: TermState;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  returnFocusRef: RefObject<HTMLElement | null>;
   onResult?: (message: string) => void;
 }) {
   const pending = state.pendingStoryDecisions.find((decision) => decision.status === 'pending');
@@ -16,20 +19,24 @@ export function StoryDecisionModal({ session, state, onResult }: {
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog || !pending) return;
+    if (!dialog || !pending || !open) return;
+    const returnFocusTarget = returnFocusRef.current;
     if (!dialog.open) {
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
     }
-    dialog.querySelector<HTMLElement>('button')?.focus();
+    dialog.querySelector<HTMLElement>('button[data-story-choice]')?.focus();
     return () => {
       if (dialog.open && typeof dialog.close === 'function') dialog.close();
+      else dialog.removeAttribute('open');
+      returnFocusTarget?.focus();
     };
-  }, [pending]);
+  }, [open, pending, returnFocusRef]);
 
-  if (!pending || !event) return null;
+  if (!pending || !event || !open) return null;
   return (
-    <dialog ref={dialogRef} className="decision-modal" aria-labelledby="story-decision-title" data-testid="story-decision-modal">
+    <dialog ref={dialogRef} className="decision-modal" aria-labelledby="story-decision-title" data-testid="story-decision-modal"
+      onCancel={(cancelEvent) => { cancelEvent.preventDefault(); onOpenChange(false); }}>
       <div className="decision-modal__paper">
         <header>
           <div>
@@ -49,10 +56,12 @@ export function StoryDecisionModal({ session, state, onResult }: {
               </p>
               <button
                 type="button"
+                data-story-choice
                 onClick={() => {
                   const result = session.dispatch({ type: 'RESOLVE_STORY', decisionId: pending.id, choiceId: choice.id });
                   const rejection = result.events.find((entry) => entry.type === 'COMMAND_REJECTED');
                   onResult?.(rejection?.type === 'COMMAND_REJECTED' ? rejection.message : `${choice.label} recorded.`);
+                  if (!rejection) onOpenChange(false);
                 }}
               >
                 {choice.label}

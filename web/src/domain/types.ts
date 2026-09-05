@@ -330,6 +330,8 @@ export type ActiveWork = WorkReservation &
 export interface Obligation {
   id: string;
   sourceId: string;
+  /** Exact card occurrence that activated a pack-sourced obligation. */
+  sourceCardInstanceId?: string;
   due: DueTime;
   mandatory: boolean;
   status: 'open' | 'fulfilled' | 'missed' | 'declined';
@@ -362,6 +364,13 @@ export interface RevealedPack {
   week: number;
   categoryId: string;
   cardDefinitionIds: string[];
+}
+
+export interface RunVariation {
+  /** One authored demand selected for each office that has a demand pool. */
+  selectedDemandIdsByOffice: Record<string, string>;
+  /** One authored deadline selected for each obligation definition. */
+  obligationDueByDefinitionId: Record<string, DueTime>;
 }
 
 export interface SessionRecord {
@@ -410,6 +419,7 @@ export interface TermState {
   pendingDecisions: PendingDecision[];
   pendingStoryDecisions: PendingStoryDecision[];
   revealedPacks: RevealedPack[];
+  runVariation: RunVariation;
   rewardedOccurrenceIds: string[];
   resolvedWeekIds: string[];
   runStatus: 'active' | 'complete';
@@ -428,6 +438,8 @@ export interface RecipeSlot {
   anyTags?: string[];
   sourceClasses?: SourceClass[];
   forms?: InstanceForm[];
+  /** Restrict a derived artifact to one or more real producer receipts. */
+  originExplanationKeys?: string[];
   quantity: 1 | 2 | 3;
   /**
    * Whether this slot's cards are used up. Defaults to true.
@@ -572,13 +584,20 @@ export interface PackPoolDefinition {
 export type ObligationFulfillmentDefinition =
   | { kind: 'docketed-policy-tag'; tag: string }
   | { kind: 'prepared-evidence-tag'; tag: string }
-  | { kind: 'completed-pattern'; patternId: string };
+  | {
+      kind: 'completed-pattern';
+      patternId: string;
+      sourceDefinitionId?: string;
+      concernId?: string;
+      requireSourceCardOccurrence?: boolean;
+    };
 
 export interface ObligationDefinition {
   id: string;
   title: string;
   sourceDefinitionId: string;
   due: DueTime;
+  dueOptions?: DueTime[];
   mandatory: boolean;
   rewardCapital: number;
   trustPenalty: number;

@@ -103,6 +103,20 @@ export function buildInitialState(
   });
 
   const stacks = cards.map((card) => ({ id: card.stackId, cardIds: [card.id] }));
+  const selectedDemandIdsByOffice = Object.fromEntries(
+    scenario.demandDefinitions
+      .map((demand) => demand.officeDefinitionId)
+      .filter((id, index, ids) => ids.indexOf(id) === index)
+      .sort()
+      .map((officeId) => [officeId, scenario.demandDefinitions
+        .filter((demand) => demand.officeDefinitionId === officeId)
+        .sort((a, b) => a.id.localeCompare(b.id))[0]!.id]),
+  );
+  const obligationDueByDefinitionId = Object.fromEntries(
+    [...scenario.obligationDefinitions]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((definition) => [definition.id, { ...definition.due }]),
+  );
 
   return {
     schemaVersion,
@@ -143,7 +157,7 @@ export function buildInitialState(
         memberId: office.id,
         support: scenario.demandDefinitions.some((demand) => demand.officeDefinitionId === office.id)
           || office.tags.includes('housing-interest') ? 'interested' as const : 'unavailable' as const,
-        demandProvisionId: scenario.demandDefinitions.find((demand) => demand.officeDefinitionId === office.id)?.id,
+        demandProvisionId: selectedDemandIdsByOffice[office.id],
         promiseOccurrenceIds: [],
         conditions: [],
         evaluatedRevision: 0,
@@ -154,6 +168,7 @@ export function buildInitialState(
     pendingDecisions: [],
     pendingStoryDecisions: [],
     revealedPacks: [],
+    runVariation: { selectedDemandIdsByOffice, obligationDueByDefinitionId },
     rewardedOccurrenceIds: [],
     resolvedWeekIds: [],
     runStatus: 'active',

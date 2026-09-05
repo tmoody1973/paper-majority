@@ -11,6 +11,8 @@ import type {
 interface ConcreteInput {
   definition: CardDefinition;
   form: InstanceForm;
+  originExplanationKey?: string;
+  sourceClass: CardDefinition['sourceClass'];
 }
 
 export interface CatalogCollision {
@@ -29,13 +31,30 @@ export interface CatalogAnalysis {
   collisions: CatalogCollision[];
 }
 
-function formsFor(definition: CardDefinition): InstanceForm[] {
-  if (definition.kind === 'evidence') return definition.validForms ?? ['raw', 'summary', 'prepared'];
-  if (definition.kind === 'policy') return ['raw', 'drafted', 'prepared'];
-  if (definition.kind === 'constituency' || definition.kind === 'institution' || definition.kind === 'political') {
-    return ['raw', 'prepared'];
-  }
-  return ['raw'];
+function formsFor(definition: CardDefinition): ConcreteInput[] {
+  const raw: ConcreteInput = { definition, form: 'raw', sourceClass: definition.sourceClass };
+  if (definition.kind === 'evidence') return [
+    raw,
+    ...['result.summary.committee-credibility', 'result.summary.district-relevance'].map((originExplanationKey) =>
+      ({ definition, form: 'summary' as const, sourceClass: 'derived' as const, originExplanationKey })),
+    ...['result.evidence.district-packet-prepared', 'result.evidence.office-concern-answered'].map((originExplanationKey) =>
+      ({ definition, form: 'prepared' as const, sourceClass: 'derived' as const, originExplanationKey })),
+  ];
+  if (definition.kind === 'policy') return [raw, {
+    definition, form: 'drafted', sourceClass: 'simulated', originExplanationKey: 'result.provision.drafted',
+  }, {
+    definition, form: 'prepared', sourceClass: 'simulated', originExplanationKey: 'result.provision.reviewed',
+  }];
+  if (definition.kind === 'constituency') return [raw,
+    ...['result.constituency.response-prepared', 'result.constituency.endorsement-earned'].map((originExplanationKey) =>
+      ({ definition, form: 'prepared' as const, sourceClass: 'simulated' as const, originExplanationKey }))];
+  if (definition.kind === 'institution') return [raw, {
+    definition, form: 'prepared', sourceClass: 'simulated', originExplanationKey: 'result.institution.committee-packet-prepared',
+  }];
+  if (definition.kind === 'political') return [raw, {
+    definition, form: 'prepared', sourceClass: 'simulated', originExplanationKey: 'result.political.asset-prepared',
+  }];
+  return [raw];
 }
 
 function slotAccepts(slot: RecipeSlot, input: ConcreteInput, party: Party): boolean {
@@ -43,8 +62,9 @@ function slotAccepts(slot: RecipeSlot, input: ConcreteInput, party: Party): bool
   if (slot.kind && slot.kind !== input.definition.kind) return false;
   if (slot.requiredTags?.some((tag) => !tags.includes(tag))) return false;
   if (slot.anyTags && !slot.anyTags.some((tag) => tags.includes(tag))) return false;
-  if (slot.sourceClasses && !slot.sourceClasses.includes(input.definition.sourceClass)) return false;
+  if (slot.sourceClasses && !slot.sourceClasses.includes(input.sourceClass)) return false;
   if (slot.forms && !slot.forms.includes(input.form)) return false;
+  if (slot.originExplanationKeys && !slot.originExplanationKeys.includes(input.originExplanationKey ?? '')) return false;
   return true;
 }
 
@@ -77,9 +97,7 @@ function enumeratePattern(
   cards: CardDefinition[],
   party: Party,
 ): Array<{ inputKey: string; definitionKey: string; familyKey: string }> {
-  const possible = cards.flatMap((definition) =>
-    formsFor(definition).map((form) => ({ definition, form })),
-  );
+  const possible = cards.flatMap(formsFor);
   const slotUnits = units(slots);
   const results: Array<{ inputKey: string; definitionKey: string; familyKey: string }> = [];
 
@@ -96,7 +114,7 @@ function enumeratePattern(
       if (!semanticValid(chosen)) return;
       const ordered = [...chosen].sort((a, b) => a.definition.id.localeCompare(b.definition.id));
       results.push({
-        inputKey: ordered.map((entry) => `${entry.definition.id}@${entry.form}`).join('+'),
+        inputKey: ordered.map((entry) => `${entry.definition.id}@${entry.form}@${entry.originExplanationKey ?? 'authored'}`).join('+'),
         definitionKey: ordered.map((entry) => entry.definition.id).join('+'),
         familyKey: ordered.map((entry) => entry.definition.kind).sort().join('+'),
       });
@@ -122,12 +140,12 @@ export function analyzeCatalog(
   const outcomes = new Set<string>();
   for (const pattern of scenario.patterns) {
     const effective = effectiveRule(pattern, activeExpansionIds, scenario.tacticExpansions).pattern;
-    const concrete = enumeratePattern(pattern, effective.slots, scenario.cards, party);
+    const concrete = enumeratePattern(effective, effective.slots, scenario.cards, party);
     byPattern[pattern.id] = new Set(concrete.map((entry) => entry.definitionKey)).size;
-    if (concrete.length > 0) outcomes.add(outputKey(pattern));
+    if (concrete.length > 0) outcomes.add(outputKey(effective));
     for (const entry of concrete) {
       const list = matches.get(entry.inputKey) ?? [];
-      list.push({ pattern, definitionKey: entry.definitionKey, familyKey: entry.familyKey });
+      list.push({ pattern: effective, definitionKey: entry.definitionKey, familyKey: entry.familyKey });
       matches.set(entry.inputKey, list);
     }
   }

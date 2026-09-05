@@ -171,6 +171,7 @@ const recipeSlotSchema = z.strictObject({
   anyTags: z.array(idSchema).optional(),
   sourceClasses: z.array(z.enum(SOURCE_CLASSES)).optional(),
   forms: z.array(z.enum(FORMS)).optional(),
+  originExplanationKeys: z.array(z.string().min(1)).min(1).optional(),
   quantity: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   consumed: z.boolean().optional(),
 });
@@ -311,7 +312,13 @@ export const relationshipConditionSchema = z.discriminatedUnion('kind', [
 const obligationFulfillmentSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('docketed-policy-tag'), tag: idSchema }),
   z.strictObject({ kind: z.literal('prepared-evidence-tag'), tag: idSchema }),
-  z.strictObject({ kind: z.literal('completed-pattern'), patternId: idSchema }),
+  z.strictObject({
+    kind: z.literal('completed-pattern'),
+    patternId: idSchema,
+    sourceDefinitionId: idSchema.optional(),
+    concernId: idSchema.optional(),
+    requireSourceCardOccurrence: z.boolean().optional(),
+  }),
 ]);
 
 const decisionChoiceEffectSchema = z.discriminatedUnion('kind', [
@@ -390,6 +397,7 @@ const rawScenarioSchema = z.strictObject({
     title: z.string().min(1),
     sourceDefinitionId: idSchema,
     due: dueTimeSchema,
+    dueOptions: z.array(dueTimeSchema).min(2).optional(),
     mandatory: z.boolean(),
     rewardCapital: finiteNonnegative,
     trustPenalty: finiteNonnegative,
@@ -557,7 +565,32 @@ export const scenarioSchema: z.ZodType<ScenarioDefinition> = rawScenarioSchema.s
 
     for (const [index, obligation] of scenario.obligationDefinitions.entries()) {
       if (!cards.has(obligation.sourceDefinitionId)) addReferenceIssue(ctx, `Unknown obligation source: ${obligation.sourceDefinitionId}`, ['obligationDefinitions', index]);
-      if (obligation.fulfillment.kind === 'completed-pattern' && !patterns.has(obligation.fulfillment.patternId)) addReferenceIssue(ctx, `Unknown fulfillment pattern: ${obligation.fulfillment.patternId}`, ['obligationDefinitions', index, 'fulfillment']);
+      if (obligation.dueOptions && !obligation.dueOptions.some((due) =>
+        due.week === obligation.due.week && due.offsetMs === obligation.due.offsetMs)) {
+        addReferenceIssue(ctx, 'The default due time must be one authored deadline option', ['obligationDefinitions', index, 'dueOptions']);
+      }
+      if (obligation.fulfillment.kind === 'completed-pattern') {
+        if (!patterns.has(obligation.fulfillment.patternId)) addReferenceIssue(ctx, `Unknown fulfillment pattern: ${obligation.fulfillment.patternId}`, ['obligationDefinitions', index, 'fulfillment']);
+        if (obligation.fulfillment.sourceDefinitionId
+          && !cards.has(obligation.fulfillment.sourceDefinitionId)) {
+          addReferenceIssue(ctx, `Unknown fulfillment source: ${obligation.fulfillment.sourceDefinitionId}`, ['obligationDefinitions', index, 'fulfillment']);
+        }
+        if (obligation.fulfillment.concernId && !demands.has(obligation.fulfillment.concernId)) {
+          addReferenceIssue(ctx, `Unknown fulfillment concern: ${obligation.fulfillment.concernId}`, ['obligationDefinitions', index, 'fulfillment']);
+        }
+        const source = cards.get(obligation.sourceDefinitionId);
+        if (obligation.fulfillment.sourceDefinitionId
+          && obligation.fulfillment.sourceDefinitionId !== obligation.sourceDefinitionId) {
+          addReferenceIssue(ctx, 'Fulfillment source must identify the obligation source card', ['obligationDefinitions', index, 'fulfillment']);
+        }
+        if (obligation.fulfillment.concernId && (source?.kind !== 'constituency'
+          || source.authoredConcern?.concernId !== obligation.fulfillment.concernId)) {
+          addReferenceIssue(ctx, 'Fulfillment concern must match the source card authored concern', ['obligationDefinitions', index, 'fulfillment']);
+        }
+        if (obligation.fulfillment.requireSourceCardOccurrence && !obligation.fulfillment.sourceDefinitionId) {
+          addReferenceIssue(ctx, 'Occurrence-bound fulfillment requires a source definition', ['obligationDefinitions', index, 'fulfillment']);
+        }
+      }
       if ('tag' in obligation.fulfillment && !tags.has(obligation.fulfillment.tag)) addReferenceIssue(ctx, `Unknown obligation tag: ${obligation.fulfillment.tag}`, ['obligationDefinitions', index, 'fulfillment']);
     }
     for (const [index, demand] of scenario.demandDefinitions.entries()) {

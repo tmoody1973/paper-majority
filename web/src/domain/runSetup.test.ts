@@ -21,7 +21,7 @@ describe('Session run setup', () => {
     expect(eligibleStoryEvents(a, scenario).map((event) => event.id)).toEqual(
       eligibleStoryEvents(b, scenario).map((event) => event.id),
     );
-    expect(a.rngCursor).toBe(4);
+    expect(a.rngCursor).toBe(12);
   });
 
   it('guarantees three roles, raw policy/evidence, and trait-or-generalist setup', () => {
@@ -45,5 +45,19 @@ describe('Session run setup', () => {
     expect(traitIds(2)).not.toEqual(traitIds(9));
     expect(traitIds(2)).toHaveLength(3);
     expect(traitIds(9)).toHaveLength(3);
+  });
+
+  it('persists bounded demand and deadline draws that vary by seed', () => {
+    const a = createRun({ ...sessionSetup, mode: 'session', seed: 2 });
+    const b = createRun({ ...sessionSetup, mode: 'session', seed: 9 });
+    expect(a.runVariation).not.toEqual(b.runVariation);
+    for (const [officeId, demandId] of Object.entries(a.runVariation.selectedDemandIdsByOffice)) {
+      expect(scenario.demandDefinitions).toContainEqual(expect.objectContaining({ id: demandId, officeDefinitionId: officeId }));
+      expect(a.relationships.find((relationship) => relationship.memberId === officeId)?.demandProvisionId).toBe(demandId);
+    }
+    for (const [definitionId, due] of Object.entries(a.runVariation.obligationDueByDefinitionId)) {
+      const definition = scenario.obligationDefinitions.find((entry) => entry.id === definitionId)!;
+      expect(definition.dueOptions).toContainEqual(due);
+    }
   });
 });

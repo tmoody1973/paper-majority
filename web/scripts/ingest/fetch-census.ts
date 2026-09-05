@@ -1,18 +1,18 @@
 import sourceMap from '../../src/content/housing/source-map.json';
-import { fetchToFile, prepareNewSnapshot, snapshotArg, writeExclusive } from './ingest-utils';
+import { fetchToFile, prepareSnapshot, snapshotArg, writeExclusive } from './ingest-utils';
 
 async function main(): Promise<void> {
   const snapshot = snapshotArg();
-  const directory = await prepareNewSnapshot(snapshot);
+  const directory = await prepareSnapshot(snapshot);
   const mapped = sourceMap.sources.filter((entry) => entry.kind === 'census-table');
   const records = [];
   for (const entry of mapped) {
-    records.push(await fetchToFile(entry.url, `${directory}/${entry.stagingFiles[0]}`));
+    records.push(await fetchToFile(entry.url, `${directory}/source-data/${entry.stagingFiles[0]}`));
     if (entry.metadataUrl && entry.stagingFiles[1]) {
-      records.push(await fetchToFile(entry.metadataUrl, `${directory}/${entry.stagingFiles[1]}`));
+      records.push(await fetchToFile(entry.metadataUrl, `${directory}/source-data/${entry.stagingFiles[1]}`));
     }
   }
-  await writeExclusive(`${directory}/census-receipt.json`, `${JSON.stringify({
+  await writeExclusive(`${directory}/receipts/census.json`, `${JSON.stringify({
     snapshot,
     mapped: mapped.length,
     fetched: records.length,

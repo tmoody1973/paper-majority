@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { effectiveCard } from '@/domain/instanceForms';
+import { describeCard } from '@/domain/cardDetail';
 import { buildMatchInputs, matchPattern } from '@/domain/recipes';
 import { createRun } from '@/domain/initialState';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
+import { getCandidateScenario } from '@/content/loadScenario';
 
 describe('effectiveCard', () => {
   it('keeps summary source IDs and makes repeat summarization impossible', () => {
@@ -74,5 +76,31 @@ describe('effectiveCard', () => {
     const before = structuredClone(sessionScenario.cards);
     effectiveCard({ ...evidence, form: 'summary' }, sessionScenario);
     expect(sessionScenario.cards).toEqual(before);
+  });
+
+  it('keeps simulated prepared support distinct from evidence-derived records', () => {
+    const candidate = getCandidateScenario();
+    const state = createRun({ ...sessionSetup, scenario: candidate, mode: 'session' });
+    const definitionId = 'constituency-urgent-renter-concern';
+    const base = state.cards[0];
+    const prepared = {
+      ...base,
+      id: 'prepared-support',
+      definitionId,
+      form: 'prepared' as const,
+      sourceDefinitionIds: [],
+      origin: {
+        explanationKey: 'result.constituency.endorsement-earned',
+        inputDefinitionIds: [definitionId],
+        consumedDefinitionIds: [definitionId],
+      },
+    };
+    const effective = effectiveCard(prepared, candidate);
+    expect(effective.effectiveSourceClass).toBe('simulated');
+    expect(effective.provenance.label).toMatch(/Simulated/);
+    expect(effective.provenance.explanationKey).toBe('result.constituency.endorsement-earned');
+    const detail = describeCard({ ...state, cards: [...state.cards, prepared] }, candidate, prepared.id);
+    expect(detail?.sourceLabel).toBe('Simulated');
+    expect(detail?.sourceExplainer).toMatch(/Invented for your run/);
   });
 });

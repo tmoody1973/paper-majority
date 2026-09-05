@@ -135,7 +135,10 @@ export function describeCard(
   if (!definition) return undefined;
   const effective = effectiveCard(instance, scenario);
 
-  const effectiveTags = computeEffectiveTags(definition, state.player.party);
+  const effectiveTags = Array.from(new Set([
+    ...effective.effectiveTags,
+    ...computeEffectiveTags(definition, state.player.party),
+  ]));
 
   // Which discovered rules can this card actually take part in?
   const knownUses: string[] = [];
@@ -153,8 +156,10 @@ export function describeCard(
       if (slot.kind && slot.kind !== definition.kind) return false;
       if (slot.requiredTags?.some((tag) => !effectiveTags.includes(tag))) return false;
       if (slot.anyTags && !slot.anyTags.some((tag) => effectiveTags.includes(tag))) return false;
-      if (slot.sourceClasses && !slot.sourceClasses.includes(definition.sourceClass)) return false;
+      if (slot.sourceClasses && !slot.sourceClasses.includes(effective.effectiveSourceClass)) return false;
       if (slot.forms && !slot.forms.includes(instance.form)) return false;
+      if (slot.originExplanationKeys
+        && !slot.originExplanationKeys.includes(effective.provenance.explanationKey ?? '')) return false;
       return true;
     });
     if (!fits) continue;

@@ -246,11 +246,11 @@ describe('week boundaries', () => {
     }, { type: 'SUBMIT_WORK', cardIds: [aide.id, office.id] }, { scenario });
     expect(started.events.filter((event) => event.type === 'RESOURCE_CHANGED')).toHaveLength(0);
     const completed = executeCommand(started.state, { type: 'TICK', deltaMs: 1_000 }, { scenario });
-    expect(completed.events.filter((event) => event.type === 'PATTERN_COMPLETED')).toEqual([{
+    expect(completed.events.filter((event) => event.type === 'PATTERN_COMPLETED')).toEqual([expect.objectContaining({
       type: 'PATTERN_COMPLETED',
       workId: 'work-1',
       patternId: 'pattern-coalition-outreach',
-    }]);
+    })]);
     expect(completed.events.filter((event) =>
       event.type === 'RESOURCE_CHANGED' && event.reason.startsWith('pattern-complete:'),
     )).toHaveLength(0);

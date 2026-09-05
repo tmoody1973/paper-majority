@@ -10,6 +10,8 @@ import {
   validateAndMigrateSave,
 } from '@/persistence/saveMigrations';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
+import { getCandidateScenario } from '@/content/loadScenario';
+import { drawStoryEvent } from '@/domain/storyDirector';
 
 describe('canonical scenario identity', () => {
   it('sorts object keys, preserves array order and uses real SHA-256', () => {
@@ -92,6 +94,50 @@ describe('save migrations', () => {
     expect(validateAndMigrateSave({ ...envelope, snapshotId: 'other' }, sessionScenario)).toMatchObject({ kind: 'wrong-snapshot' });
     expect(validateAndMigrateSave({ ...envelope, snapshotHash: '0'.repeat(64) }, sessionScenario)).toMatchObject({ kind: 'wrong-snapshot' });
     expect(envelope.snapshotHash).toBe(scenarioSnapshotHash(sessionScenario));
+  });
+
+  it('rejects replayable Story status, occurrence, and receipt tampering', () => {
+    const scenario = getCandidateScenario();
+    const base = createRun({ ...sessionSetup, scenario, mode: 'session' });
+    const drawn = drawStoryEvent(base, scenario).state;
+    const pending = drawn.pendingStoryDecisions[0];
+    const story = scenario.storyEvents.find((event) => event.id === pending.storyEventId)!;
+    const free = story.choices.find((choice) => Object.values(choice.cost).every((amount) => amount === 0))!;
+    const resolved = executeCommand(drawn, {
+      type: 'RESOLVE_STORY', decisionId: pending.id, choiceId: free.id,
+    }, { scenario }).state;
+    expect(validateAndMigrateSave(createSaveEnvelope(resolved, scenario), scenario).kind).toBe('valid');
+    const replayable = {
+      ...resolved,
+      pendingStoryDecisions: resolved.pendingStoryDecisions.map((decision) => ({ ...decision, status: 'pending' as const })),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(replayable, scenario), scenario).kind).toBe('corrupt');
+    const malformed = {
+      ...resolved,
+      pendingStoryDecisions: resolved.pendingStoryDecisions.map((decision) => ({ ...decision, occurrenceId: 'story:bad' })),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(malformed, scenario), scenario).kind).toBe('corrupt');
+  });
+
+  it('rejects missing or duplicate pack receipts and invalid variation selections', () => {
+    const scenario = getCandidateScenario();
+    const base = { ...createRun({ ...sessionSetup, scenario, mode: 'session' }), week: 2 };
+    const opened = executeCommand(base, {
+      type: 'OPEN_PACK', packOccurrenceId: 'pack:week:2', categoryId: 'week-two-policy',
+    }, { scenario }).state;
+    expect(validateAndMigrateSave(createSaveEnvelope(opened, scenario), scenario).kind).toBe('valid');
+    expect(validateAndMigrateSave(createSaveEnvelope({ ...opened, revealedPacks: [] }, scenario), scenario).kind).toBe('corrupt');
+    const openedEvent = opened.eventLog.find((event) => event.type === 'PACK_OPENED')!;
+    expect(validateAndMigrateSave(createSaveEnvelope({ ...opened, eventLog: [...opened.eventLog, openedEvent] }, scenario), scenario).kind).toBe('corrupt');
+    const officeId = Object.keys(opened.runVariation.selectedDemandIdsByOffice)[0]!;
+    const tampered = {
+      ...opened,
+      runVariation: {
+        ...opened.runVariation,
+        selectedDemandIdsByOffice: { ...opened.runVariation.selectedDemandIdsByOffice, [officeId]: 'demand-foreign' },
+      },
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(tampered, scenario), scenario).kind).toBe('corrupt');
   });
 
   it('strictly rejects malformed state and broken active-work references', () => {

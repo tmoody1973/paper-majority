@@ -11,11 +11,13 @@ import type {
 export function obligationOccurrence(
   definition: ObligationDefinition,
   occurrenceId = `week:${definition.due.week}`,
+  options: { due?: Obligation['due']; sourceCardInstanceId?: string } = {},
 ): Obligation {
   return {
     id: `${definition.id}:${occurrenceId}`,
     sourceId: definition.id,
-    due: { ...definition.due },
+    sourceCardInstanceId: options.sourceCardInstanceId,
+    due: { ...(options.due ?? definition.due) },
     mandatory: definition.mandatory,
     status: 'open',
     rewardCapital: definition.rewardCapital,
@@ -72,7 +74,11 @@ export function obligationIsFulfilled(
   return completed.some((event, index) =>
     index > createdAt
       && event.type === 'PATTERN_COMPLETED'
-      && event.patternId === fulfillment.patternId,
+      && event.patternId === fulfillment.patternId
+      && (!fulfillment.sourceDefinitionId || event.inputDefinitionIds?.includes(fulfillment.sourceDefinitionId))
+      && (!fulfillment.concernId || event.authoredConcernId === fulfillment.concernId)
+      && (!fulfillment.requireSourceCardOccurrence
+        || (!!obligation.sourceCardInstanceId && event.inputCardIds?.includes(obligation.sourceCardInstanceId))),
   );
 }
 

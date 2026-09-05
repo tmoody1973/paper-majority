@@ -29,8 +29,8 @@ export function effectiveCard(
   if (instance.form === 'drafted' && definition.kind !== 'policy') {
     throw new Error('Only Policy instances can be drafted');
   }
-  if (instance.form === 'prepared' && definition.kind !== 'evidence') {
-    throw new Error('Only Evidence instances can be prepared');
+  if (instance.form === 'prepared' && !['evidence', 'constituency', 'institution', 'political'].includes(definition.kind)) {
+    throw new Error('Only Evidence, Constituency, Institution, or Political instances can be prepared');
   }
 
   const sourceDefinitionIds = instance.sourceDefinitionIds.length > 0
@@ -60,8 +60,10 @@ export function effectiveCard(
 
   const effectiveSourceClass = instance.form === 'drafted'
     ? 'simulated'
-    : instance.form === 'summary' || instance.form === 'prepared'
+    : instance.form === 'summary' || (instance.form === 'prepared' && definition.kind === 'evidence')
       ? 'derived'
+      : instance.form === 'prepared'
+        ? 'simulated'
       : definition.sourceClass;
   const provenanceDefinitions = policyDefinition
     ? [...sourceDefinitions, policyDefinition]
@@ -76,8 +78,10 @@ export function effectiveCard(
     ? `Simulated proposed bill language based on ${policyDefinition?.title ?? definition.title}`
     : instance.form === 'summary'
       ? `Derived summary of ${sourceDefinitions.map((source) => source.title).join(', ')}`
-      : instance.form === 'prepared'
-        ? `Prepared from ${sourceDefinitions.map((source) => source.title).join(', ')}`
+      : instance.form === 'prepared' && definition.kind === 'evidence'
+        ? `Prepared from ${sourceDefinitions.map((source) => source.title).join(', ') || definition.title}`
+        : instance.form === 'prepared'
+          ? 'Simulated support or strategy artifact prepared during this run'
         : definition.sourceClass === 'simulated'
           ? 'Simulated scenario content'
           : 'Published source material';
@@ -93,6 +97,7 @@ export function effectiveCard(
       sourceClass: effectiveSourceClass,
       sourceDefinitionIds,
       policyDefinitionId,
+      explanationKey: instance.origin?.explanationKey,
       precedentIds,
       citations,
     },

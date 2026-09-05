@@ -2,8 +2,9 @@
   "snapshotId": "housing-session-2026-09-04-candidate",
   "candidate": true,
   "humanReviewPending": true,
-  "scenarioSha256": "10ce570df56fbc5efdf3cb2c375ba210f687791c16a7fc062273dea4d4045254",
-  "sourceMapSha256": "278210172fdfd89bbac3b4d6b3efe04706e131746ccf32a57c2df090cd9aec96",
+  "scenarioSha256": "66eb894bcf32a945828ef46a864300df7336d9421ea4c58b0245c65f0396ed14",
+  "sourceMapSha256": "9c51465b883577dd15f62128d3cda52ac6229fa631b9d63026b991e7661c7e87",
+  "rawSourceReceiptSha256": "5a6b915fbbae3e192daf6f8a3d96f08099d8c0b52779a531277f70fd70610785",
   "normalizedAt": "2026-09-05T00:00:00.000Z",
-  "rawInputManifest": "web/.ingest-staging/housing-2026-09-04-research-inputs/research-input-manifest.json"
+  "rawInputReceipt": "src/content/housing/raw-source-receipt.json"
 }

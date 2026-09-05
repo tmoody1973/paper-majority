@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { analyzeCatalog, tacticSubsets, type CatalogAnalysis } from '../src/content/catalogAnalysis';
 import candidate from '../src/content/housing/vertical-slice.candidate.json';
 import manifest from '../src/content/housing/manifest.json';
+import rawSourceReceipt from '../src/content/housing/raw-source-receipt.json';
 import sourceMap from '../src/content/housing/source-map.json';
 import { parseScenario } from '../src/content/schema';
 import { canonicalSha256 } from '../src/persistence/canonicalHash';
@@ -140,12 +140,38 @@ for (const demand of scenario.demandDefinitions) {
     }
   }
 }
+for (const office of scenario.cards.filter((card) => card.kind === 'coalition')) {
+  const pool = scenario.demandDefinitions.filter((demand) => demand.officeDefinitionId === office.id);
+  if (pool.length < 2) fail(`Office demand pool lacks seeded alternatives: ${office.id}`);
+}
+for (const obligation of scenario.obligationDefinitions) {
+  if (!obligation.dueOptions || obligation.dueOptions.length < 2) {
+    fail(`Obligation lacks a seeded deadline window: ${obligation.id}`);
+  }
+}
+const basicResponse = scenario.patterns.find((pattern) => pattern.id === 'pattern-basic-district-response');
+const endorsementConsumer = scenario.patterns.find((pattern) => pattern.id === 'pattern-negotiate-district-endorsement');
+const earlyCommittee = scenario.patterns.find((pattern) => pattern.id === 'pattern-tactic-early-preparation');
+if (basicResponse?.slots.find((slot) => slot.kind === 'constituency')?.consumed !== false) {
+  fail('Basic district response must return the concern for the evidence-backed follow-up.');
+}
+if (!endorsementConsumer?.slots.find((slot) => slot.kind === 'constituency')?.originExplanationKeys
+  ?.includes('result.constituency.endorsement-earned')) {
+  fail('District negotiation must require the evidence-earned endorsement producer receipt.');
+}
+if (earlyCommittee?.output.mode !== 'derived' || earlyCommittee.output.parameters?.outputSlot !== 2
+  || earlyCommittee.slots[2]?.kind !== 'institution') {
+  fail('Early Committee Consultation must produce its Institution input.');
+}
 if (!scenario.storyEvents.some((event) => event.class === 'recovery' && event.conditions.length === 0)) {
   fail('Story catalog lacks an unconditional recovery fallback.');
 }
 for (const event of scenario.storyEvents) {
   if (event.choices.length < 2 || !event.choices.some((choice) => choice.label.toLowerCase().includes('decline') || choice.label.toLowerCase().includes('accept'))) {
     fail(`Story event lacks an explicit fallback/refusal choice: ${event.id}`);
+  }
+  if (!event.choices.some((choice) => Object.values(choice.cost).every((amount) => amount === 0))) {
+    fail(`Story event lacks an always-affordable choice: ${event.id}`);
   }
 }
 
@@ -180,16 +206,20 @@ for (const card of scenario.cards) {
 const acs = sourceMap.sources.find((source) => source.id === 'acs-b25070-2024');
 const acsGeographyIds = acs && 'geographyIds' in acs ? acs.geographyIds : undefined;
 if (!acsGeographyIds || acsGeographyIds.length !== 6) fail('ACS source map must contain exactly six frozen district geography IDs.');
+const districtRecords = acs && 'districtRecords' in acs ? acs.districtRecords : undefined;
+for (const district of scenario.districts) {
+  const mapped = districtRecords?.find((record) => record.districtId === district.id);
+  if (!mapped || district.citations.length !== 1 || district.citations[0]?.url !== mapped.url
+    || !district.citations[0]?.title.includes('B25070')) {
+    fail(`District citation does not match its exact mapped B25070 record: ${district.id}`);
+  }
+}
 if (sourceMap.congressGovResources.length !== 0 || sourceMap.houseClerkRollCalls.length !== 0) {
   fail('This candidate makes no Congress.gov history or House roll-call claim; those maps must remain empty until reviewed records exist.');
 }
 
 async function finishValidation(): Promise<void> {
-const stagedRoot = resolve(process.cwd(), '.ingest-staging/housing-2026-09-04-research-inputs');
-const rawManifest = JSON.parse(await readFile(resolve(stagedRoot, 'research-input-manifest.json'), 'utf8')) as {
-  files: Array<{ path: string; sha256: string }>;
-};
-const rawByName = new Map(rawManifest.files.map((entry) => [entry.path.replace(/^source-data\//, ''), entry]));
+const rawByName = new Map(rawSourceReceipt.files.map((entry) => [entry.path.replace(/^source-data\//, ''), entry]));
 for (const source of sourceMap.sources) {
   for (const file of source.stagingFiles) {
     const raw = rawByName.get(file);
@@ -197,8 +227,20 @@ for (const source of sourceMap.sources) {
       fail(`Mapped staged source is absent from the frozen manifest: ${file}`);
       continue;
     }
-    const actual = await fileSha256(resolve(stagedRoot, 'source-data', file));
-    if (actual !== raw.sha256) fail(`Frozen source checksum mismatch: ${file}`);
+  }
+}
+
+const rawAudit = process.argv.includes('--raw-audit');
+let audited = 0;
+if (rawAudit) {
+  const index = process.argv.indexOf('--raw-audit');
+  const supplied = process.argv[index + 1];
+  const snapshot = supplied && !supplied.startsWith('--') ? supplied : 'housing-2026-09-04-research-inputs';
+  const stagedRoot = resolve(process.cwd(), '.ingest-staging', snapshot);
+  for (const entry of rawSourceReceipt.files) {
+    const actual = await fileSha256(resolve(stagedRoot, entry.path));
+    if (actual !== entry.sha256) fail(`Frozen source checksum mismatch: ${entry.path}`);
+    audited += 1;
   }
 }
 
@@ -206,21 +248,23 @@ const scenarioHash = canonicalSha256(scenario);
 const sourceMapHash = canonicalSha256(sourceMap);
 if (manifest.scenarioSha256 !== scenarioHash) fail(`Scenario manifest checksum mismatch: expected ${scenarioHash}`);
 if (manifest.sourceMapSha256 !== sourceMapHash) fail(`Source-map manifest checksum mismatch: expected ${sourceMapHash}`);
+const receiptHash = canonicalSha256(rawSourceReceipt);
+if (manifest.rawSourceReceiptSha256 !== receiptHash) fail(`Raw-source receipt checksum mismatch: expected ${receiptHash}`);
 if (!manifest.candidate || !manifest.humanReviewPending) fail('Manifest must retain candidate/human-review-pending status.');
 
 console.log(`snapshot: ${scenario.snapshotId}`);
 console.log(`status: ${scenario.contentStatus?.status}; humanReviewPending=${scenario.contentStatus?.humanReviewPending}`);
 console.log(`definitions: ${scenario.cards.length}; patterns: ${scenario.patterns.length}; tactics: ${scenario.tacticExpansions.length}; events: ${scenario.storyEvents.length}`);
-console.log(`definition sets: ${density}; form-aware matches: ${baseReports[0]?.analysis.formAwareMatchCount ?? 0}; distinct outcomes: ${baseReports[0]?.analysis.distinctOutcomes.length ?? 0}`);
+console.log(`definition sets: ${density}; theoretical slot-compatible assignments: ${baseReports[0]?.analysis.formAwareMatchCount ?? 0}; distinct outcomes: ${baseReports[0]?.analysis.distinctOutcomes.length ?? 0}`);
 console.log(`parties: ${parties.length}; tactic subsets: ${subsets.length}; collision states checked: ${parties.length * subsets.length}`);
-console.log(`evidence with all four sinks: ${threeUseEvidence.length}; raw source checksums verified: ${rawByName.size}`);
+console.log(`evidence with all four sinks: ${threeUseEvidence.length}; tracked source receipts checked: ${rawByName.size}; raw bytes audited: ${audited}`);
 console.log(`House accounting: 1 player + ${scenario.cards.filter((card) => card.kind === 'coalition').length} offices + ${scenario.houseModel.anonymousSeats} anonymous = ${scenario.houseModel.totalSeats}`);
 console.log(`Congress.gov history sources mapped: ${sourceMap.congressGovResources.length}; House roll calls mapped: ${sourceMap.houseClerkRollCalls.length}`);
 if (failures.length > 0) {
   for (const failure of failures) console.error(`FAIL: ${failure}`);
   process.exit(1);
 }
-console.log('PASS: candidate catalog references, counts, reachability, collisions, source checksums, and manifest checksums are valid.');
+console.log('PASS: candidate catalog references, counts, slot compatibility, source receipts, and manifest checksums are valid.');
 }
 
 finishValidation().catch((error: unknown) => {

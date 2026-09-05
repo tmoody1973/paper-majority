@@ -8,6 +8,7 @@ import type {
   ScenarioDefinition,
   TermState,
 } from '@/domain/types';
+import { demandForOffice } from '@/domain/variation';
 
 export function positiveDecisionResourceEffects(
   choice: DecisionChoiceDefinition | undefined,
@@ -58,7 +59,7 @@ export function evaluateRelationships(
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((office) => {
       const existing = previous.get(office.id);
-      const demand = scenario.demandDefinitions.find((candidate) => candidate.officeDefinitionId === office.id);
+      const demand = demandForOffice(state, scenario, office.id);
       if (!existing) {
         return {
           memberId: office.id,

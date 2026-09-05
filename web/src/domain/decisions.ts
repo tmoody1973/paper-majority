@@ -192,10 +192,13 @@ function proposedRelationships(
   choice: DecisionChoiceDefinition,
   occurrenceId: string,
   officeDefinitionId: string,
+  demandId: string,
   nextProvisionIds: string[],
 ): RelationshipState[] {
   const current = evaluateRelationships(state, scenario);
-  const demand = scenario.demandDefinitions.find((candidate) => candidate.officeDefinitionId === officeDefinitionId);
+  const demand = scenario.demandDefinitions.find((candidate) =>
+    candidate.id === demandId && candidate.officeDefinitionId === officeDefinitionId,
+  );
   const explicitSupport = choice.effects.find((effect) => effect.kind === 'relationship-support');
   const promiseConditions = choice.effects
     .filter((effect) => effect.kind === 'promise-condition')
@@ -325,6 +328,7 @@ export function previewDecision(
     choice,
     pending.occurrenceId,
     pending.officeDefinitionId,
+    pending.sourceId,
     nextProvisionIds,
   );
   const changes = supportChanges(beforeRelationships, nextRelationships);

@@ -1,9 +1,9 @@
 import sourceMap from '../../src/content/housing/source-map.json';
-import { fetchToFile, prepareNewSnapshot, snapshotArg, writeExclusive, type SourceMapDocument } from './ingest-utils';
+import { fetchToFile, prepareSnapshot, snapshotArg, writeExclusive, type SourceMapDocument } from './ingest-utils';
 
 async function main(): Promise<void> {
   const snapshot = snapshotArg();
-  const directory = await prepareNewSnapshot(snapshot);
+  const directory = await prepareSnapshot(snapshot);
   const key = process.env.CONGRESS_API_KEY;
   const mapped = (sourceMap as SourceMapDocument).congressGovResources;
   if (mapped.length > 0 && !key) {
@@ -14,12 +14,12 @@ async function main(): Promise<void> {
     const separator = entry.url.includes('?') ? '&' : '?';
     records.push(await fetchToFile(
       `${entry.url}${separator}api_key=${encodeURIComponent(key!)}`,
-      `${directory}/${entry.id}.json`,
+      `${directory}/source-data/${entry.id}.json`,
       undefined,
       entry.url,
     ));
   }
-  await writeExclusive(`${directory}/congress-receipt.json`, `${JSON.stringify({
+  await writeExclusive(`${directory}/receipts/congress.json`, `${JSON.stringify({
     snapshot,
     mapped: mapped.length,
     fetched: records.length,

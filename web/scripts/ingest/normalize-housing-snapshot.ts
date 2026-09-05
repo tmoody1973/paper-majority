@@ -1,6 +1,5 @@
-import { createHash } from 'node:crypto';
 import { constants, createReadStream, existsSync } from 'node:fs';
-import { copyFile, readFile } from 'node:fs/promises';
+import { copyFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 
@@ -8,13 +7,7 @@ import { canonicalSha256 } from '../../src/persistence/canonicalHash';
 import { parseScenario } from '../../src/content/schema';
 import sourceMap from '../../src/content/housing/source-map.json';
 import candidate from '../../src/content/housing/vertical-slice.candidate.json';
-import { snapshotArg, stagingDirectory, writeExclusive } from './ingest-utils';
-
-async function fileSha256(path: string): Promise<string> {
-  const hash = createHash('sha256');
-  for await (const chunk of createReadStream(path)) hash.update(chunk);
-  return hash.digest('hex');
-}
+import { snapshotArg, stagingDirectory, verifiedProducerRecords, writeExclusive } from './ingest-utils';
 
 async function extractMappedCensus(path: string) {
   const mapping = sourceMap.sources.find((entry) => entry.kind === 'census-table');
@@ -49,17 +42,7 @@ async function main(): Promise<void> {
   if ([candidateTarget, sourcesTarget, manifestTarget].some(existsSync)) {
     throw new Error(`Refusing to overwrite normalized snapshot outputs: ${snapshot}`);
   }
-  const inputManifestPath = resolve(directory, 'research-input-manifest.json');
-  const inputManifest = JSON.parse(await readFile(inputManifestPath, 'utf8')) as {
-    files: Array<{ path: string; bytes: number; sha256: string }>;
-  };
-  const verified = [];
-  for (const entry of inputManifest.files) {
-    const path = resolve(directory, entry.path);
-    const sha256 = await fileSha256(path);
-    if (sha256 !== entry.sha256) throw new Error(`Frozen input checksum mismatch: ${entry.path}`);
-    verified.push({ path: entry.path, bytes: entry.bytes, sha256 });
-  }
+  const verified = await verifiedProducerRecords(directory, sourceMap.sources);
   const census = sourceMap.sources.find((entry) => entry.kind === 'census-table');
   if (!census) throw new Error('No mapped Census table.');
   const censusRows = await extractMappedCensus(resolve(directory, 'source-data', census.stagingFiles[0]));

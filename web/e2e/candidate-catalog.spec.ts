@@ -16,6 +16,12 @@ test('candidate Story choice and pack reveal use visible controls and survive re
   await expect(dialog).toContainText('Simulated Story event');
   const initial = await state(page);
   expect(initial.pendingStoryDecisions.filter((decision) => decision.status === 'pending')).toHaveLength(1);
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+  const storyTrigger = page.getByTestId('story-decision-trigger');
+  await expect(storyTrigger).toBeFocused();
+  await storyTrigger.click();
+  await expect(dialog).toBeVisible();
   await dialog.getByRole('button').first().click();
   await expect(dialog).not.toBeVisible();
 

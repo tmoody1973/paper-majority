@@ -12,6 +12,7 @@ import { expireObligations, fulfillObligations } from '@/domain/obligations';
 import { describeTag } from '@/domain/selectors';
 import { nextStopDelta, resolveWeek } from '@/domain/week';
 import { EFFECTIVE_RULE_VERSION, patternReservation, planWork } from '@/domain/work';
+import { demandForOffice } from '@/domain/variation';
 import type {
   CardInstance,
   ActiveWork,
@@ -222,9 +223,7 @@ function startSessionPattern(
     const office = cardIds
       .map((id) => findCard(state, id))
       .find((card) => services.scenario.cards.find((definition) => definition.id === card?.definitionId)?.kind === 'coalition');
-    const demand = services.scenario.demandDefinitions.find(
-      (candidate) => candidate.officeDefinitionId === office?.definitionId,
-    );
+    const demand = office ? demandForOffice(state, services.scenario, office.definitionId) : undefined;
     if (!office || !demand) {
       return rejectCommand(state, commandType, 'no-matching-pattern', 'That office has no authored offer in this scenario.');
     }
@@ -808,9 +807,7 @@ function completeSessionWork(
     const office = memberCards.find((card) =>
       services.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'coalition',
     );
-    const demand = services.scenario.demandDefinitions.find(
-      (candidate) => candidate.officeDefinitionId === office?.definitionId,
-    );
+    const demand = office ? demandForOffice(state, services.scenario, office.definitionId) : undefined;
     const occurrenceId = demand ? `${demand.id}:revision:${state.bill.revision}` : undefined;
     const alreadyPresented = occurrenceId && (
       state.pendingDecisions.some((decision) => decision.occurrenceId === occurrenceId)
@@ -826,10 +823,18 @@ function completeSessionWork(
       choiceIds: [...demand.choiceIds],
       status: 'pending' as const,
     } : undefined;
+    const authoredConcern = authoredConcernFor(memberCards, services.scenario);
     const events: GameEvent[] = [{
       type: 'PATTERN_COMPLETED',
       workId: work.id,
       patternId: work.patternId,
+      inputCardIds: memberCards.map((card) => card.id).sort(),
+      inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
+      consumedDefinitionIds: memberCards
+        .filter((card) => work.consumedCardIds.includes(card.id))
+        .map((card) => card.definitionId)
+        .sort(),
+      authoredConcernId: authoredConcern?.concernId,
     }];
     events.unshift({
       type: 'CARD_TRANSFORMED',
@@ -954,7 +959,18 @@ function completeSessionWork(
         outputDefinitionId: resolved.definitionId,
         explanationKey: resolved.explanationKey,
       },
-      { type: 'PATTERN_COMPLETED', workId: work.id, patternId: work.patternId },
+      {
+        type: 'PATTERN_COMPLETED',
+        workId: work.id,
+        patternId: work.patternId,
+        inputCardIds: memberCards.map((card) => card.id).sort(),
+        inputDefinitionIds: memberCards.map((card) => card.definitionId).sort(),
+        consumedDefinitionIds: memberCards
+          .filter((card) => consumed.has(card.id))
+          .map((card) => card.definitionId)
+          .sort(),
+        authoredConcernId: authoredConcernFor(memberCards, services.scenario)?.concernId,
+      },
   ];
   if (hasActualResourceChange(change.applied)) {
     events.splice(1, 0, {
@@ -1859,6 +1875,9 @@ export function executeCommand(
 
     case 'TICK': {
       if (state.paused) return { state, events: [] };
+      if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return { state, events: [] };
+      }
 
       const delta = Math.min(MAX_TICK_MS, Math.max(0, Math.trunc(command.deltaMs)));
       if (delta === 0) return { state, events: [] };
@@ -1919,6 +1938,9 @@ export function executeCommand(
       }
       if (!command.paused && state.pendingDecisions.some((decision) => decision.status === 'pending')) {
         return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending coalition decision before resuming time.');
+      }
+      if (!command.paused && state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before resuming time.');
       }
       if (state.paused === command.paused) return { state, events: [] };
       return accept(state, { ...state, paused: command.paused }, [

@@ -24,6 +24,7 @@ export interface MatchInput {
     sourceClass: SourceClass;
     sourceDefinitionIds: string[];
     policyDefinitionId?: string;
+    explanationKey?: string;
     precedentIds: string[];
     citations: Citation[];
   };
@@ -88,6 +89,7 @@ function slotAccepts(slot: RecipeSlot, input: MatchInput): boolean {
   if (slot.anyTags && !slot.anyTags.some((tag) => input.effectiveTags.includes(tag))) return false;
   if (slot.sourceClasses && !slot.sourceClasses.includes(input.effectiveSourceClass)) return false;
   if (slot.forms && !slot.forms.includes(input.form)) return false;
+  if (slot.originExplanationKeys && !slot.originExplanationKeys.includes(input.provenance.explanationKey ?? '')) return false;
   return true;
 }
 

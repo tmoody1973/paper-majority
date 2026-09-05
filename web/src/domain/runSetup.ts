@@ -29,8 +29,8 @@ function validateSessionSupply(scenario: ScenarioDefinition): void {
 
 /**
  * Canonical run construction. Setup draws are declared and stable:
- * one opponent draw in buildInitialState, then one trait draw per staff role in
- * stable definition-id order. A generalist result is represented by no trait ID.
+ * one opponent draw in buildInitialState, then complete staff-role trait pools,
+ * multi-option office demand pools and multi-option deadline pools in stable ID order.
  */
 export function createRun(input: InitialStateInput & { mode: RunMode }): TermState {
   if (!input.scenario.supportedModes.includes(input.mode)) {
@@ -52,10 +52,6 @@ export function createRun(input: InitialStateInput & { mode: RunMode }): TermSta
   const completeTraitCatalog = startingStaffDefinitionIds.every((definitionId) =>
     input.scenario.staffTraits.some((trait) => trait.eligibleStaffDefinitionIds.includes(definitionId)),
   );
-  // Narrow unit fixtures may intentionally omit role pools. Such fixtures retain
-  // their historical one-draw setup rather than receiving a partial variation.
-  if (!completeTraitCatalog) return state;
-
   const rng = createRng(input.seed);
   rng(); // opponent draw, already applied by buildInitialState
   let cursor = 1;
@@ -63,7 +59,7 @@ export function createRun(input: InitialStateInput & { mode: RunMode }): TermSta
   const staff = state.cards
     .filter((card) => input.scenario.cards.find((definition) => definition.id === card.definitionId)?.kind === 'staff')
     .sort((a, b) => a.definitionId.localeCompare(b.definitionId));
-  for (const card of staff) {
+  for (const card of completeTraitCatalog ? staff : []) {
     const roll = rng();
     cursor += 1;
     const eligible = input.scenario.staffTraits
@@ -75,9 +71,37 @@ export function createRun(input: InitialStateInput & { mode: RunMode }): TermSta
     traitByStaff.set(card.id, selected);
   }
 
+  const selectedDemandIdsByOffice = { ...state.runVariation.selectedDemandIdsByOffice };
+  const officeIds = Array.from(new Set(input.scenario.demandDefinitions.map((demand) => demand.officeDefinitionId))).sort();
+  for (const officeId of officeIds) {
+    const pool = input.scenario.demandDefinitions
+      .filter((demand) => demand.officeDefinitionId === officeId)
+      .sort((a, b) => a.id.localeCompare(b.id));
+    if (pool.length > 1) {
+      const selected = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]!;
+      cursor += 1;
+      selectedDemandIdsByOffice[officeId] = selected.id;
+    }
+  }
+
+  const obligationDueByDefinitionId = { ...state.runVariation.obligationDueByDefinitionId };
+  for (const definition of [...input.scenario.obligationDefinitions].sort((a, b) => a.id.localeCompare(b.id))) {
+    const pool = [...(definition.dueOptions ?? [definition.due])]
+      .sort((a, b) => a.week - b.week || a.offsetMs - b.offsetMs);
+    if (pool.length > 1) {
+      obligationDueByDefinitionId[definition.id] = { ...pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]! };
+      cursor += 1;
+    }
+  }
+
   return {
     ...state,
     rngCursor: cursor,
+    runVariation: { selectedDemandIdsByOffice, obligationDueByDefinitionId },
+    relationships: state.relationships.map((relationship) => ({
+      ...relationship,
+      demandProvisionId: selectedDemandIdsByOffice[relationship.memberId],
+    })),
     cards: state.cards.map((card) => {
       if (!traitByStaff.has(card.id)) return card;
       const staffTraitId = traitByStaff.get(card.id);

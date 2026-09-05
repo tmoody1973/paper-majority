@@ -2,6 +2,7 @@ import type { EngineResult } from '@/domain/engine';
 import type { GameEvent } from '@/domain/events';
 import { obligationOccurrence } from '@/domain/obligations';
 import { createRng } from '@/domain/rng';
+import { dueForObligation } from '@/domain/variation';
 import type {
   CardInstance,
   PackPoolDefinition,
@@ -99,12 +100,17 @@ export function openPack(
   const obligations = scenario.obligationDefinitions
     .filter((definition) => definitionIds.includes(definition.sourceDefinitionId))
     .map((definition) => {
-      const occurrence = obligationOccurrence(definition, packOccurrenceId);
+      const sourceCardInstanceId = created.find((card) => card.definitionId === definition.sourceDefinitionId)?.id;
+      const occurrence = obligationOccurrence(definition, packOccurrenceId, {
+        due: dueForObligation(state, definition),
+        sourceCardInstanceId,
+      });
       obligationEvents.push({
         type: 'OBLIGATION_CREATED',
         obligationId: occurrence.id,
         sourceId: definition.id,
         occurrenceId: packOccurrenceId,
+        sourceCardInstanceId,
       });
       return occurrence;
     });
