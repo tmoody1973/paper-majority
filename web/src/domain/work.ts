@@ -1,4 +1,4 @@
-import { buildMatchInputs, matchPattern, type PatternMatch } from '@/domain/recipes';
+import { buildMatchInputs, effectiveRule, matchPattern, type PatternMatch } from '@/domain/recipes';
 import { validatePatternPreflight } from '@/domain/patternResolvers';
 import type {
   ActiveWork,
@@ -69,6 +69,25 @@ function withStaffTraits(
 }
 
 /**
+ * Rebuild the immutable rule that a pattern job captures at acceptance time.
+ * Save validation uses the same constructor so persisted work cannot replace
+ * authored rule fields while a later tactic unlock remains independent.
+ */
+export function effectiveWorkRule(
+  pattern: RecipePattern,
+  expansionIds: readonly string[],
+  staffCardIds: readonly string[],
+  state: TermState,
+  scenario: ScenarioDefinition,
+): { effectivePattern: RecipePattern; appliedExpansionIds: string[] } {
+  const expanded = effectiveRule(pattern, [...expansionIds], scenario.tacticExpansions);
+  return {
+    effectivePattern: withStaffTraits(expanded.pattern, [...staffCardIds], state, scenario),
+    appliedExpansionIds: expanded.appliedExpansionIds,
+  };
+}
+
+/**
  * Build the exact plan that a Session submission would reserve right now.
  *
  * This is intentionally pure. Work Mat can call it on every render without
@@ -116,7 +135,14 @@ export function planWork(
     .filter((input) => input.definition.kind === 'staff')
     .map((input) => input.instanceId)
     .sort();
-  const effectivePattern = withStaffTraits(match.effectivePattern, staffCardIds, state, scenario);
+  const capturedRule = effectiveWorkRule(
+    match.pattern,
+    match.activeExpansionIds,
+    staffCardIds,
+    state,
+    scenario,
+  );
+  const effectivePattern = capturedRule.effectivePattern;
   const attention = effectivePattern.resourceCost.staffAttention ?? 0;
   if (attention > 0 && staffCardIds.length < Math.ceil(attention)) {
     return reject('This work needs an eligible staff card for every staff slot it uses.');
@@ -189,6 +215,7 @@ export function patternReservation(
     kind: 'pattern',
     patternId: plan.preview.patternId,
     effectivePattern: structuredClone(plan.effectivePattern),
+    effectiveExpansionIds: [...plan.match.activeExpansionIds],
   };
 }
 

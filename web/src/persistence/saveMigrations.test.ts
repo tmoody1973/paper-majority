@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createRun } from '@/domain/initialState';
 import { executeCommand } from '@/domain/engine';
+import type { CardInstance, TermState } from '@/domain/types';
 import { canonicalJson, canonicalSha256, sha256Hex } from '@/persistence/canonicalHash';
 import {
   createSaveEnvelope,
@@ -25,6 +26,57 @@ describe('save migrations', () => {
     const aide = state.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
     const evidence = state.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
     return executeCommand(state, { type: 'SUBMIT_WORK', cardIds: [aide.id, evidence.id] }, { scenario: sessionScenario }).state;
+  };
+
+  const carriedAcrossStudy = (): TermState => {
+    let state = createRun({ ...sessionSetup, mode: 'session' });
+    const evidence = state.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    const summary: CardInstance = {
+      ...evidence,
+      id: 'card-summary-captured-rule',
+      stackId: 'stack-card-summary-captured-rule',
+      form: 'summary',
+      sourceDefinitionIds: [evidence.definitionId],
+    };
+    const tactic: CardInstance = {
+      id: 'card-tactic-captured-rule',
+      definitionId: 'tactic-bipartisan-working-group',
+      stackId: 'stack-card-tactic-captured-rule',
+      x: 700,
+      y: 300,
+      remainingMs: 0,
+      status: 'idle',
+      form: 'raw',
+      location: 'desk',
+      sourceDefinitionIds: [],
+    };
+    state = {
+      ...state,
+      paused: false,
+      cards: [...state.cards, summary, tactic],
+      stacks: [
+        ...state.stacks,
+        { id: summary.stackId, cardIds: [summary.id] },
+        { id: tactic.stackId, cardIds: [tactic.id] },
+      ],
+    };
+    const counsel = state.cards.find((card) => card.definitionId === 'staff-legislative-counsel')!;
+    const policy = state.cards.find((card) => card.definitionId === 'policy-housing-choice-voucher')!;
+    state = executeCommand(state, {
+      type: 'SUBMIT_WORK',
+      cardIds: [counsel.id, summary.id, policy.id],
+    }, { scenario: sessionScenario }).state;
+    const aide = state.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
+    state = executeCommand(state, {
+      type: 'START_ASSIGNMENT',
+      assignmentKind: 'study-tactic',
+      staffCardId: aide.id,
+      targetCardId: tactic.id,
+    }, { scenario: sessionScenario }).state;
+    for (let second = 0; second < 20; second += 1) {
+      state = executeCommand(state, { type: 'TICK', deltaMs: 1_000 }, { scenario: sessionScenario }).state;
+    }
+    return state;
   };
 
   it('rejects unknown save and rules versions without guessing', () => {
@@ -100,8 +152,73 @@ describe('save migrations', () => {
     expect(result.kind).toBe('corrupt');
   });
 
+  it.each([
+    ['resource cost', (pattern: Record<string, unknown>) => ({ ...pattern, resourceCost: { staffAttention: 2 } })],
+    ['duration', (pattern: Record<string, unknown>) => ({ ...pattern, durationMs: 20_001 })],
+    ['slots', (pattern: Record<string, unknown>) => ({
+      ...pattern,
+      slots: (pattern.slots as Record<string, unknown>[]).map((slot, index) => index === 0 ? { ...slot, consumed: true } : slot),
+    })],
+    ['resolver parameters', (pattern: Record<string, unknown>) => ({
+      ...pattern,
+      output: { ...(pattern.output as Record<string, unknown>), parameters: { preserveInputDefinition: false } },
+    })],
+  ])('rejects a schema-valid effective-pattern change to %s', (_label, tamper) => {
+    const state = activeState();
+    const changed = {
+      ...state,
+      activeWork: state.activeWork.map((work) => work.kind === 'pattern'
+        ? { ...work, effectivePattern: tamper(work.effectivePattern as unknown as Record<string, unknown>) }
+        : work),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(changed as TermState, sessionScenario), sessionScenario).kind).toBe('corrupt');
+  });
+
+  it('loads a captured pre-unlock rule after a later tactic study finishes', () => {
+    const carried = carriedAcrossStudy();
+    expect(carried.unlockedSlotExpansions['pattern-draft-policy']).toEqual(['expansion-bipartisan-outreach']);
+    const draft = carried.activeWork.find((work) => work.kind === 'pattern');
+    expect(draft).toMatchObject({ effectiveExpansionIds: [], effectivePattern: { durationMs: 40_000 } });
+    expect(validateAndMigrateSave(createSaveEnvelope(carried, sessionScenario), sessionScenario).kind).toBe('valid');
+
+    const oldV2 = {
+      ...carried,
+      activeWork: carried.activeWork.map((work) => {
+        if (work.kind !== 'pattern') return work;
+        const legacyWork = { ...work };
+        delete legacyWork.effectiveExpansionIds;
+        return legacyWork;
+      }),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(oldV2 as TermState, sessionScenario), sessionScenario).kind).toBe('valid');
+  });
+
+  it.each([
+    ['locked provenance', ['expansion-bipartisan-outreach']],
+    ['foreign provenance', ['expansion-foreign']],
+  ])('rejects %s on a captured rule', (_label, effectiveExpansionIds) => {
+    const state = activeState();
+    const changed = {
+      ...state,
+      activeWork: state.activeWork.map((work) => work.kind === 'pattern' ? { ...work, effectiveExpansionIds } : work),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(changed, sessionScenario), sessionScenario).kind).toBe('corrupt');
+  });
+
+  it('rejects duplicate captured provenance even when the expansion is unlocked', () => {
+    const state = carriedAcrossStudy();
+    const changed = {
+      ...state,
+      activeWork: state.activeWork.map((work) => work.kind === 'pattern'
+        ? { ...work, effectiveExpansionIds: ['expansion-bipartisan-outreach', 'expansion-bipartisan-outreach'] }
+        : work),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(changed, sessionScenario), sessionScenario).kind).toBe('corrupt');
+  });
+
   it('adapts only safe empty v1 fields into a validated v2 state', () => {
-    const state = createRun({ ...sessionSetup, mode: 'session' });
+    const safeScenario = { ...sessionScenario, obligationDefinitions: [] };
+    const state = createRun({ ...sessionSetup, scenario: safeScenario, mode: 'session' });
     const legacyState = { ...state, schemaVersion: 1 as const } as Record<string, unknown>;
     for (const key of ['activeWork', 'obligations', 'pendingDecisions', 'rewardedOccurrenceIds', 'resolvedWeekIds', 'runStatus']) {
       delete legacyState[key];
@@ -109,10 +226,10 @@ describe('save migrations', () => {
     const migrated = validateAndMigrateSave({
       saveSchemaVersion: 1,
       rulesVersion: 1,
-      snapshotId: sessionScenario.snapshotId,
-      snapshotHash: scenarioSnapshotHash(sessionScenario),
+      snapshotId: safeScenario.snapshotId,
+      snapshotHash: scenarioSnapshotHash(safeScenario),
       state: legacyState,
-    }, sessionScenario);
+    }, safeScenario);
     expect(migrated.kind).toBe('valid');
     if (migrated.kind !== 'valid') throw new Error('expected supported migration');
     expect(migrated.envelope.state).toMatchObject({
@@ -124,6 +241,20 @@ describe('save migrations', () => {
       resolvedWeekIds: [],
       runStatus: 'active',
     });
+  });
+
+  it('rejects missing v1 obligations when authored obligations make emptiness unknowable', () => {
+    const state = createRun({ ...sessionSetup, mode: 'session' });
+    const legacyState = { ...state, schemaVersion: 1 as const } as Record<string, unknown>;
+    delete legacyState.obligations;
+    const result = validateAndMigrateSave({
+      saveSchemaVersion: 1,
+      rulesVersion: 1,
+      snapshotId: sessionScenario.snapshotId,
+      snapshotHash: scenarioSnapshotHash(sessionScenario),
+      state: legacyState,
+    }, sessionScenario);
+    expect(result.kind).toBe('corrupt');
   });
 
   it('does not erase unknown in-flight v1 work', () => {

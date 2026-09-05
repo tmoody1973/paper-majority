@@ -1,5 +1,5 @@
 import { COMPUTED_TAGS, type ScenarioDefinition, type TermState } from '@/domain/types';
-import { EFFECTIVE_RULE_VERSION } from '@/domain/work';
+import { EFFECTIVE_RULE_VERSION, effectiveWorkRule } from '@/domain/work';
 import {
   recipePatternSchema,
   relationshipConditionSchema,
@@ -344,19 +344,89 @@ function validDecisionOrigin(value: unknown, scenario: ScenarioDefinition): bool
     && scenario.cards.some((card) => card.id === value.officeDefinitionId && card.kind === 'coalition');
 }
 
-function validEffectivePattern(value: unknown, patternId: string, scenario: ScenarioDefinition): boolean {
+const MAX_LEGACY_CAPTURED_EXPANSIONS = 8;
+
+function validEffectivePatternShape(value: unknown, patternId: string, scenario: ScenarioDefinition): boolean {
   const parsed = recipePatternSchema.safeParse(value);
   if (!parsed.success || parsed.data.id !== patternId) return false;
   const knownTags = new Set([...scenario.tagTaxonomy, ...COMPUTED_TAGS]);
   if (parsed.data.slots.some((slot) =>
     [...(slot.requiredTags ?? []), ...(slot.anyTags ?? [])].some((tag) => !knownTags.has(tag)))) return false;
-  if (parsed.data.output.mode === 'fixed') {
-    const definitionId = parsed.data.output.definitionId;
-    return scenario.cards.some((card) => card.id === definitionId);
+  const output = parsed.data.output;
+  if (output.mode === 'fixed') {
+    return scenario.cards.some((card) => card.id === output.definitionId);
   }
-  const outputId = parsed.data.output.parameters?.outputDefinitionId;
+  const outputId = output.parameters?.outputDefinitionId;
   return outputId === undefined
     || typeof outputId === 'string' && scenario.cards.some((card) => card.id === outputId);
+}
+
+function exactEffectivePattern(
+  persisted: unknown,
+  patternId: string,
+  expansionIds: string[],
+  staffCardIds: string[],
+  state: TermState,
+  scenario: ScenarioDefinition,
+): boolean {
+  const authored = scenario.patterns.find((pattern) => pattern.id === patternId);
+  if (!authored) return false;
+  const rebuilt = effectiveWorkRule(authored, expansionIds, staffCardIds, state, scenario);
+  return rebuilt.appliedExpansionIds.length === expansionIds.length
+    && rebuilt.appliedExpansionIds.every((id) => expansionIds.includes(id))
+    && canonicalJson(rebuilt.effectivePattern) === canonicalJson(persisted);
+}
+
+function someExpansionSubset(
+  ids: string[],
+  accepts: (subset: string[]) => boolean,
+  index = 0,
+  chosen: string[] = [],
+): boolean {
+  if (index === ids.length) return accepts(chosen);
+  if (someExpansionSubset(ids, accepts, index + 1, chosen)) return true;
+  return someExpansionSubset(ids, accepts, index + 1, [...chosen, ids[index]]);
+}
+
+function validCapturedEffectivePattern(
+  work: RecordValue,
+  state: TermState,
+  scenario: ScenarioDefinition,
+): boolean {
+  if (typeof work.patternId !== 'string'
+    || !validEffectivePatternShape(work.effectivePattern, work.patternId, scenario)
+    || !strings(work.staffCardIds)) return false;
+  const patternId = work.patternId;
+  const staffCardIds = work.staffCardIds;
+  const currentlyUnlocked = state.unlockedSlotExpansions[patternId] ?? [];
+  const authoredIds = new Set(scenario.tacticExpansions
+    .filter((expansion) => expansion.targetPatternId === patternId)
+    .map((expansion) => expansion.id));
+  if (work.effectiveExpansionIds !== undefined) {
+    if (!strings(work.effectiveExpansionIds) || !unique(work.effectiveExpansionIds)
+      || !work.effectiveExpansionIds.every((id) => authoredIds.has(id) && currentlyUnlocked.includes(id))) return false;
+    return exactEffectivePattern(
+      work.effectivePattern,
+      patternId,
+      work.effectiveExpansionIds,
+      staffCardIds,
+      state,
+      scenario,
+    );
+  }
+
+  // Saves emitted before captured provenance was added can still be proven safe
+  // against the finite set of authored expansions already unlocked in that run.
+  const legacyCandidates = currentlyUnlocked.filter((id) => authoredIds.has(id)).sort();
+  if (legacyCandidates.length > MAX_LEGACY_CAPTURED_EXPANSIONS) return false;
+  return someExpansionSubset(legacyCandidates, (subset) => exactEffectivePattern(
+    work.effectivePattern,
+    patternId,
+    subset,
+    staffCardIds,
+    state,
+    scenario,
+  ));
 }
 
 function validSessionRecord(value: unknown): boolean {
@@ -376,7 +446,7 @@ const WORK_COMMON_KEYS = [
 
 function validActiveWorkKeys(value: RecordValue): boolean {
   if (value.kind === 'pattern') {
-    return hasOnlyKeys(value, [...WORK_COMMON_KEYS, 'patternId', 'effectivePattern']);
+    return hasOnlyKeys(value, [...WORK_COMMON_KEYS, 'patternId', 'effectivePattern', 'effectiveExpansionIds']);
   }
   if (value.kind === 'study') {
     return hasOnlyKeys(value, [...WORK_COMMON_KEYS, 'expansionIds', 'effectiveExpansions']);
@@ -454,6 +524,11 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   if (!unique(relationships.map((relationship) => relationship.memberId))) return false;
   if (relationships.some((relationship) => relationship.evaluatedRevision > (bill.revision as number))) return false;
   if (!isInteger(input.staffCapacity, 0)) return false;
+  if (!isRecord(input.unlockedSlotExpansions) || !Object.entries(input.unlockedSlotExpansions).every(([patternId, expansionIds]) =>
+    scenario.patterns.some((pattern) => pattern.id === patternId)
+      && strings(expansionIds)
+      && unique(expansionIds)
+      && expansionIds.every((id) => scenario.tacticExpansions.some((expansion) => expansion.id === id && expansion.targetPatternId === patternId)))) return false;
 
   if (!Array.isArray(input.activeWork) || !input.activeWork.every((work) => isRecord(work)
     && validActiveWorkKeys(work)
@@ -466,7 +541,7 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     && (work.kind === 'pattern'
       ? typeof work.patternId === 'string'
         && scenario.patterns.some((pattern) => pattern.id === work.patternId)
-        && validEffectivePattern(work.effectivePattern, work.patternId, scenario)
+        && validCapturedEffectivePattern(work, input as unknown as TermState, scenario)
       : strings(work.expansionIds) && unique(work.expansionIds)
         && work.expansionIds.every((id) => scenario.tacticExpansions.some((expansion) => expansion.id === id))
         && Array.isArray(work.effectiveExpansions)
@@ -549,11 +624,6 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     if (!strings(input[key]) || !unique(input[key])) return false;
   }
   if (!(input.discoveredPatternIds as string[]).every((id) => scenario.patterns.some((pattern) => pattern.id === id))) return false;
-  if (!isRecord(input.unlockedSlotExpansions) || !Object.entries(input.unlockedSlotExpansions).every(([patternId, expansionIds]) =>
-    scenario.patterns.some((pattern) => pattern.id === patternId)
-      && strings(expansionIds)
-      && unique(expansionIds)
-      && expansionIds.every((id) => scenario.tacticExpansions.some((expansion) => expansion.id === id && expansion.targetPatternId === patternId)))) return false;
   if (!Array.isArray(input.electionEffects) || !input.electionEffects.every(validElectionEffect)) return false;
   if (!unique((input.electionEffects as TermState['electionEffects']).map((effect) => effect.id))) return false;
   if (!Array.isArray(input.eventLog) || !input.eventLog.every((event) => validEvent(event, scenario))) return false;
@@ -563,7 +633,7 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   return true;
 }
 
-function adaptV1State(value: unknown): unknown {
+function adaptV1State(value: unknown, scenario: ScenarioDefinition): unknown {
   if (!isRecord(value) || value.schemaVersion !== 1) return value;
   const events = Array.isArray(value.eventLog) ? value.eventLog.filter(isRecord) : [];
   const relationships = Array.isArray(value.relationships) ? value.relationships.filter(isRecord) : [];
@@ -591,7 +661,8 @@ function adaptV1State(value: unknown): unknown {
     cards.some((card) => card.status === 'working')
       || stacks.some((stack) => stack.activeActionId !== undefined || stack.paidCost !== undefined)
   )) return value;
-  if (value.obligations === undefined && decisionEvidence) return value;
+  if (value.obligations === undefined
+    && (scenario.obligationDefinitions.length > 0 || decisionEvidence)) return value;
   if (value.pendingDecisions === undefined && decisionEvidence) return value;
   if (value.rewardedOccurrenceIds === undefined && rewardEvidence) return value;
   if (value.resolvedWeekIds === undefined && weekEvidence) return value;
@@ -639,7 +710,7 @@ export function validateAndMigrateSave(input: unknown, scenario: ScenarioDefinit
   if (input.snapshotId !== scenario.snapshotId || input.snapshotHash !== expectedHash) {
     return { kind: 'wrong-snapshot', message: 'This checkpoint belongs to a different content snapshot.' };
   }
-  const state = input.saveSchemaVersion === 1 ? adaptV1State(input.state) : input.state;
+  const state = input.saveSchemaVersion === 1 ? adaptV1State(input.state, scenario) : input.state;
   if (!validState(state, scenario)) {
     return { kind: 'corrupt', message: 'The checkpoint state is malformed or has broken canonical references.' };
   }

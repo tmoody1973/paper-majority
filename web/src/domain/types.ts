@@ -301,7 +301,13 @@ export interface WorkReservation {
 
 export type ActiveWork = WorkReservation &
   (
-    | { kind: 'pattern'; patternId: string; effectivePattern: RecipePattern }
+    | {
+        kind: 'pattern';
+        patternId: string;
+        effectivePattern: RecipePattern;
+        /** Expansion ids captured when this immutable effective rule was reserved. */
+        effectiveExpansionIds?: string[];
+      }
     | {
         kind: 'study';
         expansionIds: string[];

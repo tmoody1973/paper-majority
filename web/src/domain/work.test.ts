@@ -100,11 +100,21 @@ describe('Session work reservations', () => {
     expect(started.state.bill.provisionIds).toEqual([]);
     expect(started.state.activeWork[0]).toMatchObject({
       kind: 'pattern',
+      effectiveExpansionIds: [],
       staffCardIds: [counsel.id],
       consumedCardIds: [policy.id, summary.id].sort(),
       returnedCardIds: [counsel.id],
       effectivePattern: { id: 'pattern-draft-policy' },
       paidCost: { staffAttention: 1 },
+    });
+    const expanded = executeCommand({
+      ...state,
+      unlockedSlotExpansions: { 'pattern-draft-policy': ['expansion-bipartisan-outreach'] },
+    }, { type: 'SUBMIT_WORK', cardIds: ids }, { scenario: sessionScenario });
+    expect(expanded.state.activeWork[0]).toMatchObject({
+      kind: 'pattern',
+      effectiveExpansionIds: ['expansion-bipartisan-outreach'],
+      effectivePattern: { durationMs: 32_000 },
     });
     expect(previewWork(started.state, sessionScenario, ids)).toMatchObject({ accepted: false });
     const confirmedCounterState: TermState = {
