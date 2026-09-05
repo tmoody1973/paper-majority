@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { getCandidateScenario } from '@/content/loadScenario';
 import { executeCommand } from '@/domain/engine';
+import { matchesPatternOutputReceipt, resolvePatternOutput } from '@/domain/patternResolvers';
+import { buildMatchInputs, matchPattern } from '@/domain/recipes';
 import { createRun } from '@/domain/runSetup';
 import type { TermState } from '@/domain/types';
 import { createSaveEnvelope, validateAndMigrateSave } from '@/persistence/saveMigrations';
@@ -46,6 +48,86 @@ function openWeek(state: TermState, week: number, categoryId: string): TermState
 }
 
 describe('candidate producer-to-consumer commands', () => {
+  it.each([
+    { patternId: 'pattern-draft-policy', supplyId: 'evidence-rent-burden-report', supplyForm: 'summary' as const },
+    { patternId: 'pattern-tactic-costly-drafting', supplyId: 'political-media-attention', supplyForm: 'raw' as const },
+  ])('drafts real Policy language and round-trips $patternId', ({ patternId, supplyId, supplyForm }) => {
+    let state = run();
+    if (supplyForm === 'summary') {
+      state = finishWork(state, [cardId(state, 'staff-policy-aide'), cardId(state, supplyId)]);
+    } else {
+      // Initialize this optional supply at its authored pack week; this is not a six-week playthrough.
+      state = openWeek(state, 6, 'week-six-office');
+    }
+    const policyId = 'policy-housing-choice-voucher';
+    const policyCardId = cardId(state, policyId);
+    const supplyCardId = cardId(state, supplyId, supplyForm);
+    const staffCardId = cardId(state, 'staff-legislative-counsel');
+    // Deliberately differ from slot order: identity must come from the matched assignment.
+    const ids = [supplyCardId, staffCardId, policyCardId];
+    const inputs = buildMatchInputs(ids.map((id) => state.cards.find((card) => card.id === id)!), scenario, state.player.party);
+    const match = matchPattern(inputs, scenario.patterns, Object.values(state.unlockedSlotExpansions).flat(), scenario.tacticExpansions)!;
+    expect(match.pattern.id).toBe(patternId);
+    expect(resolvePatternOutput(match, inputs)).toEqual({
+      definitionId: policyId,
+      form: 'drafted',
+      outputSlotIndex: 1,
+      effects: { billMomentum: 2 },
+      explanationKey: 'result.provision.drafted',
+    });
+    state = finishWork(state, ids);
+    const drafted = state.cards.find((card) => card.definitionId === policyId && card.form === 'drafted')!;
+    expect(drafted).toMatchObject({
+      policyDefinitionId: policyId,
+      sourceDefinitionIds: supplyForm === 'summary' ? [supplyId] : [],
+      origin: {
+        explanationKey: 'result.provision.drafted',
+        inputDefinitionIds: [policyId, supplyId, 'staff-legislative-counsel'].sort(),
+        consumedDefinitionIds: [policyId, supplyId].sort(),
+      },
+    });
+    const receipt = state.eventLog.find((event) => event.type === 'CARD_TRANSFORMED'
+      && event.producedCardIds.includes(drafted.id));
+    expect(receipt).toMatchObject({
+      producerPatternId: patternId,
+      outputDefinitionId: policyId,
+      outputForm: 'drafted',
+      outputSlotIndex: 1,
+      outputSourceCardId: policyCardId,
+      outputSourceDefinitionId: policyId,
+      outputSourceForm: 'raw',
+      consumedCardIds: expect.arrayContaining([policyCardId, supplyCardId]),
+      returnedCardIds: [staffCardId],
+    });
+    expect(matchesPatternOutputReceipt(match.pattern, scenario, {
+      definitionId: drafted.definitionId,
+      form: drafted.form,
+      explanationKey: drafted.origin!.explanationKey,
+      outputSlotIndex: 1,
+      outputSourceDefinitionId: policyId,
+      outputSourceForm: 'raw',
+    })).toBe(true);
+    const roundTrip = validateAndMigrateSave(JSON.parse(JSON.stringify(createSaveEnvelope(state, scenario))), scenario);
+    expect(roundTrip.kind).toBe('valid');
+    if (roundTrip.kind !== 'valid') throw new Error('Production draft must reload');
+    expect(roundTrip.envelope.state).toEqual(state);
+
+    // Even a coordinated live-card/receipt rewrite cannot restore the old wrong-family output.
+    const wrongSlot = {
+      ...state,
+      cards: state.cards.map((card) => card.id === drafted.id ? { ...card, definitionId: supplyId } : card),
+      eventLog: state.eventLog.map((event) => event === receipt ? {
+        ...event,
+        outputDefinitionId: supplyId,
+        outputSlotIndex: 2,
+        outputSourceCardId: supplyCardId,
+        outputSourceDefinitionId: supplyId,
+        outputSourceForm: supplyForm,
+      } : event),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(wrongSlot, scenario), scenario).kind).toBe('corrupt');
+  });
+
   it('fulfills the seeded Waters fair-access counter with its authored renter concern', () => {
     let state = run();
     expect(state.runVariation.selectedDemandIdsByOffice['coalition-office-maxine-waters']).toBe('demand-fair-access');

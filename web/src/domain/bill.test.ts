@@ -105,6 +105,16 @@ describe('DOCKET_PROVISION', () => {
     );
     expect(drafted?.policyDefinitionId).toBe('policy-housing-choice-voucher');
     expect(drafted?.sourceDefinitionIds).toEqual(['evidence-rent-burden-report']);
+    // The original Session fixture has no outputSlot override and preserves Policy slot 2.
+    expect(finished.events).toContainEqual(expect.objectContaining({
+      type: 'CARD_TRANSFORMED',
+      outputDefinitionId: 'policy-housing-choice-voucher',
+      outputForm: 'drafted',
+      outputSlotIndex: 2,
+      outputSourceCardId: policy,
+      outputSourceDefinitionId: 'policy-housing-choice-voucher',
+      outputSourceForm: 'raw',
+    }));
     expect(finished.state.bill).toEqual(run.bill);
 
     const first = executeCommand(

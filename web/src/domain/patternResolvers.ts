@@ -10,7 +10,7 @@ export interface ResolvedPatternOutput {
   outputSlotIndex?: number;
 }
 
-const RESOLVER_RECEIPTS: Record<DerivedResolverId, { form: InstanceForm; explanations: string[]; defaultOutputSlot?: number }> = {
+const RESOLVER_OUTPUT_CONTRACTS: Record<DerivedResolverId, { form: InstanceForm; explanations: string[]; defaultOutputSlot?: number }> = {
   'summarize-evidence-v1': { form: 'summary', explanations: ['result.summary.committee-credibility', 'result.summary.district-relevance'], defaultOutputSlot: 1 },
   'draft-provision-v1': { form: 'drafted', explanations: ['result.provision.drafted'], defaultOutputSlot: 2 },
   'answer-office-concern-v1': { form: 'prepared', explanations: ['result.evidence.office-concern-answered'], defaultOutputSlot: 1 },
@@ -23,6 +23,16 @@ const RESOLVER_RECEIPTS: Record<DerivedResolverId, { form: InstanceForm; explana
   'prepare-political-asset-v1': { form: 'prepared', explanations: ['result.political.asset-prepared'], defaultOutputSlot: 1 },
   'review-provision-v1': { form: 'drafted', explanations: ['result.provision.reviewed'], defaultOutputSlot: 1 },
 };
+
+/** One authored/default selection for both production and persisted receipts. */
+function outputSlotFor(
+  resolverId: DerivedResolverId,
+  parameters: Record<string, string | number | boolean> = {},
+): number | undefined {
+  return typeof parameters.outputSlot === 'number'
+    ? parameters.outputSlot
+    : RESOLVER_OUTPUT_CONTRACTS[resolverId].defaultOutputSlot;
+}
 
 /** Authenticate a persisted producer claim against the authored resolver contract. */
 export function matchesPatternOutputReceipt(
@@ -45,12 +55,11 @@ export function matchesPatternOutputReceipt(
       && claim.outputSourceDefinitionId === undefined
       && claim.outputSourceForm === undefined;
   }
-  const receipt = RESOLVER_RECEIPTS[pattern.output.resolverId];
+  const receipt = RESOLVER_OUTPUT_CONTRACTS[pattern.output.resolverId];
   if (!receipt.explanations.includes(claim.explanationKey)) return false;
   const preservesInput = pattern.output.parameters?.preserveInputDefinition === true;
   if (preservesInput) {
-    const authoredSlot = pattern.output.parameters?.outputSlot;
-    const outputSlotIndex = typeof authoredSlot === 'number' ? authoredSlot : receipt.defaultOutputSlot;
+    const outputSlotIndex = outputSlotFor(pattern.output.resolverId, pattern.output.parameters);
     const slot = outputSlotIndex === undefined ? undefined : pattern.slots[outputSlotIndex];
     const source = scenario.cards.find((card) => card.id === claim.outputSourceDefinitionId);
     return claim.form === receipt.form
@@ -112,11 +121,6 @@ function inputForSlot(context: ResolverContext, slotIndex: number): MatchInput {
   return found;
 }
 
-function parameterSlot(context: ResolverContext, fallback: number): number {
-  const value = context.parameters.outputSlot;
-  return typeof value === 'number' && Number.isInteger(value) ? value : fallback;
-}
-
 function officeConcernHasExpectedRecipient(context: ResolverContext): boolean {
   const office = inputForSlot(context, 2);
   const concern = inputForSlot(context, 3);
@@ -146,10 +150,13 @@ export function validatePatternPreflight(
 
 function outputForSessionForm(
   context: ResolverContext,
-  slotIndex: number,
-  form: InstanceForm,
 ): Pick<ResolvedPatternOutput, 'definitionId' | 'form' | 'outputSlotIndex'> {
   if (context.parameters.preserveInputDefinition === true) {
+    const output = context.match.pattern.output;
+    if (output.mode !== 'derived') throw new Error('Preserved output requires a derived resolver');
+    const slotIndex = outputSlotFor(output.resolverId, context.parameters);
+    if (slotIndex === undefined) throw new Error('Resolver does not preserve an input slot');
+    const { form } = RESOLVER_OUTPUT_CONTRACTS[output.resolverId];
     return { definitionId: inputForSlot(context, slotIndex).definition.id, form, outputSlotIndex: slotIndex };
   }
   return { definitionId: requireOutputId(context.parameters) };
@@ -162,19 +169,19 @@ const summarizeEvidence: PatternResolver = (context) => {
   // a derived local survey buys district relevance.
   return evidence.definition.sourceClass === 'official'
     ? {
-        ...outputForSessionForm(context, 1, 'summary'),
+        ...outputForSessionForm(context),
         effects: { billMomentum: 3 },
         explanationKey: 'result.summary.committee-credibility',
       }
     : {
-        ...outputForSessionForm(context, 1, 'summary'),
+        ...outputForSessionForm(context),
         effects: { districtTrust: 3 },
         explanationKey: 'result.summary.district-relevance',
       };
 };
 
 const draftProvision: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, 2, 'drafted'),
+  ...outputForSessionForm(context),
   effects: { billMomentum: 2 },
   explanationKey: 'result.provision.drafted',
 });
@@ -184,14 +191,14 @@ const answerOfficeConcern: PatternResolver = (context) => {
     throw new Error('Office-concern work requires the authored concern for that recipient office');
   }
   return {
-    ...outputForSessionForm(context, 1, 'prepared'),
+    ...outputForSessionForm(context),
     effects: { billMomentum: 1 },
     explanationKey: 'result.evidence.office-concern-answered',
   };
 };
 
 const prepareEvidencePacket: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, 1, 'prepared'),
+  ...outputForSessionForm(context),
   effects: { districtTrust: 2 },
   explanationKey: 'result.evidence.district-packet-prepared',
 });
@@ -220,31 +227,31 @@ const strengthenProvision: PatternResolver = (context) => ({
 });
 
 const prepareDistrictResponse: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  ...outputForSessionForm(context),
   effects: { districtTrust: 2 },
   explanationKey: 'result.constituency.response-prepared',
 });
 
 const prepareCommitteePacket: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  ...outputForSessionForm(context),
   effects: { billMomentum: 2 },
   explanationKey: 'result.institution.committee-packet-prepared',
 });
 
 const prepareDistrictEndorsement: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  ...outputForSessionForm(context),
   effects: { districtTrust: 3, billMomentum: 1 },
   explanationKey: 'result.constituency.endorsement-earned',
 });
 
 const preparePoliticalAsset: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, parameterSlot(context, 1), 'prepared'),
+  ...outputForSessionForm(context),
   effects: { billMomentum: 1 },
   explanationKey: 'result.political.asset-prepared',
 });
 
 const reviewProvision: PatternResolver = (context) => ({
-  ...outputForSessionForm(context, parameterSlot(context, 1), 'drafted'),
+  ...outputForSessionForm(context),
   effects: { billMomentum: 2 },
   explanationKey: 'result.provision.reviewed',
 });
