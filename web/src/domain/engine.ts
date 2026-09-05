@@ -1,7 +1,7 @@
 import type { GameCommand, GameCommandType } from '@/domain/commands';
 import { previewBillChange, previewDocketProvision } from '@/domain/bill';
-import { applyRelationshipEvaluation } from '@/domain/coalition';
-import { findRequiredDecisionWorkPlan, previewDecision } from '@/domain/decisions';
+import { applyRelationshipEvaluation, evaluateRelationships } from '@/domain/coalition';
+import { findRequiredDecisionWorkPlan, planDecisionUpfrontResources, previewDecision } from '@/domain/decisions';
 import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
@@ -1413,6 +1413,16 @@ export function executeCommand(
         return rejectCommand(state, command.type, reason, preview.message);
       }
       const choice = services.scenario.decisionChoices.find((candidate) => candidate.id === command.choiceId)!;
+      const billPreview = previewBillChange(state, services.scenario, preview.nextProvisionIds);
+      const resourcePlan = planDecisionUpfrontResources(
+        state.resources,
+        choice,
+        preview.requiredWork?.cost ?? {},
+        billPreview.integrity,
+      );
+      if (!resourcePlan.accepted) {
+        return rejectCommand(state, command.type, 'insufficient-resources', 'The choice and its required work exceed current resources.');
+      }
       let workEvents: GameEvent[] = [];
       let next = state;
       if (preview.requiredWork) {
@@ -1473,16 +1483,10 @@ export function executeCommand(
             sourceClass: 'simulated' as const,
           }];
         });
-      const billPreview = previewBillChange(state, services.scenario, nextProvisionIds);
-      const resourceRequest: Partial<Resources> = {
-        policyIntegrity: billPreview.integrity - next.resources.policyIntegrity,
+      const resourceChange = {
+        resources: resourcePlan.resources,
+        applied: resourcePlan.decisionApplied,
       };
-      for (const effect of choice.effects) {
-        if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity' && effect.delta < 0) {
-          resourceRequest[effect.resource] = (resourceRequest[effect.resource] ?? 0) + effect.delta;
-        }
-      }
-      const resourceChange = applyResourceDelta(next.resources, resourceRequest);
       const nextBill = {
         ...next.bill,
         provisionIds: nextProvisionIds,
@@ -1535,7 +1539,7 @@ export function executeCommand(
       const evaluated = applyRelationshipEvaluation(
         withResolution,
         services.scenario,
-        state.relationships,
+        evaluateRelationships(state, services.scenario),
         decisionEvents,
       );
       const allDecisionEvents = [...decisionEvents, ...evaluated.events];

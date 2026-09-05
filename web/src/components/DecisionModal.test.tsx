@@ -128,13 +128,19 @@ describe('DecisionModal', () => {
       cards: [...base.cards, prepared],
       stacks: [...base.stacks, { id: prepared.stackId, cardIds: [prepared.id] }],
     };
-    const session = createGameSession(state, sessionScenario);
+    const scenario = structuredClone(sessionScenario);
+    scenario.decisionChoices = scenario.decisionChoices.map((choice) => choice.id === 'choice-counter-renter-protection'
+      ? { ...choice, effects: [...choice.effects, { kind: 'resource' as const, resource: 'politicalCapital' as const, delta: 2 }] }
+      : choice);
+    const session = createGameSession(state, scenario);
     render(<Harness session={session} />);
 
     const counter = screen.getByTestId('decision-choice-counter');
     expect(counter).toHaveTextContent('District Director');
     expect(counter).toHaveTextContent('Rent Burden Report');
     expect(counter).toHaveTextContent('work cannot be cancelled');
+    expect(counter).toHaveTextContent('Conditional fulfillment reward: up to political capital +2');
+    expect(counter).toHaveTextContent('Actual gain depends on the resource cap at fulfillment');
     await userEvent.setup().click(screen.getByTestId('decision-resolve-counter'));
 
     expect(session.getState().activeWork[0]?.decisionOrigin?.choiceId).toBe('choice-counter-renter-protection');

@@ -106,10 +106,23 @@ export function DecisionModal({ session, state, open, onOpenChange, returnFocusR
                       ...added.map((id) => `add ${titleOf(session, id)}`),
                       ...removed.map((id) => `remove ${titleOf(session, id)}`),
                     ].join('; ') || 'none'}</li>
-                    <li>Resources: {(Object.entries(preview.resourceDeltas) as [keyof Resources, number][])
+                    <li>Upfront costs: {(Object.entries(preview.upfrontCosts) as [keyof Resources, number][])
+                      .filter(([, amount]) => amount !== 0)
+                      .map(([resource, amount]) => `${resourceName(resource)} ${amount}`)
+                      .join(', ') || 'none'}</li>
+                    <li>Resources after immediate effects: {(Object.entries(preview.resourceDeltas) as [keyof Resources, number][])
                       .filter(([, amount]) => amount !== 0)
                       .map(([resource, amount]) => `${resourceName(resource)} ${amount > 0 ? '+' : ''}${amount}`)
                       .join(', ') || 'no change'}</li>
+                    {(Object.entries(preview.deferredRewards) as [keyof Resources, number][]).some(([, amount]) => amount > 0) && (
+                      <li>
+                        Conditional fulfillment reward: up to{' '}
+                        {(Object.entries(preview.deferredRewards) as [keyof Resources, number][])
+                          .filter(([, amount]) => amount > 0)
+                          .map(([resource, amount]) => `${resourceName(resource)} +${amount}`)
+                          .join(', ')} when this promise is first fulfilled. Actual gain depends on the resource cap at fulfillment.
+                      </li>
+                    )}
                     <li>Support gained: {preview.gainedSupport.map((id) => titleOf(session, id)).join(', ') || 'none'}</li>
                     <li>Support lost: {preview.lostSupport.map((id) => titleOf(session, id)).join(', ') || 'none'}</li>
                     <li>Incompatible promises or values: {preview.incompatiblePromises.map((id) => {

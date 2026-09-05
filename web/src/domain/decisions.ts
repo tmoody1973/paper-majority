@@ -1,5 +1,10 @@
 import { previewBillChange } from '@/domain/bill';
-import { evaluateRelationships, relationshipConditionSatisfied } from '@/domain/coalition';
+import {
+  applyRelationshipEvaluation,
+  evaluateRelationships,
+  positiveDecisionResourceEffects,
+  relationshipConditionSatisfied,
+} from '@/domain/coalition';
 import { applyResourceDelta } from '@/domain/resources';
 import { planWork, type WorkPlan } from '@/domain/work';
 import type {
@@ -37,7 +42,9 @@ export type DecisionPreview =
       expectedBillRevision: number;
       affectedOfficeDefinitionIds: string[];
       nextProvisionIds: string[];
+      upfrontCosts: Partial<Resources>;
       resourceDeltas: Partial<Resources>;
+      deferredRewards: Partial<Resources>;
       newObligations: Obligation[];
       requiredWork?: RequiredDecisionWork;
       gainedSupport: string[];
@@ -95,14 +102,71 @@ export function findRequiredDecisionWorkPlan(
   return requiredWorkPlan(state, scenario, pending.officeDefinitionId, pending.sourceId, choice.requiredWorkPatternId);
 }
 
-function resourceEffects(choice: DecisionChoiceDefinition): Partial<Resources> {
-  const deltas: Partial<Resources> = {};
+function negativeDecisionResourceCosts(choice: DecisionChoiceDefinition): Partial<Resources> {
+  const costs: Partial<Resources> = {};
   for (const effect of choice.effects) {
-    if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity') {
-      deltas[effect.resource] = (deltas[effect.resource] ?? 0) + effect.delta;
+    if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity' && effect.delta < 0) {
+      costs[effect.resource] = (costs[effect.resource] ?? 0) + -effect.delta;
     }
   }
-  return deltas;
+  return costs;
+}
+
+export type DecisionUpfrontResourcePlan =
+  | { accepted: false; costs: Partial<Resources> }
+  | {
+      accepted: true;
+      costs: Partial<Resources>;
+      afterWorkResources: Resources;
+      resources: Resources;
+      workApplied: Partial<Resources>;
+      decisionApplied: Partial<Resources>;
+    };
+
+/** Apply the exact commit order: reserve work, pay every negative choice effect, then set bill integrity. */
+export function planDecisionUpfrontResources(
+  resources: Resources,
+  choice: DecisionChoiceDefinition,
+  workCost: Partial<Resources>,
+  policyIntegrity: number,
+): DecisionUpfrontResourcePlan {
+  const choiceCosts = negativeDecisionResourceCosts(choice);
+  const costs: Partial<Resources> = { ...workCost };
+  for (const [resource, amount] of Object.entries(choiceCosts) as [keyof Resources, number][]) {
+    costs[resource] = (costs[resource] ?? 0) + amount;
+  }
+  if ((Object.entries(costs) as [keyof Resources, number][]).some(
+    ([resource, amount]) => resources[resource] < amount,
+  )) {
+    return { accepted: false, costs };
+  }
+
+  const workRequest = Object.fromEntries(
+    (Object.entries(workCost) as [keyof Resources, number][]).map(([resource, amount]) => [resource, -amount]),
+  ) as Partial<Resources>;
+  const work = applyResourceDelta(resources, workRequest);
+  const decisionRequest = Object.fromEntries(
+    (Object.entries(choiceCosts) as [keyof Resources, number][]).map(([resource, amount]) => [resource, -amount]),
+  ) as Partial<Resources>;
+  decisionRequest.policyIntegrity = policyIntegrity - work.resources.policyIntegrity;
+  const decision = applyResourceDelta(work.resources, decisionRequest);
+  return {
+    accepted: true,
+    costs,
+    afterWorkResources: work.resources,
+    resources: decision.resources,
+    workApplied: work.applied,
+    decisionApplied: decision.applied,
+  };
+}
+
+function resourceDifferences(before: Resources, after: Resources): Partial<Resources> {
+  const differences: Partial<Resources> = {};
+  for (const resource of Object.keys(before) as (keyof Resources)[]) {
+    const delta = after[resource] - before[resource];
+    if (delta !== 0) differences[resource] = delta;
+  }
+  return differences;
 }
 
 function provisionEffects(
@@ -233,20 +297,17 @@ export function previewDecision(
     return { accepted: false, reason: 'missing-prerequisites', message: 'No eligible staff and evidence are ready for this counteroffer.' };
   }
 
-  const choiceResources = resourceEffects(choice);
-  const requiredNow: Partial<Resources> = { ...required?.plan.preview.cost };
-  for (const [resource, delta] of Object.entries(choiceResources) as [keyof Resources, number][]) {
-    if (delta < 0) requiredNow[resource] = (requiredNow[resource] ?? 0) + -delta;
-  }
-  const affordable = (Object.entries(requiredNow) as [keyof Resources, number][]).every(
-    ([resource, amount]) => state.resources[resource] >= amount,
-  );
-  if (!affordable) {
-    return { accepted: false, reason: 'insufficient-resources', message: 'The choice and its required work exceed current resources.' };
-  }
-
   const nextProvisionIds = provisionEffects(state, choice);
   const billPreview = previewBillChange(state, scenario, nextProvisionIds);
+  const resourcePlan = planDecisionUpfrontResources(
+    state.resources,
+    choice,
+    required?.plan.preview.cost ?? {},
+    billPreview.integrity,
+  );
+  if (!resourcePlan.accepted) {
+    return { accepted: false, reason: 'insufficient-resources', message: 'The choice and its required work exceed current resources.' };
+  }
   const beforeRelationships = evaluateRelationships(state, scenario);
   const relationshipInput = required
     ? {
@@ -266,19 +327,30 @@ export function previewDecision(
     nextProvisionIds,
   );
   const changes = supportChanges(beforeRelationships, nextRelationships);
-  const fulfilledNow = nextRelationships.some((relationship) =>
-    relationship.demandOccurrenceId === pending.occurrenceId && relationship.support === 'committed',
+  const projected = applyRelationshipEvaluation(
+    {
+      ...relationshipInput,
+      resources: resourcePlan.resources,
+      bill: { ...state.bill, provisionIds: nextProvisionIds },
+      relationships: nextRelationships,
+    },
+    scenario,
+    beforeRelationships,
+    [{ type: 'DECISION_RESOLVED', decisionId, choiceId, occurrenceId: pending.occurrenceId }],
   );
-  const jointDeltas: Partial<Resources> = {};
-  for (const [resource, delta] of Object.entries(choiceResources) as [keyof Resources, number][]) {
-    if (delta < 0 || fulfilledNow) jointDeltas[resource] = (jointDeltas[resource] ?? 0) + delta;
-  }
-  for (const [resource, amount] of Object.entries(required?.plan.preview.cost ?? {}) as [keyof Resources, number][]) {
-    jointDeltas[resource] = (jointDeltas[resource] ?? 0) - amount;
-  }
-  const integrityDelta = billPreview.integrity - state.resources.policyIntegrity;
-  const requestedResources = { ...jointDeltas, policyIntegrity: integrityDelta };
-  const applied = applyResourceDelta(state.resources, requestedResources).applied;
+  const currentFulfilled = projected.events.some((event) =>
+    event.type === 'PROMISE_CHANGED'
+      && event.promiseOccurrenceId === pending.occurrenceId
+      && event.status === 'fulfilled',
+  );
+  const currentPromiseOpen = nextRelationships.some((relationship) =>
+    relationship.promiseOccurrenceIds.includes(pending.occurrenceId),
+  );
+  const deferredRewards = !currentPromiseOpen
+    || currentFulfilled
+    || state.rewardedOccurrenceIds.includes(pending.occurrenceId)
+    ? {}
+    : positiveDecisionResourceEffects(choice);
   const negativeValues = nextProvisionIds
     .filter((id) => !state.bill.provisionIds.includes(id))
     .flatMap((id) => {
@@ -317,7 +389,9 @@ export function previewDecision(
       ...changes.lostSupport,
     ])).sort(),
     nextProvisionIds,
-    resourceDeltas: applied,
+    upfrontCosts: resourcePlan.costs,
+    resourceDeltas: resourceDifferences(state.resources, projected.state.resources),
+    deferredRewards,
     newObligations,
     requiredWork: required ? {
       patternId: required.plan.preview.patternId,

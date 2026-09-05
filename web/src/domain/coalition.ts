@@ -1,11 +1,24 @@
 import type { GameEvent } from '@/domain/events';
 import { applyResourceDelta } from '@/domain/resources';
 import type {
+  DecisionChoiceDefinition,
   DemandConditionDefinition,
   RelationshipState,
+  Resources,
   ScenarioDefinition,
   TermState,
 } from '@/domain/types';
+
+export function positiveDecisionResourceEffects(
+  choice: DecisionChoiceDefinition | undefined,
+): Partial<Resources> {
+  return choice?.effects.reduce((deltas, effect) => {
+    if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity' && effect.delta > 0) {
+      deltas[effect.resource] = (deltas[effect.resource] ?? 0) + effect.delta;
+    }
+    return deltas;
+  }, {} as Partial<Resources>) ?? {};
+}
 
 function definitionTags(state: TermState, scenario: ScenarioDefinition, provisionIds: string[]): Set<string> {
   return new Set(provisionIds.flatMap((provisionId) =>
@@ -143,12 +156,7 @@ export function applyRelationshipEvaluation(
     const choice = resolution?.type === 'DECISION_RESOLVED'
       ? scenario.decisionChoices.find((candidate) => candidate.id === resolution.choiceId)
       : undefined;
-    const requested = choice?.effects.reduce((deltas, effect) => {
-      if (effect.kind === 'resource' && effect.resource !== 'policyIntegrity' && effect.delta > 0) {
-        deltas[effect.resource] = (deltas[effect.resource] ?? 0) + effect.delta;
-      }
-      return deltas;
-    }, {} as Partial<typeof state.resources>) ?? {};
+    const requested = positiveDecisionResourceEffects(choice);
     const reward = applyResourceDelta(resources, requested);
     resources = reward.resources;
     if (Object.values(reward.applied).some((amount) => amount !== 0)) {

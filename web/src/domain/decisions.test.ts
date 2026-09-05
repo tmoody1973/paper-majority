@@ -90,6 +90,74 @@ describe('previewDecision', () => {
 });
 
 describe('RESOLVE_DECISION', () => {
+  it('requires every mixed-sign upfront cost and previews the exact ordered capped result', () => {
+    const scenario = structuredClone(sessionScenario);
+    scenario.decisionChoices = scenario.decisionChoices.map((choice) => choice.id === 'choice-accept-renter-protection'
+      ? {
+          ...choice,
+          effects: [
+            ...choice.effects.filter((effect) => effect.kind !== 'resource'),
+            { kind: 'resource' as const, resource: 'politicalCapital' as const, delta: -5 },
+            { kind: 'resource' as const, resource: 'politicalCapital' as const, delta: 10 },
+          ],
+        }
+      : choice);
+    const low = withPending('demand-renter-protection');
+    const insufficient = { ...low, resources: { ...low.resources, politicalCapital: 3 } };
+    const before = structuredClone(insufficient);
+
+    expect(previewDecision(
+      insufficient,
+      scenario,
+      insufficient.pendingDecisions[0].id,
+      'choice-accept-renter-protection',
+    )).toMatchObject({ accepted: false, reason: 'insufficient-resources' });
+    const rejected = executeCommand(insufficient, {
+      type: 'RESOLVE_DECISION',
+      decisionId: insufficient.pendingDecisions[0].id,
+      choiceId: 'choice-accept-renter-protection',
+      expectedBillRevision: 0,
+    }, { scenario });
+    expect(rejected.state).toBe(insufficient);
+    expect(rejected.state).toEqual(before);
+
+    const affordable = { ...low, resources: { ...low.resources, politicalCapital: 5 } };
+    const preview = previewDecision(
+      affordable,
+      scenario,
+      affordable.pendingDecisions[0].id,
+      'choice-accept-renter-protection',
+    );
+    expect(preview).toMatchObject({
+      accepted: true,
+      upfrontCosts: { politicalCapital: 5 },
+      resourceDeltas: { politicalCapital: 4, policyIntegrity: -10 },
+      deferredRewards: {},
+    });
+    const accepted = executeCommand(affordable, {
+      type: 'RESOLVE_DECISION',
+      decisionId: affordable.pendingDecisions[0].id,
+      choiceId: 'choice-accept-renter-protection',
+      expectedBillRevision: 0,
+    }, { scenario });
+    const committedDeltas = Object.fromEntries(Object.entries(accepted.state.resources).flatMap(([resource, amount]) => {
+      const delta = amount - affordable.resources[resource as keyof typeof affordable.resources];
+      return delta === 0 ? [] : [[resource, delta]];
+    }));
+    expect(preview.accepted && preview.resourceDeltas).toEqual(committedDeltas);
+    expect(accepted.state.resources.politicalCapital).toBe(9);
+    expect(accepted.events).toContainEqual(expect.objectContaining({
+      type: 'RESOURCE_CHANGED',
+      changes: expect.objectContaining({ politicalCapital: -5 }),
+      reason: `decision:${affordable.pendingDecisions[0].occurrenceId}`,
+    }));
+    expect(accepted.events).toContainEqual(expect.objectContaining({
+      type: 'RESOURCE_CHANGED',
+      changes: expect.objectContaining({ politicalCapital: 9 }),
+      reason: `promise-fulfilled:${affordable.pendingDecisions[0].occurrenceId}`,
+    }));
+  });
+
   it('resolves an acceptance exactly once and leaves player identity unchanged', () => {
     const state = withPending('demand-renter-protection');
     const command = {
@@ -186,6 +254,18 @@ describe('RESOLVE_DECISION', () => {
       ? { ...choice, effects: [...choice.effects, { kind: 'resource' as const, resource: 'politicalCapital' as const, delta: 2 }] }
       : choice);
     const initialCapital = state.resources.politicalCapital;
+    const counterPreview = previewDecision(
+      state,
+      scenario,
+      state.pendingDecisions[0].id,
+      'choice-counter-renter-protection',
+    );
+    expect(counterPreview).toMatchObject({
+      accepted: true,
+      upfrontCosts: { staffAttention: 1 },
+      resourceDeltas: { staffAttention: -1 },
+      deferredRewards: { politicalCapital: 2 },
+    });
     const result = executeCommand(state, {
       type: 'RESOLVE_DECISION',
       decisionId: state.pendingDecisions[0].id,
@@ -239,6 +319,78 @@ describe('RESOLVE_DECISION', () => {
     expect(finished.state.eventLog.filter((event) =>
       event.type === 'RESOURCE_CHANGED' && event.reason === `promise-fulfilled:${state.pendingDecisions[0].occurrenceId}`,
     )).toHaveLength(1);
+  });
+
+  it('includes a capped immediate reward when the choice restores an older unresolved promise', () => {
+    const scenario = structuredClone(sessionScenario);
+    scenario.decisionChoices = scenario.decisionChoices.map((choice) => {
+      if (choice.id === 'choice-accept-rural-supply') {
+        return {
+          ...choice,
+          effects: [...choice.effects, { kind: 'resource' as const, resource: 'districtTrust' as const, delta: 50 }],
+        };
+      }
+      if (choice.id === 'choice-accept-renter-protection') {
+        return {
+          ...choice,
+          effects: choice.effects.map((effect) => effect.kind === 'bill-add-provision'
+            ? { ...effect, provisionId: 'policy-housing-choice-voucher' }
+            : effect),
+        };
+      }
+      return choice;
+    });
+    const state = withPending('demand-renter-protection');
+    const oldOccurrence = 'demand-rural-supply:revision:prior';
+    const withOldPromise: TermState = {
+      ...state,
+      relationships: [{
+        memberId: 'coalition-office-ridgeline',
+        support: 'conditional',
+        demandProvisionId: 'demand-rural-supply',
+        demandOccurrenceId: oldOccurrence,
+        promiseOccurrenceIds: [oldOccurrence],
+        conditions: [{ kind: 'bill-has-tag', tag: 'renter-focused' }],
+        evaluatedRevision: 0,
+      }],
+      eventLog: [
+        ...state.eventLog,
+        {
+          type: 'DECISION_RESOLVED',
+          decisionId: 'decision:old-rural-offer',
+          choiceId: 'choice-accept-rural-supply',
+          occurrenceId: oldOccurrence,
+        },
+      ],
+    };
+    const preview = previewDecision(
+      withOldPromise,
+      scenario,
+      withOldPromise.pendingDecisions[0].id,
+      'choice-accept-renter-protection',
+    );
+    expect(preview).toMatchObject({
+      accepted: true,
+      resourceDeltas: { politicalCapital: -1, districtTrust: 40, policyIntegrity: 16 },
+    });
+    const result = executeCommand(withOldPromise, {
+      type: 'RESOLVE_DECISION',
+      decisionId: withOldPromise.pendingDecisions[0].id,
+      choiceId: 'choice-accept-renter-protection',
+      expectedBillRevision: 0,
+    }, { scenario });
+    const committedDeltas = Object.fromEntries(Object.entries(result.state.resources).flatMap(([resource, amount]) => {
+      const delta = amount - withOldPromise.resources[resource as keyof typeof withOldPromise.resources];
+      return delta === 0 ? [] : [[resource, delta]];
+    }));
+    expect(preview.accepted && preview.resourceDeltas).toEqual(committedDeltas);
+    expect(result.state.resources.districtTrust).toBe(100);
+    expect(result.state.rewardedOccurrenceIds).toContain(oldOccurrence);
+    expect(result.events).toContainEqual(expect.objectContaining({
+      type: 'RESOURCE_CHANGED',
+      changes: { districtTrust: 40 },
+      reason: `promise-fulfilled:${oldOccurrence}`,
+    }));
   });
 
   it('blocks a drafted bill edit during a pending offer and leaves the offer explicitly resolvable', () => {
