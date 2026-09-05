@@ -63,12 +63,28 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const [dismissedDecisionId, setDismissedDecisionId] = useState<string | undefined>();
   const decisionTriggerRef = useRef<HTMLButtonElement>(null);
 
-  // Honour the operating-system preference before the player touches anything.
+  // Recover first. A saved reduced-motion choice is canonical setup and must not
+  // be silently rewritten by the operating-system preference during hydration.
   useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return;
+    if (session.getState().mode === 'interaction-spike') {
+      if (typeof window.matchMedia === 'function') {
+        session.setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      }
+      return;
+    }
+    let recovery: ReturnType<GameSession['recover']>;
+    try {
+      recovery = session.recover(window.localStorage);
+    } catch (error) {
+      // Accessing localStorage itself can be denied before it can satisfy the
+      // SaveStorage interface. Keep the authored in-memory run intact.
+      const denied = () => { throw error; };
+      recovery = session.recover({ getItem: denied, setItem: denied, removeItem: denied });
+    }
+    if (recovery.kind !== 'empty' || initialState !== undefined || typeof window.matchMedia !== 'function') return;
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     session.setReducedMotion(query.matches);
-  }, [session]);
+  }, [initialState, session]);
 
   // A development-only read/dispatch adapter for the E2E suite. It goes through the
   // same session as every other caller, so it is not a second mutation path.
@@ -113,6 +129,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   );
   const pendingDecision = nextPendingDecision(state);
   const decisionOpen = Boolean(pendingDecision && dismissedDecisionId !== pendingDecision.id);
+  const persistenceNotice = session.getPersistenceNotice();
 
   return (
     <main className="shell">
@@ -138,6 +155,11 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
           {pendingDecision ? 'Review pending coalition decision' : 'No pending coalition decisions'}
         </button>
       </div>
+      {persistenceNotice && (
+        <p className="shell__save-warning" data-testid="session-save-warning" role="status">
+          {persistenceNotice}
+        </p>
+      )}
       {pendingDecision && (
         <DecisionModal
           key={pendingDecision.id}

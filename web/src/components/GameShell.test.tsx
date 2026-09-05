@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The shell must render on the server and in a plain DOM test without Phaser ever
 // being imported. Stubbing `next/dynamic` proves the boundary rather than assuming it.
@@ -14,6 +14,7 @@ import { GameShell } from '@/components/GameShell';
 import { createRun } from '@/domain/initialState';
 import type { CardInstance, PendingDecision, TermState } from '@/domain/types';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
+import { saveCheckpoint, SAVE_KEYS } from '@/persistence/saveRepository';
 
 function pendingDocketState(): TermState {
   const state = createRun({ ...sessionSetup, mode: 'session' });
@@ -53,6 +54,8 @@ function pendingDocketState(): TermState {
 }
 
 describe('GameShell', () => {
+  beforeEach(() => localStorage.clear());
+
   it('publishes a replacement Session snapshot instead of retaining the old HUD', async () => {
     const first = createRun({ ...sessionSetup, mode: 'session' });
     const second = { ...createRun({ ...sessionSetup, mode: 'session' }), week: 4 };
@@ -129,5 +132,28 @@ describe('GameShell', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByTestId('decision-trigger')).toHaveAttribute('aria-disabled', 'true');
     await waitFor(() => expect(screen.getByTestId('decision-trigger')).toHaveFocus());
+  });
+
+  it('recovers the saved reduced-motion setting instead of replacing it with the OS preference', async () => {
+    const restored = createRun({
+      ...sessionSetup,
+      mode: 'session',
+      settings: { reducedMotion: true },
+    });
+    expect(saveCheckpoint(localStorage, restored, sessionScenario).kind).toBe('saved');
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn().mockReturnValue({ matches: false }),
+    });
+    render(<GameShell scenario={sessionScenario} initialState={createRun({ ...sessionSetup, mode: 'session' })} />);
+    await waitFor(() => expect(screen.getByTestId('hud-reduced-motion')).toHaveTextContent('on'));
+  });
+
+  it('shows an actionable recovery warning and leaves incompatible bytes untouched', async () => {
+    const raw = JSON.stringify({ saveSchemaVersion: 88, rulesVersion: 88 });
+    localStorage.setItem(SAVE_KEYS.current, raw);
+    render(<GameShell scenario={sessionScenario} initialState={createRun({ ...sessionSetup, mode: 'session' })} />);
+    expect(await screen.findByTestId('session-save-warning')).toHaveTextContent(/invalid document shape|unsupported/i);
+    expect(localStorage.getItem(SAVE_KEYS.current)).toBe(raw);
   });
 });
