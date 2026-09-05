@@ -1,5 +1,6 @@
 import type {
   CardKind,
+  Obligation,
   RecipeSlot,
   ScenarioDefinition,
   TermState,
@@ -11,6 +12,18 @@ export function nextPendingDecision(state: TermState) {
   return state.pendingDecisions
     .filter((decision) => decision.status === 'pending')
     .sort((a, b) => a.id.localeCompare(b.id))[0];
+}
+
+/** Stable, canonical order shared by the weekly review and filing cabinet. */
+export function openObligations(state: TermState, mandatoryOnly = false): Obligation[] {
+  return state.obligations
+    .filter((obligation) => obligation.status === 'open')
+    .filter((obligation) => !mandatoryOnly || obligation.mandatory)
+    .sort((a, b) =>
+      a.due.week - b.due.week
+      || a.due.offsetMs - b.due.offsetMs
+      || a.id.localeCompare(b.id),
+    );
 }
 
 /**

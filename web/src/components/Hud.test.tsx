@@ -32,6 +32,12 @@ function withWorkingCard(state: TermState): TermState {
 }
 
 describe('Hud paused nudge', () => {
+  it('shows six-week progress and the boundary state for Session mode', () => {
+    renderHud({ ...base, mode: 'session', schemaVersion: 2, week: 3, weekPhase: 'boundary' });
+    expect(screen.getByText('3 of 6')).toBeInTheDocument();
+    expect(screen.getByText('Boundary review')).toBeInTheDocument();
+    expect(screen.getByTestId('hud-pause')).toBeDisabled();
+  });
   it('says nothing extra when the desk is paused and idle', () => {
     renderHud({ ...base, paused: true });
 

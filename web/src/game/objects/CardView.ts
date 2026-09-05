@@ -269,6 +269,7 @@ export class CardView extends Phaser.GameObjects.Container {
     definition: CardDefinition,
     costLine = '',
     originLine = '',
+    deadlineLine = '',
   ): void {
     this.instance = instance;
     this.definition = definition;
@@ -277,7 +278,10 @@ export class CardView extends Phaser.GameObjects.Container {
     this.originText.setText(originLine);
 
     const remainingSeconds = Math.ceil(instance.remainingMs / 1000);
-    if (instance.status === 'expired') {
+    if (deadlineLine) {
+      this.deadline.setText(deadlineLine);
+      this.setAlpha(1);
+    } else if (instance.status === 'expired') {
       this.deadline.setText('Missed');
       this.setAlpha(0.55);
     } else if (instance.status !== 'working' && instance.remainingMs > 0) {

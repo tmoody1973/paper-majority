@@ -102,6 +102,7 @@ export type GameEvent =
   | { type: 'PAUSE_CHANGED'; paused: boolean }
   | { type: 'EVENT_TRIGGERED'; storyEventId: string; whyRules: string[] }
   | { type: 'WEEK_RESOLVED'; week: number; summary: string[] }
+  | { type: 'OBLIGATION_STATUS_CHANGED'; obligationId: string; status: 'fulfilled' | 'missed' | 'declined' }
   | { type: 'WORK_SUBMITTED'; workId: string; cardIds: string[]; completesAtSimulationMs: number }
   | { type: 'PROVISION_DOCKETED'; cardId: string; provisionId: string; revision: number }
   | { type: 'PROVISION_NEGOTIATED'; decisionId: string; occurrenceId: string; provisionId: string; change: 'added' | 'removed'; revision: number }

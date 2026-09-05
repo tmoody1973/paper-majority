@@ -53,6 +53,14 @@ function pendingDocketState(): TermState {
 }
 
 describe('GameShell', () => {
+  it('publishes a replacement Session snapshot instead of retaining the old HUD', async () => {
+    const first = createRun({ ...sessionSetup, mode: 'session' });
+    const second = { ...createRun({ ...sessionSetup, mode: 'session' }), week: 4 };
+    const view = render(<GameShell scenario={sessionScenario} initialState={first} />);
+    expect(screen.getByText('1 of 6')).toBeInTheDocument();
+    view.rerender(<GameShell scenario={sessionScenario} initialState={second} />);
+    expect(await screen.findByText('4 of 6')).toBeInTheDocument();
+  });
   it('renders the HUD', () => {
     render(<GameShell />);
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { describeStudyOption } from '@/domain/selectors';
+import { describeStudyOption, openObligations } from '@/domain/selectors';
 import { remainingWorkMs } from '@/domain/work';
 import type { TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
@@ -160,7 +160,56 @@ export function AccessibleCardControls({
         >
           Take it back out
         </button>
+        {state.mode !== 'interaction-spike' && (
+          <>
+            <button
+              type="button"
+              data-testid="controls-file"
+              disabled={!sourceId || state.cards.find((card) => card.id === sourceId)?.location !== 'desk'}
+              onClick={() => session.dispatch({ type: 'FILE_CARD', cardId: sourceId })}
+            >
+              File card
+            </button>
+            <button
+              type="button"
+              data-testid="controls-archive"
+              disabled={!sourceId || state.cards.find((card) => card.id === sourceId)?.location === 'archived'}
+              onClick={() => session.dispatch({ type: 'ARCHIVE_CARD', cardId: sourceId })}
+            >
+              Archive card
+            </button>
+          </>
+        )}
       </div>
+
+      {state.mode !== 'interaction-spike' && (
+        <section className="filing-cabinet" aria-label="Filing cabinet">
+          <h3>Filing cabinet</h3>
+          <p>Six filing slots keep cards off the desk without removing their obligations.</p>
+          <p data-testid="filing-count">
+            {state.cards.filter((card) => card.location === 'filed').length} of 6 slots used
+          </p>
+          {state.cards.some((card) => card.location === 'filed') ? (
+            <ul>
+              {state.cards.filter((card) => card.location === 'filed').map((card) => (
+                <li key={card.id}>
+                  <span>{label(card.id)}</span>{' '}
+                  <button type="button" onClick={() => session.dispatch({ type: 'UNFILE_CARD', cardId: card.id })}>
+                    Return to desk
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : <p>No filed cards.</p>}
+          <h3>Open mandatory obligations</h3>
+          <ul aria-label="Mandatory filing obligations">
+            {openObligations(state, true).map((obligation) => {
+              const definition = scenario.obligationDefinitions.find((item) => item.id === obligation.sourceId);
+              return <li key={obligation.id}>{definition?.title ?? obligation.id} — due week {obligation.due.week}</li>;
+            })}
+          </ul>
+        </section>
+      )}
 
       {study.isTactic && study.blockedReason && (
         <p className="controls__note controls__note--study" data-testid="controls-study-note">

@@ -40,7 +40,8 @@ export type GameCommand =
   | { type: 'CONCLUDE_SESSION' }
   | { type: 'ACCEPT_AMENDMENT'; memberId: string; provisionId: string }
   | { type: 'REJECT_AMENDMENT'; memberId: string }
-  | { type: 'ADVANCE_WEEK'; confirmEarly?: boolean }
+  | { type: 'ADVANCE_WEEK'; confirmEarly: true; expectedWeek: number }
+  | { type: 'ADVANCE_WEEK'; confirmEarly?: false; expectedWeek?: never }
   | { type: 'RESOLVE_VOTE' };
 
 export type GameCommandType = GameCommand['type'];

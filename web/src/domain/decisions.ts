@@ -6,6 +6,7 @@ import {
   relationshipConditionSatisfied,
 } from '@/domain/coalition';
 import { applyResourceDelta } from '@/domain/resources';
+import { obligationOccurrence } from '@/domain/obligations';
 import { planWork, type WorkPlan } from '@/domain/work';
 import type {
   DecisionChoiceDefinition,
@@ -365,15 +366,7 @@ export function previewDecision(
     if (effect.kind !== 'create-obligation') return [];
     const definition = scenario.obligationDefinitions.find((candidate) => candidate.id === effect.obligationDefinitionId);
     if (!definition) return [];
-    return [{
-      id: `${definition.id}:${pending.occurrenceId}`,
-      sourceId: definition.id,
-      due: { ...definition.due },
-      mandatory: definition.mandatory,
-      status: 'open' as const,
-      rewardCapital: definition.rewardCapital,
-      trustPenalty: definition.trustPenalty,
-    }];
+    return [obligationOccurrence(definition, pending.occurrenceId)];
   });
 
   return {

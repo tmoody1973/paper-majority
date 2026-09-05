@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { AccessibleCardControls } from '@/components/AccessibleCardControls';
 import { BillDocket } from '@/components/BillDocket';
@@ -12,6 +12,7 @@ import { OfficeBrief } from '@/components/OfficeBrief';
 import { PlainEnglishKey } from '@/components/PlainEnglishKey';
 import { StaffHandbook } from '@/components/StaffHandbook';
 import { WorkMat } from '@/components/WorkMat';
+import { WeekSummary } from '@/components/WeekSummary';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
 import { describeCard } from '@/domain/cardDetail';
 import { buildHandbook, nextPendingDecision } from '@/domain/selectors';
@@ -49,7 +50,11 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
     [fixture, initialState, scenario],
   );
 
-  const [state, setState] = useState<TermState>(() => session.getState());
+  const subscribe = useCallback(
+    (listener: () => void) => session.subscribe(() => listener()),
+    [session],
+  );
+  const state = useSyncExternalStore(subscribe, session.getState, session.getState);
   const [lastResult, setLastResult] = useState<string>('');
   const [handbookOpen, setHandbookOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>();
@@ -57,8 +62,6 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const [workMatCardIds, setWorkMatCardIds] = useState<string[]>([]);
   const [dismissedDecisionId, setDismissedDecisionId] = useState<string | undefined>();
   const decisionTriggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => session.subscribe((result) => setState(result.state)), [session]);
 
   // Honour the operating-system preference before the player touches anything.
   useEffect(() => {
@@ -97,6 +100,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
       : ids.length < 4 ? [...ids, cardId] : ids);
   }, [session]);
   const onHover = useCallback((cardId: string | undefined) => setHoveredCardId(cardId), []);
+  const onInspect = useCallback((cardId: string) => setSelectedCardId(cardId), []);
 
   // A tap pins a card open; hovering only previews. A card consumed by a
   // transformation simply stops resolving, and the panel falls back.
@@ -104,6 +108,9 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const detail = shownCardId ? describeCard(state, scenario, shownCardId) : undefined;
 
   const handbook = useMemo(() => buildHandbook(state, scenario), [state, scenario]);
+  const validWorkMatCardIds = workMatCardIds.filter((id) =>
+    state.cards.some((card) => card.id === id && card.location === 'desk'),
+  );
   const pendingDecision = nextPendingDecision(state);
   const decisionOpen = Boolean(pendingDecision && dismissedDecisionId !== pendingDecision.id);
 
@@ -160,11 +167,12 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
         <aside className="shell__side">
           {state.mode !== 'interaction-spike' && (
             <>
+              <WeekSummary session={session} state={state} onResult={onResult} />
               <BillDocket session={session} state={state} onResult={onResult} />
               <WorkMat
                 session={session}
                 state={state}
-                selectedCardIds={workMatCardIds}
+                selectedCardIds={validWorkMatCardIds}
                 onSelectedCardIdsChange={setWorkMatCardIds}
                 onResult={onResult}
               />
@@ -178,7 +186,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
           {handbookOpen ? (
             <StaffHandbook view={handbook} />
           ) : (
-            <AccessibleCardControls session={session} state={state} onInspect={onSelect} />
+            <AccessibleCardControls session={session} state={state} onInspect={onInspect} />
           )}
           <PlainEnglishKey />
         </aside>

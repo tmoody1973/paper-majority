@@ -1,6 +1,7 @@
 'use client';
 
 import type { Resources, TermState } from '@/domain/types';
+import { openObligations } from '@/domain/selectors';
 
 const RESOURCE_LABELS: { key: keyof Resources; label: string; max?: number }[] = [
   { key: 'staffAttention', label: 'Staff Attention' },
@@ -36,7 +37,21 @@ export function Hud({
       <div className="hud__row">
         <p className="hud__week">
           <span className="hud__week-label">Legislative week</span>
-          <strong>{state.week}</strong>
+          <strong>{state.mode === 'interaction-spike' ? state.week : `${state.week} of 6`}</strong>
+          {state.mode !== 'interaction-spike' && (
+            <>
+              <span className="hud__week-phase">
+                {state.runStatus === 'complete'
+                  ? 'Session complete'
+                  : state.weekPhase === 'boundary'
+                    ? 'Boundary review'
+                    : `${Math.ceil((state.weekLengthMs - state.elapsedMs) / 1000)}s remaining`}
+              </span>
+              <span className="hud__week-phase">
+                {openObligations(state).filter((obligation) => obligation.due.week <= state.week).length} due obligation(s)
+              </span>
+            </>
+          )}
         </p>
 
         {/* Same-party and opposing-party are relative to the player. Without this,
@@ -65,9 +80,16 @@ export function Hud({
             type="button"
             onClick={onTogglePause}
             data-testid="hud-pause"
-            disabled={state.pendingDecisions.some((decision) => decision.status === 'pending')}
+            disabled={state.runStatus === 'complete'
+              || state.weekPhase === 'boundary'
+              || state.pendingDecisions.some((decision) => decision.status === 'pending')}
+            aria-disabled={state.runStatus === 'complete' || state.weekPhase === 'boundary'}
           >
-            {state.paused ? 'Resume' : 'Pause'}
+            {state.runStatus === 'complete'
+              ? 'Session complete'
+              : state.weekPhase === 'boundary'
+                ? 'Paused for review'
+                : state.paused ? 'Resume' : 'Pause'}
           </button>
           <button
             type="button"

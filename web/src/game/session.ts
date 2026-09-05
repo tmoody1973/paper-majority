@@ -32,6 +32,9 @@ export function createGameSession(
     getState: () => state,
     getScenario: () => scenario,
     dispatch(command) {
+      // Time commands and pointer commands share this single ordered boundary.
+      // In particular, a recovered snapshot cannot have a second browser timer
+      // racing the canonical weekly transition.
       const result = executeCommand(state, command, services);
       state = result.state;
       for (const listener of [...listeners]) listener(result);

@@ -6,7 +6,9 @@ import type { GameEvent, RejectionReason } from '@/domain/events';
 import { resolvePatternOutput } from '@/domain/patternResolvers';
 import { buildMatchInputs, matchPattern, type MatchInput } from '@/domain/recipes';
 import { applyResourceDelta } from '@/domain/resources';
+import { expireObligations, fulfillObligations } from '@/domain/obligations';
 import { describeTag } from '@/domain/selectors';
+import { nextStopDelta, resolveWeek } from '@/domain/week';
 import { EFFECTIVE_RULE_VERSION, patternReservation, planWork } from '@/domain/work';
 import type {
   CardInstance,
@@ -30,6 +32,7 @@ export interface EngineResult {
 
 /** A TICK may never jump further than this, however long the browser was asleep. */
 const MAX_TICK_MS = 1_000;
+const FILING_SLOTS = 6;
 
 /**
  * A Study Tactic assignment is stored in the existing `activeActionId` field with a
@@ -920,6 +923,75 @@ function completeSessionWork(
   return { state: evaluated.state, events: [...events, ...evaluated.events] };
 }
 
+function appendEvents(state: TermState, events: GameEvent[]): TermState {
+  return events.length === 0 ? state : { ...state, eventLog: [...state.eventLog, ...events] };
+}
+
+/**
+ * Move Session time through canonical stops. Work at a timestamp is completed as
+ * one deterministic batch before obligations at that same timestamp are settled.
+ */
+function advanceSessionTimeline(
+  state: TermState,
+  services: EngineServices,
+  requestedMs: number,
+  stopAfterFirstMeaningfulStop: boolean,
+): EngineResult {
+  let next = state;
+  const allEvents: GameEvent[] = [];
+  let remaining = Math.max(0, Math.trunc(requestedMs));
+
+  while (remaining > 0 && next.weekPhase === 'active' && next.runStatus === 'active') {
+    const step = Math.min(remaining, nextStopDelta(next, services.scenario));
+    if (step > 0) {
+      next = {
+        ...next,
+        simulationMs: next.simulationMs + step,
+        elapsedMs: Math.min(next.weekLengthMs, next.elapsedMs + step),
+      };
+      remaining -= step;
+    }
+
+    // Complete every ready reservation before observing a decision raised by any
+    // member of the batch. Otherwise sort order could turn an on-time peer into a miss.
+    const ready = next.activeWork
+      .filter((work) => work.completesAtSimulationMs <= next.simulationMs)
+      .sort((a, b) => a.id.localeCompare(b.id));
+    for (const work of ready) {
+      const completed = completeSessionWork(next, work, services);
+      next = appendEvents(completed.state, completed.events);
+      allEvents.push(...completed.events);
+    }
+
+    const fulfilled = fulfillObligations(next, services.scenario);
+    next = appendEvents(fulfilled.state, fulfilled.events);
+    allEvents.push(...fulfilled.events);
+
+    let expiredEventCount = 0;
+    if (next.elapsedMs >= next.weekLengthMs) {
+      next = { ...next, elapsedMs: next.weekLengthMs, weekPhase: 'boundary', paused: true };
+    } else {
+      const expired = expireObligations(next, next.simulationMs);
+      next = appendEvents(expired.state, expired.events);
+      allEvents.push(...expired.events);
+      expiredEventCount = expired.events.length;
+    }
+
+    if (
+      next.pendingDecisions.some((decision) => decision.status === 'pending')
+      || next.weekPhase === 'boundary'
+      || (stopAfterFirstMeaningfulStop
+        && (ready.length > 0 || fulfilled.events.length > 0 || expiredEventCount > 0))
+    ) break;
+
+    // A zero delta means a current-time stop was just handled. If it produced no
+    // state change there is no safe progress to make in this command.
+    if (step === 0 && ready.length === 0 && fulfilled.events.length === 0) break;
+  }
+
+  return { state: next, events: allEvents };
+}
+
 /**
  * Start an accepted pattern: pay the validated cost, put the inputs to work and
  * record the discovery exactly once. The transformation itself completes later,
@@ -1389,7 +1461,8 @@ export function executeCommand(
         revision: preview.nextRevision,
       });
       const evaluated = applyRelationshipEvaluation(next, services.scenario, state.relationships, events);
-      return accept(state, evaluated.state, [...events, ...evaluated.events]);
+      const fulfillment = fulfillObligations(evaluated.state, services.scenario, [...events, ...evaluated.events]);
+      return accept(state, fulfillment.state, [...events, ...evaluated.events, ...fulfillment.events]);
     }
 
     case 'RESOLVE_DECISION': {
@@ -1543,10 +1616,12 @@ export function executeCommand(
         decisionEvents,
       );
       const allDecisionEvents = [...decisionEvents, ...evaluated.events];
-      if (workEvents.length === 0) return accept(state, evaluated.state, allDecisionEvents);
+      const fulfillment = fulfillObligations(evaluated.state, services.scenario, allDecisionEvents);
+      const finalDecisionEvents = [...allDecisionEvents, ...fulfillment.events];
+      if (workEvents.length === 0) return accept(state, fulfillment.state, finalDecisionEvents);
       return {
-        state: { ...evaluated.state, eventLog: [...evaluated.state.eventLog, ...allDecisionEvents] },
-        events: [...workEvents, ...allDecisionEvents],
+        state: { ...fulfillment.state, eventLog: [...fulfillment.state.eventLog, ...finalDecisionEvents] },
+        events: [...workEvents, ...finalDecisionEvents],
       };
     }
 
@@ -1601,6 +1676,99 @@ export function executeCommand(
       return accept(state, applied.state, [applied.event]);
     }
 
+    case 'FILE_CARD':
+    case 'UNFILE_CARD':
+    case 'ARCHIVE_CARD': {
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'The filing cabinet is available in Session mode.');
+      }
+      const card = findCard(state, command.cardId);
+      if (!card) return rejectCommand(state, command.type, 'unknown-card', 'That card is no longer in the office.');
+      if (state.activeWork.some((work) => work.cardIds.includes(command.cardId))) {
+        return rejectCommand(state, command.type, 'card-busy', 'Active work must finish before this card can be filed.');
+      }
+      const location = command.type === 'FILE_CARD'
+        ? 'filed' as const
+        : command.type === 'ARCHIVE_CARD'
+          ? 'archived' as const
+          : 'desk' as const;
+      if (card.location === location) return { state, events: [] };
+      if (command.type === 'FILE_CARD') {
+        const filedCount = state.cards.filter((candidate) => candidate.location === 'filed').length;
+        if (filedCount >= FILING_SLOTS) {
+          return rejectCommand(state, command.type, 'invalid-stage', 'The six filing slots are full.');
+        }
+      }
+      if (command.type === 'UNFILE_CARD' && card.location !== 'filed') {
+        return rejectCommand(state, command.type, 'invalid-stage', 'Only filed cards can return to the desk.');
+      }
+      const locationEvent: GameEvent = { type: 'CARD_LOCATION_CHANGED', cardId: card.id, location };
+      const changed: TermState = {
+        ...state,
+        cards: state.cards.map((candidate) => candidate.id === card.id
+          ? { ...candidate, location }
+          : candidate),
+      };
+      const evaluated = applyRelationshipEvaluation(
+        changed,
+        services.scenario,
+        state.relationships,
+        [locationEvent],
+      );
+      return accept(state, evaluated.state, [locationEvent, ...evaluated.events]);
+    }
+
+    case 'FAST_FORWARD': {
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'Fast-forward is available in Session mode.');
+      }
+      if (state.runStatus === 'complete') {
+        return rejectCommand(state, command.type, 'run-complete', 'This Session is complete.');
+      }
+      if (state.weekPhase === 'boundary') {
+        return rejectCommand(state, command.type, 'invalid-stage', 'Review the week before starting the next one.');
+      }
+      if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending decision before advancing time.');
+      }
+      return advanceSessionTimeline(
+        state,
+        services,
+        Math.max(0, state.weekLengthMs - state.elapsedMs),
+        true,
+      );
+    }
+
+    case 'ADVANCE_WEEK': {
+      if (state.mode === 'interaction-spike') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'Weekly review is available in Session mode.');
+      }
+      if (state.runStatus === 'complete') {
+        return rejectCommand(state, command.type, 'run-complete', 'This Session is complete.');
+      }
+      if (command.confirmEarly) {
+        if (command.expectedWeek === undefined || command.expectedWeek !== state.week || state.weekPhase !== 'active') {
+          return rejectCommand(state, command.type, 'stale-decision', 'That week-ending request is no longer current.');
+        }
+        if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
+          return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending decision before ending the week.');
+        }
+        return advanceSessionTimeline(
+          state,
+          services,
+          Math.max(0, state.weekLengthMs - state.elapsedMs),
+          false,
+        );
+      }
+      if (state.weekPhase !== 'boundary') {
+        return rejectCommand(state, command.type, 'clock-not-expired', 'The week is still active.');
+      }
+      if (state.week === 6 && state.resolvedWeekIds.includes('week:6')) {
+        return rejectCommand(state, command.type, 'invalid-stage', 'The sixth week is ready for Session conclusion.');
+      }
+      return resolveWeek(state, services.scenario);
+    }
+
     case 'TICK': {
       if (state.paused) return { state, events: [] };
 
@@ -1608,23 +1776,8 @@ export function executeCommand(
       if (delta === 0) return { state, events: [] };
 
       if (state.mode !== 'interaction-spike') {
-        let next: TermState = {
-          ...state,
-          simulationMs: state.simulationMs + delta,
-          elapsedMs: state.elapsedMs + delta,
-        };
-        const events: GameEvent[] = [];
-        const ready = next.activeWork
-          .filter((work) => work.completesAtSimulationMs <= next.simulationMs)
-          .sort((a, b) => a.id.localeCompare(b.id));
-        for (const work of ready) {
-          const completed = completeSessionWork(next, work, services);
-          next = completed.state;
-          events.push(...completed.events);
-          if (next.pendingDecisions.some((decision) => decision.status === 'pending')) break;
-        }
-        if (events.length === 0) return { state: next, events: [] };
-        return { state: { ...next, eventLog: [...next.eventLog, ...events] }, events };
+        if (state.weekPhase === 'boundary') return { state, events: [] };
+        return advanceSessionTimeline(state, services, delta, false);
       }
 
       let next: TermState = {
@@ -1670,6 +1823,12 @@ export function executeCommand(
     }
 
     case 'SET_PAUSED': {
+      if (!command.paused && state.weekPhase === 'boundary') {
+        return rejectCommand(state, command.type, 'invalid-stage', 'Review the week before resuming the calendar.');
+      }
+      if (!command.paused && state.runStatus === 'complete') {
+        return rejectCommand(state, command.type, 'run-complete', 'This Session is complete.');
+      }
       if (!command.paused && state.pendingDecisions.some((decision) => decision.status === 'pending')) {
         return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending coalition decision before resuming time.');
       }

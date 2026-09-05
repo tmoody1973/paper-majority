@@ -4,8 +4,11 @@ import { describe, expect, it } from 'vitest';
 
 import { AccessibleCardControls } from '@/components/AccessibleCardControls';
 import { createFixtureState, getFixtureScenario } from '@/content/fixtures/loadFixture';
+import { createRun } from '@/domain/initialState';
+import { obligationOccurrence } from '@/domain/obligations';
 import { createGameSession, type GameSession } from '@/game/session';
 import type { TermState } from '@/domain/types';
+import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 
 /**
  * The keyboard panel is the accessible equivalent of the drag, so it has to refuse
@@ -84,5 +87,23 @@ describe('AccessibleCardControls', () => {
 
     expect(screen.getByTestId('controls-study')).toBeDisabled();
     expect(screen.getByTestId('controls-study-note')).toHaveTextContent(/already working/i);
+  });
+
+  it('states the six-slot cabinet and keeps a filed source obligation accessible', async () => {
+    const base = createRun({ ...sessionSetup, mode: 'session' });
+    const source = base.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    const state = {
+      ...base,
+      cards: base.cards.map((card) => card.id === source.id ? { ...card, location: 'filed' as const } : card),
+      obligations: [obligationOccurrence(sessionScenario.obligationDefinitions[0])],
+    };
+    const session = createGameSession(state, sessionScenario);
+    renderPanel(session, state);
+
+    expect(screen.getByText(/Six filing slots/)).toBeInTheDocument();
+    expect(screen.getByTestId('filing-count')).toHaveTextContent('1 of 6');
+    expect(screen.getByRole('list', { name: 'Mandatory filing obligations' })).toHaveTextContent('Answer renter concern');
+    await userEvent.click(screen.getByRole('button', { name: 'Return to desk' }));
+    expect(session.getState().cards.find((card) => card.id === source.id)?.location).toBe('desk');
   });
 });

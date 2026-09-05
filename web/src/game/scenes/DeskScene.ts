@@ -8,6 +8,7 @@ import {
   wouldDropBeAccepted,
 } from '@/domain/dropIntent';
 import { remainingWorkMs } from '@/domain/work';
+import { openObligations } from '@/domain/selectors';
 import type { CardDefinition, CardInstance } from '@/domain/types';
 import { resolveDropTarget, type DropTarget } from '@/game/input/dropResolver';
 import { CardView, CARD_HEIGHT, CARD_WIDTH } from '@/game/objects/CardView';
@@ -256,6 +257,14 @@ export class DeskScene extends Phaser.Scene {
         const detail = describeCard(state, this.session.getScenario(), cardId);
         const costLine = detail?.costs[0]?.short;
         const originLine = detail?.origin?.short;
+        const deadlineLine = state.mode === 'interaction-spike' ? '' : openObligations(state)
+          .filter((obligation) => {
+            const definition = this.session.getScenario().obligationDefinitions.find(
+              (candidate) => candidate.id === obligation.sourceId,
+            );
+            return definition?.sourceDefinitionId === instance.definitionId;
+          })
+          .map((obligation) => `Due W${obligation.due.week} · ${Math.ceil(obligation.due.offsetMs / 1000)}s`)[0] ?? '';
 
         const existing = this.views.get(cardId);
         if (existing) {
@@ -267,9 +276,10 @@ export class DeskScene extends Phaser.Scene {
               this.definitionFor(instance),
               costLine,
               originLine,
+              deadlineLine,
             );
           } else {
-            existing.refresh(placed, this.definitionFor(instance), costLine, originLine);
+            existing.refresh(placed, this.definitionFor(instance), costLine, originLine, deadlineLine);
             existing.setDepth(indexInStack);
           }
         } else {
@@ -278,7 +288,7 @@ export class DeskScene extends Phaser.Scene {
             definition: this.definitionFor(instance),
             reducedMotion: this.reducedMotion,
           });
-          view.refresh(placed, this.definitionFor(instance), costLine, originLine);
+          view.refresh(placed, this.definitionFor(instance), costLine, originLine, deadlineLine);
           view.setDepth(indexInStack);
           this.views.set(cardId, view);
         }

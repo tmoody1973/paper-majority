@@ -18,14 +18,18 @@ export interface StackLayout {
 }
 
 export function layoutStacks(state: TermState, cardHeight: number): StackLayout[] {
-  return state.stacks.map((stack: StackState) => {
-    const anchor = state.cards.find((card) => card.id === stack.cardIds[0]);
+  return state.stacks.flatMap((stack: StackState) => {
+    const cardIds = stack.cardIds.filter((id) =>
+      state.cards.find((card) => card.id === id)?.location === 'desk',
+    );
+    if (cardIds.length === 0) return [];
+    const anchor = state.cards.find((card) => card.id === cardIds[0]);
     return {
       stackId: stack.id,
-      cardIds: stack.cardIds,
+      cardIds,
       x: anchor?.x ?? 0,
       y: anchor?.y ?? 0,
-      height: cardHeight + (stack.cardIds.length - 1) * STACK_FAN_OFFSET_Y,
+      height: cardHeight + (cardIds.length - 1) * STACK_FAN_OFFSET_Y,
       active: Boolean(stack.activeActionId),
     };
   });
