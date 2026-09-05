@@ -6,13 +6,18 @@ import {
   resourceCostSchema,
   tacticExpansionSchema,
 } from '@/content/schema';
-import { canonicalJson, canonicalSha256 } from '@/persistence/canonicalHash';
+import { canonicalJson } from '@/persistence/canonicalHash';
+import {
+  CURRENT_RULES_VERSION,
+  scenarioSnapshotHash,
+  sessionIdentityForScenario,
+} from '@/persistence/sessionIdentity';
 import { matchesPatternOutputReceipt } from '@/domain/patternResolvers';
 import { SESSION_READINESS_MILESTONE_ID } from '@/domain/objectives';
 import { buildSessionRecord } from '@/domain/sessionRecord';
 
 export const CURRENT_SAVE_SCHEMA_VERSION = 2 as const;
-export const CURRENT_RULES_VERSION = 2 as const;
+export { CURRENT_RULES_VERSION, scenarioSnapshotHash } from '@/persistence/sessionIdentity';
 
 export interface SaveEnvelopeV2 {
   saveSchemaVersion: 2;
@@ -503,7 +508,8 @@ function validCapturedEffectivePattern(
   ));
 }
 
-function validSessionRecord(value: unknown): boolean {
+function validSessionRecord(value: unknown, scenario: ScenarioDefinition): boolean {
+  const identity = sessionIdentityForScenario(scenario);
   return isRecord(value)
     && hasOnlyKeys(value, [
       'id', 'outcome', 'completedAtSimulationMs', 'setup', 'objective', 'gaps', 'bill',
@@ -512,7 +518,16 @@ function validSessionRecord(value: unknown): boolean {
     && typeof value.id === 'string'
     && ['ready', 'not-ready'].includes(value.outcome as string)
     && isInteger(value.completedAtSimulationMs, 0)
-    && isRecord(value.setup) && isValidRunSettings(value.setup.settings)
+    && isRecord(value.setup)
+    && hasOnlyKeys(value.setup, [
+      'mode', 'rulesVersion', 'snapshotId', 'snapshotHash',
+      'seed', 'districtId', 'party', 'values', 'settings',
+    ])
+    && value.setup.mode === identity.mode
+    && value.setup.rulesVersion === identity.rulesVersion
+    && value.setup.snapshotId === identity.snapshotId
+    && value.setup.snapshotHash === identity.snapshotHash
+    && isValidRunSettings(value.setup.settings)
     && isRecord(value.objective) && isRecord(value.gaps)
     && isRecord(value.bill) && isRecord(value.integrity)
     && Array.isArray(value.promises) && Array.isArray(value.obligations)
@@ -850,8 +865,9 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
   const conclusionEvents = eventLog.filter((event) => event.type === 'SESSION_CONCLUDED');
   if (input.runStatus === 'active' && (input.sessionRecord !== undefined || conclusionEvents.length !== 0)) return false;
   if (input.runStatus === 'complete') {
-    if (!validSessionRecord(input.sessionRecord) || conclusionEvents.length !== 1) return false;
+    if (!validSessionRecord(input.sessionRecord, scenario) || conclusionEvents.length !== 1) return false;
     const record = input.sessionRecord as TermState['sessionRecord'];
+    if (record!.setup.mode !== input.mode) return false;
     const stateForRecord = {
       ...input,
       settings: {
@@ -924,10 +940,6 @@ function adaptV1State(value: unknown, scenario: ScenarioDefinition): unknown {
   };
 }
 
-export function scenarioSnapshotHash(scenario: ScenarioDefinition): string {
-  return canonicalSha256(scenario);
-}
-
 export function createSaveEnvelope(state: TermState, scenario: ScenarioDefinition): SaveEnvelopeV2 {
   return {
     saveSchemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
@@ -936,6 +948,46 @@ export function createSaveEnvelope(state: TermState, scenario: ScenarioDefinitio
     snapshotHash: scenarioSnapshotHash(scenario),
     state,
   };
+}
+
+type LegacyRecordIdentityMigration =
+  | { ok: true; state: unknown }
+  | { ok: false };
+
+/**
+ * Task 9 records predate their three duplicated compatibility fields. For that
+ * one exact legacy shape, copy rules/hash from an already verified save envelope
+ * and mode from the enclosing canonical state. Any partial identity is ambiguous
+ * and must remain corrupt rather than being completed from the current build.
+ */
+function migrateLegacyRecordIdentity(
+  state: unknown,
+  envelope: { rulesVersion: typeof CURRENT_RULES_VERSION; snapshotHash: string },
+): LegacyRecordIdentityMigration {
+  if (!isRecord(state) || state.runStatus !== 'complete' || !isRecord(state.sessionRecord)
+    || !isRecord(state.sessionRecord.setup)) return { ok: true, state };
+  const setup = state.sessionRecord.setup;
+  const identityKeys = ['mode', 'rulesVersion', 'snapshotHash'] as const;
+  const present = identityKeys.filter((key) => Object.hasOwn(setup, key));
+  if (present.length === 0) {
+    if (state.mode !== 'session') return { ok: false };
+    return {
+      ok: true,
+      state: {
+        ...state,
+        sessionRecord: {
+          ...state.sessionRecord,
+          setup: {
+            ...setup,
+            mode: state.mode,
+            rulesVersion: envelope.rulesVersion,
+            snapshotHash: envelope.snapshotHash,
+          },
+        },
+      },
+    };
+  }
+  return present.length === identityKeys.length ? { ok: true, state } : { ok: false };
 }
 
 export function validateAndMigrateSave(input: unknown, scenario: ScenarioDefinition): SaveValidationResult {
@@ -955,7 +1007,19 @@ export function validateAndMigrateSave(input: unknown, scenario: ScenarioDefinit
   if (input.snapshotId !== scenario.snapshotId || input.snapshotHash !== expectedHash) {
     return { kind: 'wrong-snapshot', message: 'This checkpoint belongs to a different content snapshot.' };
   }
-  const state = input.saveSchemaVersion === 1 ? adaptV1State(input.state, scenario) : input.state;
+  let state: unknown;
+  if (input.saveSchemaVersion === 1) {
+    state = adaptV1State(input.state, scenario);
+  } else {
+    const migrated = migrateLegacyRecordIdentity(input.state, {
+      rulesVersion: input.rulesVersion as typeof CURRENT_RULES_VERSION,
+      snapshotHash: input.snapshotHash as string,
+    });
+    if (!migrated.ok) {
+      return { kind: 'corrupt', message: 'The finished record contains incomplete compatibility identity.' };
+    }
+    state = migrated.state;
+  }
   if (!validState(state, scenario)) {
     return { kind: 'corrupt', message: 'The checkpoint state is malformed or has broken canonical references.' };
   }

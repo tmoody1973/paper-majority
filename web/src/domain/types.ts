@@ -378,7 +378,10 @@ export interface SessionRecord {
   readonly outcome: 'ready' | 'not-ready';
   readonly completedAtSimulationMs: number;
   readonly setup: Readonly<{
+    mode: 'session';
+    rulesVersion: 2;
     snapshotId: string;
+    snapshotHash: string;
     seed: number;
     districtId: string;
     party: Party;

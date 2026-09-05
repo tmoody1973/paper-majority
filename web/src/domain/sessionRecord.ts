@@ -3,6 +3,7 @@ import type {
   GameEvent,
 } from '@/domain/events';
 import type { ScenarioDefinition, SessionRecord, TermState } from '@/domain/types';
+import { sessionIdentityForScenario } from '@/persistence/sessionIdentity';
 
 function eventIdentity(event: GameEvent, index: number): string {
   if ('occurrenceId' in event && typeof event.occurrenceId === 'string') {
@@ -59,7 +60,10 @@ export function buildNextExperiments(state: TermState, scenario: ScenarioDefinit
 
 /** Build a detached, serializable explanation of the run's actual state and causes. */
 export function buildSessionRecord(state: TermState, scenario: ScenarioDefinition): SessionRecord {
-  void scenario;
+  const identity = sessionIdentityForScenario(scenario);
+  if (state.mode !== identity.mode || state.snapshotId !== identity.snapshotId) {
+    throw new TypeError('Cannot build a Session record with inconsistent compatibility identity.');
+  }
   const readiness = sessionReadiness(state);
   const promiseEvents = state.eventLog.filter((event) => event.type === 'PROMISE_CHANGED');
   const promises = state.relationships.flatMap((relationship) =>
@@ -88,7 +92,7 @@ export function buildSessionRecord(state: TermState, scenario: ScenarioDefinitio
     outcome: readiness.ready ? 'ready' : 'not-ready',
     completedAtSimulationMs: state.simulationMs,
     setup: {
-      snapshotId: state.snapshotId,
+      ...identity,
       seed: state.seed,
       districtId: state.player.districtId,
       party: state.player.party,

@@ -5,6 +5,7 @@ import { buildNextExperiments, buildSessionRecord } from '@/domain/sessionRecord
 import { createRun } from '@/domain/runSetup';
 import type { TermState } from '@/domain/types';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
+import { scenarioSnapshotHash } from '@/persistence/sessionIdentity';
 
 function boundary(): TermState {
   const state = createRun({ ...sessionSetup, mode: 'session' });
@@ -53,6 +54,12 @@ describe('Session record and conclusion', () => {
     state.eventLog.push({ type: 'WEEK_RESOLVED', week: 1, summary: [] });
     expect(record.setup.values).toEqual(sessionSetup.values);
     expect(record.setup.settings.pace).toBe('standard');
+    expect(record.setup).toMatchObject({
+      mode: 'session',
+      rulesVersion: 2,
+      snapshotId: sessionScenario.snapshotId,
+      snapshotHash: scenarioSnapshotHash(sessionScenario),
+    });
     expect(record.causeEventIds).toEqual([]);
   });
 

@@ -13,7 +13,7 @@ import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 import { getCandidateScenario } from '@/content/loadScenario';
 import { drawStoryEvent } from '@/domain/storyDirector';
 import { SESSION_READINESS_MILESTONE_ID } from '@/domain/objectives';
-import { loadCheckpoint, saveCheckpoint, type SaveStorage } from '@/persistence/saveRepository';
+import { loadCheckpoint, SAVE_KEYS, saveCheckpoint, type SaveStorage } from '@/persistence/saveRepository';
 
 describe('canonical scenario identity', () => {
   it('sorts object keys, preserves array order and uses real SHA-256', () => {
@@ -391,6 +391,70 @@ describe('save migrations', () => {
     expect(valid.kind).toBe('valid');
     if (valid.kind !== 'valid') throw new Error('expected finished record round trip');
     expect(valid.envelope.state.sessionRecord).toEqual(finished.sessionRecord);
+    expect(valid.envelope.state.sessionRecord?.setup).toMatchObject({
+      mode: 'session',
+      rulesVersion: 2,
+      snapshotId: sessionScenario.snapshotId,
+      snapshotHash: scenarioSnapshotHash(sessionScenario),
+    });
+
+    const legacy = structuredClone(createSaveEnvelope(finished, sessionScenario)) as unknown as {
+      rulesVersion: 2;
+      snapshotHash: string;
+      state: { sessionRecord: { setup: Record<string, unknown> } };
+    };
+    delete legacy.state.sessionRecord.setup.mode;
+    delete legacy.state.sessionRecord.setup.rulesVersion;
+    delete legacy.state.sessionRecord.setup.snapshotHash;
+    const migratedLegacy = validateAndMigrateSave(legacy, sessionScenario);
+    expect(migratedLegacy.kind).toBe('valid');
+    if (migratedLegacy.kind !== 'valid') throw new Error('expected Task 9 record identity migration');
+    expect(migratedLegacy.envelope.state.sessionRecord?.setup).toMatchObject({
+      mode: 'session',
+      rulesVersion: legacy.rulesVersion,
+      snapshotHash: legacy.snapshotHash,
+    });
+    expect(legacy.state.sessionRecord.setup).not.toHaveProperty('mode');
+    expect(legacy.state.sessionRecord.setup).not.toHaveProperty('rulesVersion');
+    expect(legacy.state.sessionRecord.setup).not.toHaveProperty('snapshotHash');
+
+    const legacyValues = new Map<string, string>([[SAVE_KEYS.current, JSON.stringify(legacy)]]);
+    const legacyStorage: SaveStorage = {
+      getItem: (key) => legacyValues.get(key) ?? null,
+      setItem: (key, value) => { legacyValues.set(key, value); },
+      removeItem: (key) => { legacyValues.delete(key); },
+    };
+    const loadedLegacy = loadCheckpoint(legacyStorage, sessionScenario);
+    expect(loadedLegacy.kind).toBe('loaded');
+    if (loadedLegacy.kind !== 'loaded') throw new Error('expected Task 9 finished checkpoint load');
+    expect(loadedLegacy.state.sessionRecord?.setup).toMatchObject({
+      mode: 'session',
+      rulesVersion: legacy.rulesVersion,
+      snapshotHash: legacy.snapshotHash,
+    });
+
+    for (const missing of ['mode', 'rulesVersion', 'snapshotHash'] as const) {
+      const partial = structuredClone(createSaveEnvelope(finished, sessionScenario)) as unknown as {
+        state: { sessionRecord: { setup: Record<string, unknown> } };
+      };
+      delete partial.state.sessionRecord.setup[missing];
+      expect(validateAndMigrateSave(partial, sessionScenario)).toMatchObject({
+        kind: 'corrupt',
+        message: expect.stringMatching(/incomplete compatibility identity/i),
+      });
+    }
+
+    for (const identityChange of [
+      { rulesVersion: 1 },
+      { snapshotHash: '0'.repeat(64) },
+      { mode: 'term' },
+    ]) {
+      const inconsistent = structuredClone(createSaveEnvelope(finished, sessionScenario)) as unknown as {
+        state: { sessionRecord: { setup: Record<string, unknown> } };
+      };
+      Object.assign(inconsistent.state.sessionRecord.setup, identityChange);
+      expect(validateAndMigrateSave(inconsistent, sessionScenario).kind).toBe('corrupt');
+    }
 
     const changedPresentation = {
       ...finished,

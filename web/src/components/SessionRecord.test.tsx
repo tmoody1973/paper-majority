@@ -22,6 +22,10 @@ describe('SessionRecord local copy controls', () => {
     expect(decoded).toMatchObject({
       ok: true,
       setup: {
+        mode: record.setup.mode,
+        rulesVersion: record.setup.rulesVersion,
+        snapshotId: record.setup.snapshotId,
+        snapshotHash: record.setup.snapshotHash,
         seed: record.setup.seed,
         settings: { reducedMotion: true },
         values: record.setup.values,

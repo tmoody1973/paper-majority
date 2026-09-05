@@ -6,11 +6,12 @@ import type {
   SessionRecord,
 } from '@/domain/types';
 import { canonicalJson } from '@/persistence/canonicalHash';
+import { isValidRunSettings } from '@/persistence/saveMigrations';
 import {
   CURRENT_RULES_VERSION,
-  isValidRunSettings,
-  scenarioSnapshotHash,
-} from '@/persistence/saveMigrations';
+  matchesSessionIdentity,
+  sessionIdentityForScenario,
+} from '@/persistence/sessionIdentity';
 
 export const CHALLENGE_SCHEMA_VERSION = 1 as const;
 export const MAX_CHALLENGE_CODE_LENGTH = 8_192;
@@ -96,7 +97,7 @@ function validateSetup(value: unknown, scenario?: ScenarioDefinition): Challenge
     return { ok: false, reason: 'The challenge snapshot or district is invalid.' };
   }
   if (scenario) {
-    if (value.snapshotId !== scenario.snapshotId || value.snapshotHash !== scenarioSnapshotHash(scenario)) {
+    if (!matchesSessionIdentity(value as unknown as ChallengeSetup, scenario)) {
       return { ok: false, reason: 'This challenge uses a content snapshot that is not available in this build.' };
     }
     if (!scenario.supportedModes.includes('session')) {
@@ -112,10 +113,7 @@ function validateSetup(value: unknown, scenario?: ScenarioDefinition): Challenge
 export function createChallengeSetup(input: SetupInput, scenario: ScenarioDefinition): ChallengeSetup {
   const candidate: ChallengeSetup = {
     schemaVersion: CHALLENGE_SCHEMA_VERSION,
-    rulesVersion: CURRENT_RULES_VERSION,
-    snapshotId: scenario.snapshotId,
-    snapshotHash: scenarioSnapshotHash(scenario),
-    mode: 'session',
+    ...sessionIdentityForScenario(scenario),
     seed: input.seed,
     districtId: input.districtId,
     party: input.party,
@@ -131,16 +129,21 @@ export function challengeSetupFromRecord(
   record: SessionRecord,
   scenario: ScenarioDefinition,
 ): ChallengeSetup {
-  if (record.setup.snapshotId !== scenario.snapshotId) {
-    throw new TypeError('The finished record belongs to a content snapshot that is not available in this build.');
-  }
-  return createChallengeSetup({
+  const candidate: ChallengeSetup = {
+    schemaVersion: CHALLENGE_SCHEMA_VERSION,
+    mode: record.setup.mode,
+    rulesVersion: record.setup.rulesVersion,
+    snapshotId: record.setup.snapshotId,
+    snapshotHash: record.setup.snapshotHash,
     seed: record.setup.seed,
     districtId: record.setup.districtId,
     party: record.setup.party,
     values: [record.setup.values[0], record.setup.values[1]],
     settings: { ...record.setup.settings },
-  }, scenario);
+  };
+  const validated = validateSetup(candidate, scenario);
+  if (!validated.ok) throw new TypeError(validated.reason);
+  return validated.setup;
 }
 
 export function encodeChallenge(setup: ChallengeSetup): string {

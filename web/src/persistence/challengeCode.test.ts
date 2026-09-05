@@ -4,9 +4,11 @@ import { getCandidateScenario } from '@/content/loadScenario';
 import { executeCommand } from '@/domain/engine';
 import { DEFAULT_RUN_SETTINGS } from '@/domain/initialState';
 import { createRun } from '@/domain/runSetup';
+import { buildSessionRecord } from '@/domain/sessionRecord';
 import type { ChallengeSetup } from '@/persistence/challengeCode';
 import {
   createChallengeSetup,
+  challengeSetupFromRecord,
   decodeChallenge,
   encodeChallenge,
   MAX_CHALLENGE_CODE_LENGTH,
@@ -100,5 +102,29 @@ describe('versioned Session challenge codes', () => {
     const openedImported = executeCommand(imported, { type: 'DRAW_STORY_EVENT' }, { scenario }).state;
     expect(openedImported).toEqual(openedDirect);
     expect(openedImported.pendingStoryDecisions).toEqual(openedDirect.pendingStoryDecisions);
+  });
+
+  it('exports the record identity exactly and refuses to relabel old rules or a changed hash', () => {
+    const record = buildSessionRecord(createRun({ scenario, ...setup }), scenario);
+    expect(challengeSetupFromRecord(record, scenario)).toMatchObject({
+      mode: record.setup.mode,
+      rulesVersion: record.setup.rulesVersion,
+      snapshotId: record.setup.snapshotId,
+      snapshotHash: record.setup.snapshotHash,
+    });
+
+    const oldRules = structuredClone(record) as unknown as {
+      setup: { rulesVersion: number; snapshotHash: string; snapshotId: string };
+    };
+    oldRules.setup.rulesVersion = 1;
+    expect(() => challengeSetupFromRecord(oldRules as never, scenario)).toThrow(/unsupported rules version 1/i);
+    expect(oldRules.setup.rulesVersion).toBe(1);
+
+    const changedScenario = structuredClone(scenario);
+    changedScenario.frozenAt = '2026-09-06T00:00:00.000Z';
+    expect(changedScenario.snapshotId).toBe(record.setup.snapshotId);
+    expect(scenarioSnapshotHash(changedScenario)).not.toBe(record.setup.snapshotHash);
+    expect(() => challengeSetupFromRecord(record, changedScenario)).toThrow(/not available/i);
+    expect(record.setup.snapshotHash).toBe(setup.snapshotHash);
   });
 });
