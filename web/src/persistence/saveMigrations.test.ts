@@ -146,6 +146,37 @@ describe('save migrations', () => {
     expect(validateAndMigrateSave(createSaveEnvelope(tampered, scenario), scenario).kind).toBe('corrupt');
   });
 
+  it('accepts a docket receipt after its drafted card is consumed and rejects receipt-event tampering', () => {
+    const scenario = structuredClone(sessionScenario);
+    scenario.patterns = scenario.patterns.map((pattern) => ({ ...pattern, durationMs: 1 }));
+    let state = createRun({ ...sessionSetup, scenario, mode: 'session' });
+    const aide = state.cards.find((card) => card.definitionId === 'staff-policy-aide')!;
+    const evidence = state.cards.find((card) => card.definitionId === 'evidence-rent-burden-report')!;
+    state = executeCommand(state, {
+      type: 'SUBMIT_WORK', cardIds: [aide.id, evidence.id],
+    }, { scenario }).state;
+    state = executeCommand(state, { type: 'FAST_FORWARD' }, { scenario }).state;
+    const summary = state.cards.find((card) => card.definitionId === evidence.definitionId && card.form === 'summary')!;
+    const counsel = state.cards.find((card) => card.definitionId === 'staff-legislative-counsel')!;
+    const policy = state.cards.find((card) => card.definitionId === 'policy-housing-choice-voucher')!;
+    state = executeCommand(state, {
+      type: 'SUBMIT_WORK', cardIds: [counsel.id, summary.id, policy.id],
+    }, { scenario }).state;
+    state = executeCommand(state, { type: 'FAST_FORWARD' }, { scenario }).state;
+    const drafted = state.cards.find((card) => card.definitionId === policy.definitionId && card.form === 'drafted')!;
+    state = executeCommand(state, { type: 'DOCKET_PROVISION', cardId: drafted.id }, { scenario }).state;
+
+    expect(state.cards.some((card) => card.id === drafted.id)).toBe(false);
+    expect(validateAndMigrateSave(createSaveEnvelope(state, scenario), scenario).kind).toBe('valid');
+    const tampered = {
+      ...state,
+      eventLog: state.eventLog.map((event) => event.type === 'PROVISION_DOCKETED'
+        ? { ...event, cardId: 'card-not-the-draft' }
+        : event),
+    };
+    expect(validateAndMigrateSave(createSaveEnvelope(tampered, scenario), scenario).kind).toBe('corrupt');
+  });
+
   it('strictly rejects malformed state and broken active-work references', () => {
     const state = createRun({ ...sessionSetup, mode: 'session' });
     const envelope = createSaveEnvelope(state, sessionScenario);
@@ -342,5 +373,25 @@ describe('save migrations', () => {
       state: legacyState,
     }, sessionScenario);
     expect(result.kind).toBe('corrupt');
+  });
+
+  it('round-trips a deeply derived finished record and rejects record tampering', () => {
+    const base = createRun({ ...sessionSetup, mode: 'session' });
+    const boundary = {
+      ...base,
+      elapsedMs: base.weekLengthMs,
+      simulationMs: base.weekLengthMs,
+      weekPhase: 'boundary' as const,
+      paused: true,
+    };
+    const finished = executeCommand(boundary, { type: 'CONCLUDE_SESSION' }, { scenario: sessionScenario }).state;
+    const valid = validateAndMigrateSave(JSON.parse(JSON.stringify(createSaveEnvelope(finished, sessionScenario))), sessionScenario);
+    expect(valid.kind).toBe('valid');
+    if (valid.kind !== 'valid') throw new Error('expected finished record round trip');
+    expect(valid.envelope.state.sessionRecord).toEqual(finished.sessionRecord);
+
+    const changed = structuredClone(createSaveEnvelope(finished, sessionScenario));
+    (changed.state.sessionRecord!.gaps as { provisionGap: number }).provisionGap = 0;
+    expect(validateAndMigrateSave(changed, sessionScenario).kind).toBe('corrupt');
   });
 });

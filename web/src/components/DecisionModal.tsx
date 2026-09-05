@@ -6,6 +6,7 @@ import { previewDecision } from '@/domain/decisions';
 import { nextPendingDecision } from '@/domain/selectors';
 import type { Resources, TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
+import { readinessMilestonePhrase } from '@/content/i18n/en';
 
 export interface DecisionModalProps {
   session: GameSession;
@@ -167,7 +168,10 @@ export function DecisionModal({ session, state, open, onOpenChange, returnFocusR
                       return;
                     }
                     onOpenChange(false);
-                    onResult?.(`${choice.label} recorded.`);
+                    const milestone = result.events.find((entry) => entry.type === 'READINESS_MILESTONE_REWARDED');
+                    onResult?.(milestone?.type === 'READINESS_MILESTONE_REWARDED'
+                      ? `${choice.label} recorded. ${readinessMilestonePhrase(milestone.appliedCapital)}`
+                      : `${choice.label} recorded.`);
                   }}
                 >
                   {choice.label}

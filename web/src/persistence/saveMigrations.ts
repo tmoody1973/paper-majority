@@ -8,6 +8,8 @@ import {
 } from '@/content/schema';
 import { canonicalJson, canonicalSha256 } from '@/persistence/canonicalHash';
 import { matchesPatternOutputReceipt } from '@/domain/patternResolvers';
+import { SESSION_READINESS_MILESTONE_ID } from '@/domain/objectives';
+import { buildSessionRecord } from '@/domain/sessionRecord';
 
 export const CURRENT_SAVE_SCHEMA_VERSION = 2 as const;
 export const CURRENT_RULES_VERSION = 2 as const;
@@ -173,6 +175,7 @@ const EVENT_KEYS: Record<string, readonly string[]> = {
   OPPORTUNITY_DECLINED: ['type', 'occurrenceId', 'sourceId'],
   PACK_OPENED: ['type', 'packOccurrenceId', 'categoryId', 'cardDefinitionIds'],
   CARD_LOCATION_CHANGED: ['type', 'cardId', 'location'],
+  READINESS_MILESTONE_REWARDED: ['type', 'rewardId', 'appliedCapital'],
   SESSION_CONCLUDED: ['type', 'outcome'],
   VOTE_RESOLVED: ['type', 'stage', 'passed', 'tally'],
   REELECTION_RESOLVED: ['type', 'result'],
@@ -190,7 +193,7 @@ const EVENT_STRING_ARRAY_FIELDS = new Set([
   'whyRules', 'summary', 'choiceIds', 'cardDefinitionIds', 'inputCardIds', 'inputDefinitionIds',
   'consumedDefinitionIds',
 ]);
-const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision', 'outputSlotIndex']);
+const EVENT_NUMBER_FIELDS = new Set(['x', 'y', 'durationMs', 'week', 'completesAtSimulationMs', 'revision', 'outputSlotIndex', 'appliedCapital']);
 const EVENT_OBJECT_FIELDS = new Set(['changes', 'effect', 'forecast', 'tally', 'result']);
 
 function validElectionEffect(value: unknown): boolean {
@@ -357,6 +360,9 @@ function validEvent(value: unknown, scenario: ScenarioDefinition): boolean {
         && (value.cardDefinitionIds as string[]).every((id) => scenario.cards.some((card) => card.id === id));
     case 'CARD_LOCATION_CHANGED':
       return ['desk', 'filed', 'archived'].includes(value.location as string);
+    case 'READINESS_MILESTONE_REWARDED':
+      return value.rewardId === SESSION_READINESS_MILESTONE_ID
+        && isInteger(value.appliedCapital, 0, 1);
     case 'SESSION_CONCLUDED':
       return ['ready', 'not-ready'].includes(value.outcome as string);
     case 'VOTE_RESOLVED':
@@ -498,13 +504,19 @@ function validCapturedEffectivePattern(
 }
 
 function validSessionRecord(value: unknown): boolean {
-  if (!isRecord(value) || !hasOnlyKeys(value, ['id', 'outcome', 'completedAtSimulationMs', 'gaps', 'causeEventIds'])
-    || typeof value.id !== 'string' || !['ready', 'not-ready'].includes(value.outcome as string)
-    || !isInteger(value.completedAtSimulationMs, 0) || !strings(value.causeEventIds)
-    || !isRecord(value.gaps) || !hasOnlyKeys(value.gaps, ['provisionGap', 'supportGap', 'overdueMandatoryIds'])) return false;
-  return isInteger(value.gaps.provisionGap, 0)
-    && isInteger(value.gaps.supportGap, 0)
-    && strings(value.gaps.overdueMandatoryIds);
+  return isRecord(value)
+    && hasOnlyKeys(value, [
+      'id', 'outcome', 'completedAtSimulationMs', 'setup', 'objective', 'gaps', 'bill',
+      'integrity', 'promises', 'obligations', 'declinedOpportunities', 'causeEventIds',
+    ])
+    && typeof value.id === 'string'
+    && ['ready', 'not-ready'].includes(value.outcome as string)
+    && isInteger(value.completedAtSimulationMs, 0)
+    && isRecord(value.setup) && isRecord(value.objective) && isRecord(value.gaps)
+    && isRecord(value.bill) && isRecord(value.integrity)
+    && Array.isArray(value.promises) && Array.isArray(value.obligations)
+    && Array.isArray(value.declinedOpportunities) && strings(value.causeEventIds)
+    && jsonSafe(value);
 }
 
 const WORK_COMMON_KEYS = [
@@ -734,10 +746,17 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     entry.kind !== 'pattern'
       || scenario.decisionChoices.find((choice) => choice.id === entry.decisionOrigin?.choiceId)?.requiredWorkPatternId !== entry.patternId
   ))) return false;
+  if (!Array.isArray(input.eventLog) || !input.eventLog.every((event) => validEvent(event, scenario))) return false;
+  const eventLog = input.eventLog as TermState['eventLog'];
   if (receipts.some((receipt) => receipt.origin === 'draft'
-    ? !cards.some((card) => card.id === receipt.draftedCardId
-      && card.form === receipt.form
-      && (card.policyDefinitionId ?? card.definitionId) === receipt.provisionId)
+    ? eventLog.filter((event) => event.type === 'CARD_TRANSFORMED'
+      && event.producedCardIds.includes(receipt.draftedCardId)
+      && event.outputForm === receipt.form
+      && event.outputDefinitionId === receipt.provisionId).length !== 1
+      || eventLog.filter((event) => event.type === 'PROVISION_DOCKETED'
+        && event.cardId === receipt.draftedCardId
+        && event.provisionId === receipt.provisionId
+        && event.revision === receipt.docketedAtRevision).length !== 1
     : !decisions.some((decision) => decision.id === receipt.decisionId
       && decision.sourceId === receipt.sourceId
       && decision.occurrenceId === receipt.occurrenceId
@@ -747,10 +766,9 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     if (!strings(input[key]) || !unique(input[key])) return false;
   }
   if (!(input.discoveredPatternIds as string[]).every((id) => scenario.patterns.some((pattern) => pattern.id === id))) return false;
+  if (!(input.objectives as string[]).every((id) => scenario.modeObjectives.some((objective) => objective.id === id))) return false;
   if (!Array.isArray(input.electionEffects) || !input.electionEffects.every(validElectionEffect)) return false;
   if (!unique((input.electionEffects as TermState['electionEffects']).map((effect) => effect.id))) return false;
-  if (!Array.isArray(input.eventLog) || !input.eventLog.every((event) => validEvent(event, scenario))) return false;
-  const eventLog = input.eventLog as TermState['eventLog'];
   const transforms = eventLog.filter((event) => event.type === 'CARD_TRANSFORMED');
   const producedIds = transforms.flatMap((event) => event.producedCardIds);
   if (!unique(producedIds)) return false;
@@ -818,7 +836,24 @@ function validState(input: unknown, scenario: ScenarioDefinition): input is Term
     obligation.id === event.obligationId && obligation.sourceId === event.sourceId
       && obligation.sourceCardInstanceId === event.sourceCardInstanceId))) return false;
   if (!['active', 'complete'].includes(input.runStatus as string)) return false;
-  if (input.sessionRecord !== undefined && !validSessionRecord(input.sessionRecord)) return false;
+  const milestoneEvents = eventLog.filter((event) => event.type === 'READINESS_MILESTONE_REWARDED');
+  const hasMilestoneReceipt = (input.rewardedOccurrenceIds as string[]).includes(SESSION_READINESS_MILESTONE_ID);
+  if (milestoneEvents.length !== (hasMilestoneReceipt ? 1 : 0)) return false;
+  if (milestoneEvents[0]) {
+    const applied = milestoneEvents[0].appliedCapital;
+    const resourceEvents = eventLog.filter((event) => event.type === 'RESOURCE_CHANGED')
+      .filter((event) => event.reason === SESSION_READINESS_MILESTONE_ID);
+    if (resourceEvents.length !== (applied === 0 ? 0 : 1)
+      || resourceEvents[0]?.changes.politicalCapital !== applied) return false;
+  }
+  const conclusionEvents = eventLog.filter((event) => event.type === 'SESSION_CONCLUDED');
+  if (input.runStatus === 'active' && (input.sessionRecord !== undefined || conclusionEvents.length !== 0)) return false;
+  if (input.runStatus === 'complete') {
+    if (!validSessionRecord(input.sessionRecord) || conclusionEvents.length !== 1) return false;
+    const rebuilt = buildSessionRecord(input as unknown as TermState, scenario);
+    if (canonicalJson(input.sessionRecord) !== canonicalJson(rebuilt)
+      || conclusionEvents[0]?.outcome !== rebuilt.outcome) return false;
+  }
   if (input.weekPhase === 'boundary' && input.paused !== true) return false;
   return true;
 }

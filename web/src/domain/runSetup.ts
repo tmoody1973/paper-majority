@@ -107,5 +107,9 @@ export function createRun(input: InitialStateInput & { mode: RunMode }): TermSta
       const staffTraitId = traitByStaff.get(card.id);
       return staffTraitId ? { ...card, staffTraitId } : card;
     }),
+    objectives: input.scenario.modeObjectives
+      .filter((objective) => objective.mode === 'session')
+      .map((objective) => objective.id)
+      .sort(),
   };
 }

@@ -377,11 +377,50 @@ export interface SessionRecord {
   readonly id: string;
   readonly outcome: 'ready' | 'not-ready';
   readonly completedAtSimulationMs: number;
+  readonly setup: Readonly<{
+    snapshotId: string;
+    seed: number;
+    districtId: string;
+    party: Party;
+    values: readonly [GoverningValue, GoverningValue];
+    settings: Readonly<RunSettings>;
+  }>;
+  readonly objective: Readonly<{
+    provisionCount: number;
+    committedOfficeCount: number;
+    requiredProvisionCount: 2;
+    requiredCommittedOfficeCount: 2;
+  }>;
   readonly gaps: Readonly<{
     provisionGap: number;
     supportGap: number;
     overdueMandatoryIds: readonly string[];
   }>;
+  readonly bill: Readonly<{
+    revision: number;
+    provisionIds: readonly string[];
+    provisionReceipts: readonly BillProvisionReceipt[];
+  }>;
+  readonly integrity: Readonly<{
+    finalScore: number;
+    contributions: readonly Readonly<{
+      id: string;
+      reason: string;
+      appliedDelta: number;
+    }>[];
+    explanation: string;
+  }>;
+  readonly promises: readonly Readonly<{
+    occurrenceId: string;
+    officeDefinitionId: string;
+    status: 'open' | 'fulfilled' | 'broken';
+    conditions: readonly RelationshipCondition[];
+  }>[];
+  readonly obligations: readonly Readonly<Obligation>[];
+  readonly declinedOpportunities: readonly Readonly<{
+    occurrenceId: string;
+    sourceId: string;
+  }>[];
   readonly causeEventIds: readonly string[];
 }
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { previewDecision } from '@/domain/decisions';
 import { executeCommand } from '@/domain/engine';
 import { createRun } from '@/domain/initialState';
+import { SESSION_READINESS_MILESTONE_ID } from '@/domain/objectives';
 import type { CardInstance, PendingDecision, TermState } from '@/domain/types';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 
@@ -519,7 +520,11 @@ describe('RESOLVE_DECISION', () => {
     const regained = executeCommand(ready, { type: 'DOCKET_PROVISION', cardId: drafted.id }, services);
     expect(regained.state.relationships.find((entry) => entry.memberId === 'coalition-office-ridgeline')?.support).toBe('committed');
     expect(regained.events).toContainEqual(expect.objectContaining({ type: 'PROMISE_CHANGED', status: 'fulfilled' }));
-    expect(regained.state.rewardedOccurrenceIds).toEqual(first.state.rewardedOccurrenceIds.concat(hillcrestOccurrence).sort());
+    expect(regained.state.rewardedOccurrenceIds).toEqual(first.state.rewardedOccurrenceIds
+      .concat(hillcrestOccurrence, SESSION_READINESS_MILESTONE_ID).sort());
+    expect(regained.events).toContainEqual(expect.objectContaining({
+      type: 'READINESS_MILESTONE_REWARDED', rewardId: SESSION_READINESS_MILESTONE_ID,
+    }));
   });
 });
 

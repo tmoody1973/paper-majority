@@ -4,6 +4,7 @@ import { previewWeek } from '@/domain/week';
 import { openObligations } from '@/domain/selectors';
 import type { Resources, TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
+import { readinessMilestonePhrase } from '@/content/i18n/en';
 
 const RESOURCE_LABELS: Record<keyof Resources, string> = {
   staffAttention: 'Staff Attention',
@@ -35,7 +36,12 @@ export function WeekSummary({
   const dispatch = (command: Parameters<GameSession['dispatch']>[0]) => {
     const result = session.dispatch(command);
     const rejection = result.events.find((event) => event.type === 'COMMAND_REJECTED');
-    onResult?.(rejection?.type === 'COMMAND_REJECTED' ? rejection.message : 'Office calendar updated.');
+    const milestone = result.events.find((event) => event.type === 'READINESS_MILESTONE_REWARDED');
+    onResult?.(rejection?.type === 'COMMAND_REJECTED'
+      ? rejection.message
+      : milestone?.type === 'READINESS_MILESTONE_REWARDED'
+        ? readinessMilestonePhrase(milestone.appliedCapital)
+        : 'Office calendar updated.');
   };
 
   return (
@@ -97,7 +103,7 @@ export function WeekSummary({
             <button
               type="button"
               data-testid="week-fast-forward"
-              disabled={state.runStatus === 'complete' || state.pendingDecisions.some((decision) => decision.status === 'pending')}
+              disabled={state.runStatus === 'complete' || state.pendingDecisions.some((decision) => decision.status === 'pending') || state.pendingStoryDecisions.some((decision) => decision.status === 'pending')}
               onClick={() => dispatch({ type: 'FAST_FORWARD' })}
             >
               Fast-forward to next event
@@ -105,7 +111,7 @@ export function WeekSummary({
             <button
               type="button"
               data-testid="week-end-early"
-              disabled={state.runStatus === 'complete' || state.pendingDecisions.some((decision) => decision.status === 'pending')}
+              disabled={state.runStatus === 'complete' || state.pendingDecisions.some((decision) => decision.status === 'pending') || state.pendingStoryDecisions.some((decision) => decision.status === 'pending')}
               onClick={() => dispatch({ type: 'ADVANCE_WEEK', confirmEarly: true, expectedWeek: state.week })}
             >
               End week early
@@ -116,12 +122,23 @@ export function WeekSummary({
             type="button"
             data-testid="week-confirm"
             disabled={state.pendingDecisions.some((decision) => decision.status === 'pending')
+              || state.pendingStoryDecisions.some((decision) => decision.status === 'pending')
               || (state.week === 6 && state.resolvedWeekIds.includes('week:6'))}
             onClick={() => dispatch({ type: 'ADVANCE_WEEK' })}
           >
             {state.week < 6 ? `Apply review and start week ${state.week + 1}` : 'Apply final week review'}
           </button>
         )}
+        <button
+          type="button"
+          data-testid="session-conclude"
+          disabled={state.runStatus === 'complete'
+            || state.pendingDecisions.some((decision) => decision.status === 'pending')
+            || state.pendingStoryDecisions.some((decision) => decision.status === 'pending')}
+          onClick={() => dispatch({ type: 'CONCLUDE_SESSION' })}
+        >
+          {state.week < 6 ? `Conclude at Week ${state.week} boundary` : 'Conclude six-week Session'}
+        </button>
       </div>
     </section>
   );

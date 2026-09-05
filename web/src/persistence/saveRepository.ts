@@ -9,6 +9,7 @@ export const SAVE_KEYS = {
   candidate: 'congress-game.save.candidate',
   current: 'congress-game.save.current',
   previousWeek: 'congress-game.save.previous-week',
+  replaced: 'congress-game.save.replaced',
 } as const;
 
 export interface SaveStorage {

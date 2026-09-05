@@ -33,27 +33,42 @@ async function stageWithKeyboard(page: Page, cardId: string) {
 }
 
 async function clickDeskCard(page: Page, cardId: string) {
-  const canvas = await page.locator('canvas').boundingBox();
-  if (!canvas) throw new Error('canvas has no box');
-  const point = await page.evaluate((id) => {
-    const camera = (window as unknown as {
-      __congressGameCamera: { getScreenPoint(cardId: string): { x: number; y: number } | undefined };
-    }).__congressGameCamera;
-    return camera.getScreenPoint(id);
-  }, cardId);
-  if (!point) throw new Error(`card ${cardId} has no rendered point`);
-  await page.mouse.click(canvas.x + point.x, canvas.y + point.y);
+  const tap = async () => {
+    const canvasLocator = page.locator('canvas');
+    await canvasLocator.scrollIntoViewIfNeeded();
+    const canvas = await canvasLocator.boundingBox();
+    if (!canvas) throw new Error('canvas has no box');
+    const point = await page.evaluate((id) => {
+      const camera = (window as unknown as {
+        __congressGameCamera: { getExposedScreenPoint(cardId: string): { x: number; y: number } | undefined };
+      }).__congressGameCamera;
+      return camera.getExposedScreenPoint(id);
+    }, cardId);
+    if (!point) throw new Error(`card ${cardId} has no rendered point`);
+    await page.mouse.click(canvas.x + point.x, canvas.y + point.y);
+  };
+
+  await tap();
+  await expect(page.getByTestId(`work-mat-ghost-${cardId}`)).toBeVisible({ timeout: 5_000 });
 }
 
-async function dragDeskCard(page: Page, cardId: string, target: { x: number; y: number }) {
+async function dragDeskCard(
+  page: Page,
+  cardId: string,
+  target: { x: number; y: number },
+  exposedStart = false,
+) {
   const canvas = await page.locator('canvas').boundingBox();
   if (!canvas) throw new Error('canvas has no box');
-  const start = await page.evaluate((id) => {
+  const start = await page.evaluate(({ id, useExposed }) => {
     const camera = (window as unknown as {
-      __congressGameCamera: { getScreenPoint(cardId: string): { x: number; y: number } | undefined };
+      __congressGameCamera: {
+        getScreenPoint(cardId: string): { x: number; y: number } | undefined;
+        getExposedScreenPoint(cardId: string): { x: number; y: number } | undefined;
+      };
     }).__congressGameCamera;
-    return camera.getScreenPoint(id);
-  }, cardId);
+    return useExposed ? camera.getExposedScreenPoint(id) : camera.getScreenPoint(id);
+  }, { id: cardId, useExposed: exposedStart });
   if (!start) throw new Error(`card ${cardId} has no rendered point`);
   await page.mouse.move(canvas.x + start.x, canvas.y + start.y);
   await page.mouse.down();
@@ -133,8 +148,18 @@ test('three-input Work Mat is usable by pointer while paused and keyboard while 
   // Cancellation keeps the real pile. Pull its cards apart before tapping each one again.
   const canvas = await page.locator('canvas').boundingBox();
   if (!canvas) throw new Error('canvas has no box');
-  await dragDeskCard(page, counsel, { x: canvas.x + 64, y: canvas.y + 72 });
-  await dragDeskCard(page, summary, { x: canvas.x + 176, y: canvas.y + 72 });
+  const beforeCounselMove = (await state(page)).cards.find((card) => card.id === counsel)!;
+  await dragDeskCard(page, counsel, { x: canvas.x + 120, y: canvas.y + 100 }, true);
+  await expect.poll(async () => {
+    const card = (await state(page)).cards.find((candidate) => candidate.id === counsel)!;
+    return `${card.x}:${card.y}`;
+  }).not.toBe(`${beforeCounselMove.x}:${beforeCounselMove.y}`);
+  const beforeSummaryMove = (await state(page)).cards.find((card) => card.id === summary)!;
+  await dragDeskCard(page, summary, { x: canvas.x + 360, y: canvas.y + 100 }, true);
+  await expect.poll(async () => {
+    const card = (await state(page)).cards.find((candidate) => candidate.id === summary)!;
+    return `${card.x}:${card.y}`;
+  }).not.toBe(`${beforeSummaryMove.x}:${beforeSummaryMove.y}`);
   await expect.poll(async () => new Set(
     (await state(page)).cards
       .filter((card) => [counsel, summary, policy].includes(card.id))

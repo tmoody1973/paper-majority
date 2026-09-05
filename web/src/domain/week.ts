@@ -55,7 +55,11 @@ export function previewWeek(
   };
 }
 
-export function resolveWeek(state: TermState, scenario: ScenarioDefinition): EngineResult {
+export function resolveWeek(
+  state: TermState,
+  scenario: ScenarioDefinition,
+  options: { advanceToNextWeek?: boolean } = {},
+): EngineResult {
   const resolutionId = `week:${state.week}`;
   if (
     state.weekPhase !== 'boundary'
@@ -91,7 +95,7 @@ export function resolveWeek(state: TermState, scenario: ScenarioDefinition): Eng
   });
   events.push({ type: 'WEEK_RESOLVED', week: state.week, summary });
 
-  if (state.week < 6) {
+  if (state.week < 6 && options.advanceToNextWeek !== false) {
     const capital = applyResourceDelta(next.resources, {
       politicalCapital: Math.max(0, 1 - next.resources.politicalCapital),
     });

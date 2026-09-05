@@ -2,6 +2,7 @@
 
 import type { Resources, TermState } from '@/domain/types';
 import { openObligations } from '@/domain/selectors';
+import { sessionReadiness } from '@/domain/objectives';
 
 const RESOURCE_LABELS: { key: keyof Resources; label: string; max?: number }[] = [
   { key: 'staffAttention', label: 'Staff Attention' },
@@ -31,6 +32,7 @@ export function Hud({
 }: HudProps) {
   const workIsFrozen = state.paused && state.cards.some((card) => card.status === 'working');
   const pausedNudge = workIsFrozen ? 'Paused — press Resume to let the work happen.' : undefined;
+  const readiness = sessionReadiness(state);
 
   return (
     <header className="hud" aria-label="Office status">
@@ -49,6 +51,9 @@ export function Hud({
               </span>
               <span className="hud__week-phase">
                 {openObligations(state).filter((obligation) => obligation.due.week <= state.week).length} due obligation(s)
+              </span>
+              <span className="hud__week-phase" data-testid="hud-readiness-gap">
+                Goal gap: {readiness.provisionGap} provision · {readiness.supportGap} office · {readiness.overdueMandatoryIds.length} overdue
               </span>
             </>
           )}
@@ -82,7 +87,8 @@ export function Hud({
             data-testid="hud-pause"
             disabled={state.runStatus === 'complete'
               || state.weekPhase === 'boundary'
-              || state.pendingDecisions.some((decision) => decision.status === 'pending')}
+              || state.pendingDecisions.some((decision) => decision.status === 'pending')
+              || state.pendingStoryDecisions.some((decision) => decision.status === 'pending')}
             aria-disabled={state.runStatus === 'complete' || state.weekPhase === 'boundary'}
           >
             {state.runStatus === 'complete'

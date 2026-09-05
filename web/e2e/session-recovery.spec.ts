@@ -64,12 +64,15 @@ test('a complete first week remains coherent through paid work, decision and rel
   await page.getByTestId('bill-docket-picker').selectOption(draft);
   await page.getByTestId('bill-docket-add').click();
   await expect(page.getByTestId('bill-docket-revision')).toHaveText('Revision 1');
+  expect((await state(page)).bill.revision).toBe(1);
+  await expect(page.getByTestId('session-save-warning')).toHaveCount(0);
 
   await stage(page, await idFor(page, 'staff-policy-aide'));
   await stage(page, await idFor(page, 'coalition-office-hillcrest'));
   await page.getByTestId('work-mat-begin').click();
   await reload(page);
   expect((await state(page)).activeWork).toHaveLength(1);
+  expect((await state(page)).bill.revision).toBe(1);
   await page.getByTestId('week-fast-forward').click();
   await expect(page.getByRole('dialog')).toBeVisible();
 

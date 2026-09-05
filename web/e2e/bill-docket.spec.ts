@@ -24,6 +24,16 @@ async function cardScreenPoint(page: Page, cardId: string): Promise<{ x: number;
   return point;
 }
 
+async function exposedCardScreenPoint(page: Page, cardId: string): Promise<{ x: number; y: number }> {
+  const point = await page.evaluate((id) => (
+    window as unknown as {
+      __congressGameCamera: { getExposedScreenPoint(cardId: string): { x: number; y: number } | undefined };
+    }
+  ).__congressGameCamera.getExposedScreenPoint(id), cardId);
+  if (!point) throw new Error(`card ${cardId} has no exposed rendered point`);
+  return point;
+}
+
 async function docketScreenPoint(page: Page): Promise<{ x: number; y: number }> {
   const point = await page.evaluate(() => (
     window as unknown as {
@@ -35,12 +45,29 @@ async function docketScreenPoint(page: Page): Promise<{ x: number; y: number }> 
 }
 
 async function dragCard(page: Page, cardId: string, target: { x: number; y: number }) {
-  const canvas = await page.locator('canvas').boundingBox();
+  const canvasLocator = page.locator('canvas');
+  await canvasLocator.scrollIntoViewIfNeeded();
+  const canvas = await canvasLocator.boundingBox();
   if (!canvas) throw new Error('canvas has no box');
-  const start = await cardScreenPoint(page, cardId);
+  const center = await cardScreenPoint(page, cardId);
+  const start = await exposedCardScreenPoint(page, cardId);
   await page.mouse.move(canvas.x + start.x, canvas.y + start.y);
+  await expect.poll(() => page.evaluate(() => (
+    window as unknown as {
+      __congressGameCamera: { getHoveredCardId(): string | undefined };
+    }
+  ).__congressGameCamera.getHoveredCardId())).toBe(cardId);
   await page.mouse.down();
-  await page.mouse.move(canvas.x + target.x, canvas.y + target.y, { steps: 16 });
+  await page.mouse.move(
+    canvas.x + target.x + start.x - center.x,
+    canvas.y + target.y + start.y - center.y,
+    { steps: 16 },
+  );
+  await expect.poll(() => page.evaluate(() => (
+    window as unknown as {
+      __congressGameCamera: { getDraggingCardId(): string | undefined };
+    }
+  ).__congressGameCamera.getDraggingCardId())).toBe(cardId);
   await page.mouse.up();
 }
 

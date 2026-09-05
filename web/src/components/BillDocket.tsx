@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { previewBillChange, previewDocketProvision } from '@/domain/bill';
 import type { ScenarioDefinition, TermState } from '@/domain/types';
 import type { GameSession } from '@/game/session';
+import { readinessMilestonePhrase } from '@/content/i18n/en';
 
 export interface BillDocketProps {
   session: GameSession;
@@ -68,7 +69,10 @@ export function BillDocket({ session, state, onResult }: BillDocketProps) {
     }
     const docketed = result.events.find((event) => event.type === 'PROVISION_DOCKETED');
     if (docketed?.type === 'PROVISION_DOCKETED') {
-      const message = `${titleOf(scenario, docketed.provisionId)} added to the bill.`;
+      const milestone = result.events.find((event) => event.type === 'READINESS_MILESTONE_REWARDED');
+      const message = milestone?.type === 'READINESS_MILESTONE_REWARDED'
+        ? `${titleOf(scenario, docketed.provisionId)} added to the bill. ${readinessMilestonePhrase(milestone.appliedCapital)}`
+        : `${titleOf(scenario, docketed.provisionId)} added to the bill.`;
       setCandidateId('');
       setFeedback(message);
       onResult?.(message);

@@ -141,6 +141,7 @@ export type GameEvent =
   | { type: 'OPPORTUNITY_DECLINED'; occurrenceId: string; sourceId: string }
   | { type: 'PACK_OPENED'; packOccurrenceId: string; categoryId: string; cardDefinitionIds: string[] }
   | { type: 'CARD_LOCATION_CHANGED'; cardId: string; location: 'desk' | 'filed' | 'archived' }
+  | { type: 'READINESS_MILESTONE_REWARDED'; rewardId: string; appliedCapital: number }
   | { type: 'SESSION_CONCLUDED'; outcome: 'ready' | 'not-ready' }
   | { type: 'VOTE_RESOLVED'; stage: ProcedureStage; passed: boolean; tally: VoteTally }
   | { type: 'REELECTION_RESOLVED'; result: ReelectionResult }

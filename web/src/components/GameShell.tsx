@@ -12,6 +12,8 @@ import { OfficeBrief } from '@/components/OfficeBrief';
 import { PlainEnglishKey } from '@/components/PlainEnglishKey';
 import { StaffHandbook } from '@/components/StaffHandbook';
 import { StoryDecisionModal } from '@/components/StoryDecisionModal';
+import { Sourcebook } from '@/components/Sourcebook';
+import { SessionRecord } from '@/components/SessionRecord';
 import { WorkMat } from '@/components/WorkMat';
 import { WeekSummary } from '@/components/WeekSummary';
 import { createFixtureState, getFixtureScenario, type FixtureId } from '@/content/fixtures/loadFixture';
@@ -42,13 +44,16 @@ export interface GameShellProps {
   fixture?: FixtureId;
   scenario?: ScenarioDefinition;
   initialState?: TermState;
+  session?: GameSession;
+  onRestart?: () => void;
+  recoverOnMount?: boolean;
 }
 
-export function GameShell({ fixture = 'interaction-spike', scenario: providedScenario, initialState }: GameShellProps) {
+export function GameShell({ fixture = 'interaction-spike', scenario: providedScenario, initialState, session: providedSession, onRestart, recoverOnMount = true }: GameShellProps) {
   const scenario = useMemo(() => providedScenario ?? getFixtureScenario(), [providedScenario]);
   const session = useMemo<GameSession>(
-    () => createGameSession(initialState ?? createFixtureState(fixture), scenario),
-    [fixture, initialState, scenario],
+    () => providedSession ?? createGameSession(initialState ?? createFixtureState(fixture), scenario),
+    [fixture, initialState, providedSession, scenario],
   );
 
   const subscribe = useCallback(
@@ -58,6 +63,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const state = useSyncExternalStore(subscribe, session.getState, session.getState);
   const [lastResult, setLastResult] = useState<string>('');
   const [handbookOpen, setHandbookOpen] = useState(false);
+  const [sourcebookOpen, setSourcebookOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>();
   const [hoveredCardId, setHoveredCardId] = useState<string | undefined>();
   const [workMatCardIds, setWorkMatCardIds] = useState<string[]>([]);
@@ -66,10 +72,15 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const [dismissedStoryDecisionId, setDismissedStoryDecisionId] = useState<string | undefined>();
   const decisionTriggerRef = useRef<HTMLButtonElement>(null);
   const storyTriggerRef = useRef<HTMLButtonElement>(null);
+  const canvasSelectionBlockedRef = useRef(false);
 
   // Recover first. A saved reduced-motion choice is canonical setup and must not
   // be silently rewritten by the operating-system preference during hydration.
   useEffect(() => {
+    if (providedSession || !recoverOnMount) {
+      setProfilePatternIds([...session.getPlayerProfile().lifetimeDiscoveredPatternIds]);
+      return;
+    }
     if (session.getState().mode === 'interaction-spike') {
       if (typeof window.matchMedia === 'function') {
         session.setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -89,7 +100,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
     if (recovery.kind !== 'empty' || initialState !== undefined || typeof window.matchMedia !== 'function') return;
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     session.setReducedMotion(query.matches);
-  }, [initialState, session]);
+  }, [initialState, providedSession, recoverOnMount, session]);
 
   // A development-only read/dispatch adapter for the E2E suite. It goes through the
   // same session as every other caller, so it is not a second mutation path.
@@ -114,6 +125,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
 
   const onResult = useCallback((phrase: string) => setLastResult(phrase), []);
   const onSelect = useCallback((cardId: string) => {
+    if (canvasSelectionBlockedRef.current) return;
     setSelectedCardId(cardId);
     if (session.getState().mode === 'interaction-spike') return;
     setWorkMatCardIds((ids) => ids.includes(cardId)
@@ -139,6 +151,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
   const decisionOpen = Boolean(pendingDecision && dismissedDecisionId !== pendingDecision.id);
   const pendingStoryDecision = state.pendingStoryDecisions.find((decision) => decision.status === 'pending');
   const storyOpen = Boolean(pendingStoryDecision && dismissedStoryDecisionId !== pendingStoryDecision.id);
+  canvasSelectionBlockedRef.current = decisionOpen || storyOpen || state.runStatus === 'complete';
   const persistenceNotice = session.getPersistenceNotice();
   const currentPack = scenario.weeklyPacks.find((pack) => pack.week === state.week);
   const currentPackOpened = state.revealedPacks.some((pack) => pack.packOccurrenceId === `pack:week:${state.week}`);
@@ -176,7 +189,7 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
         >
           {pendingStoryDecision ? 'Review pending Story choice' : 'No pending Story choices'}
         </button>
-        {state.mode === 'session' && currentPack && !currentPackOpened && currentPack.pools.map((pool) => (
+        {state.mode === 'session' && state.runStatus === 'active' && currentPack && !currentPackOpened && currentPack.pools.map((pool) => (
           <button
             key={pool.id}
             type="button"
@@ -190,6 +203,11 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
             Open Week {state.week}: {pool.title}
           </button>
         ))}
+        {state.mode === 'session' && (
+          <button type="button" data-testid="sourcebook-toggle" aria-expanded={sourcebookOpen} onClick={() => setSourcebookOpen((open) => !open)}>
+            {sourcebookOpen ? 'Close Sourcebook' : 'Sourcebook'}
+          </button>
+        )}
       </div>
       {scenario.contentStatus?.status === 'candidate' && (
         <p className="shell__save-warning" data-testid="candidate-content-notice" role="status">
@@ -220,6 +238,15 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
         returnFocusRef={storyTriggerRef}
         onResult={onResult}
       />
+
+      {sourcebookOpen && <Sourcebook scenario={scenario} />}
+      {state.runStatus === 'complete' && state.sessionRecord ? (
+        <SessionRecord
+          record={state.sessionRecord}
+          onRestart={onRestart}
+          preservedSaveBytes={session.getPreservedSaveBytes()}
+        />
+      ) : (
 
       <div className="shell__body">
         <section
@@ -259,9 +286,10 @@ export function GameShell({ fixture = 'interaction-spike', scenario: providedSce
           ) : (
             <AccessibleCardControls session={session} state={state} onInspect={onInspect} />
           )}
-          <PlainEnglishKey />
+          <PlainEnglishKey session={state.mode === 'session'} />
         </aside>
       </div>
+      )}
     </main>
   );
 }

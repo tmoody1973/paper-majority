@@ -52,5 +52,5 @@ export default function SessionWorkbenchPage() {
     ],
   };
 
-  return <GameShell scenario={scenario} initialState={initialState} />;
+  return <GameShell scenario={scenario} initialState={initialState} recoverOnMount={false} />;
 }

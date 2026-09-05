@@ -34,6 +34,12 @@ export const STUDY_PHRASES = {
   completed: 'Rule changed. Check the Staff Handbook.',
 };
 
+export function readinessMilestonePhrase(appliedCapital: number): string {
+  return appliedCapital > 0
+    ? 'Readiness prepared: +1 Political Capital for meeting every Session requirement for the first time.'
+    : 'Readiness prepared for the first time. Political Capital was already at its cap, so the actual gain was 0.';
+}
+
 export function resultPhrase(explanationKey: string, returnedTitles: string[] = []): string {
   const base = RESULT_PHRASES[explanationKey] ?? 'Something new is on the desk.';
   if (returnedTitles.length === 0) return base;

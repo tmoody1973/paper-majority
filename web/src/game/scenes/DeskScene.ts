@@ -56,6 +56,7 @@ export class DeskScene extends Phaser.Scene {
    * depth, and the lost depth made the pan handler mistake a card drag for a desk pan.
    */
   private draggingCardId?: string;
+  private hoveredCardId?: string;
   private lastTickAt = 0;
 
   constructor() {
@@ -99,7 +100,10 @@ export class DeskScene extends Phaser.Scene {
             getViewY: (cardId: string) => number | undefined;
             getProgress: (cardId: string) => number | undefined;
             getScreenPoint: (cardId: string) => { x: number; y: number } | undefined;
+            getExposedScreenPoint: (cardId: string) => { x: number; y: number } | undefined;
             getDocketScreenPoint: () => { x: number; y: number } | undefined;
+            getDraggingCardId: () => string | undefined;
+            getHoveredCardId: () => string | undefined;
           };
         }
       ).__congressGameCamera = {
@@ -117,6 +121,32 @@ export class DeskScene extends Phaser.Scene {
             y: (view.y - camera.worldView.y) * camera.zoom,
           };
         },
+        getExposedScreenPoint: (cardId: string) => {
+          const view = this.views.get(cardId);
+          if (!view) return undefined;
+          const camera = this.cameras.main;
+          const inset = 10;
+          const xOffsets = [0, -CARD_WIDTH / 2 + inset, CARD_WIDTH / 2 - inset];
+          const yOffsets = [
+            0,
+            -CARD_HEIGHT / 2 + inset,
+            -CARD_HEIGHT / 2 + STACK_OFFSET_Y / 2,
+            CARD_HEIGHT / 2 - inset,
+          ];
+          const candidates = yOffsets.flatMap((y) => xOffsets.map((x) => ({ x: view.x + x, y: view.y + y })));
+          // A stack's header can still sit beneath an unrelated card. Find a
+          // physical point that no other card covers, so E2E taps exercise the
+          // same visible target a player can actually reach.
+          const point = candidates.find((candidate) => [...this.views.values()].every((other) =>
+            other === view
+              || Math.abs(candidate.x - other.x) >= CARD_WIDTH / 2
+              || Math.abs(candidate.y - other.y) >= CARD_HEIGHT / 2,
+          )) ?? candidates[0]!;
+          return {
+            x: (point.x - camera.worldView.x) * camera.zoom,
+            y: (point.y - camera.worldView.y) * camera.zoom,
+          };
+        },
         getDocketScreenPoint: () => {
           if (!this.docketBackground) return undefined;
           const camera = this.cameras.main;
@@ -125,6 +155,8 @@ export class DeskScene extends Phaser.Scene {
             y: (DOCKET_Y - camera.worldView.y) * camera.zoom,
           };
         },
+        getDraggingCardId: () => this.draggingCardId,
+        getHoveredCardId: () => this.hoveredCardId,
       };
     }
   }
@@ -460,12 +492,14 @@ export class DeskScene extends Phaser.Scene {
     this.input.on('gameobjectover', (_pointer: Phaser.Input.Pointer, gameObject: unknown) => {
       const view = gameObject as CardView;
       if (!view?.cardId || this.draggingCardId) return;
+      this.hoveredCardId = view.cardId;
       this.onHover(view.cardId);
     });
 
     this.input.on('gameobjectout', (_pointer: Phaser.Input.Pointer, gameObject: unknown) => {
       const view = gameObject as CardView;
       if (!view?.cardId) return;
+      if (this.hoveredCardId === view.cardId) this.hoveredCardId = undefined;
       this.onHover(undefined);
     });
 

@@ -9,6 +9,8 @@ import { buildMatchInputs, matchPattern, type MatchInput, type PatternMatch } fr
 import { applyResourceDelta } from '@/domain/resources';
 import { drawStoryEvent, resolveStoryEvent } from '@/domain/storyDirector';
 import { expireObligations, fulfillObligations } from '@/domain/obligations';
+import { SESSION_READINESS_MILESTONE_ID, sessionReadiness } from '@/domain/objectives';
+import { buildSessionRecord } from '@/domain/sessionRecord';
 import { describeTag } from '@/domain/selectors';
 import { nextStopDelta, resolveWeek } from '@/domain/week';
 import { EFFECTIVE_RULE_VERSION, patternReservation, planWork } from '@/domain/work';
@@ -79,6 +81,10 @@ function rejectStack(
 
 function accept(state: TermState, next: TermState, events: GameEvent[]): EngineResult {
   return { state: { ...next, eventLog: [...next.eventLog, ...events] }, events };
+}
+
+function runIsComplete(state: TermState): boolean {
+  return state.runStatus === 'complete';
 }
 
 // ---------------------------------------------------------------------------
@@ -1364,11 +1370,14 @@ function startStudyTactic(
 // The command boundary
 // ---------------------------------------------------------------------------
 
-export function executeCommand(
+function executeCommandCore(
   state: TermState,
   command: GameCommand,
   services: EngineServices,
 ): EngineResult {
+  if (runIsComplete(state)) {
+    return rejectCommand(state, command.type, 'run-complete', 'This Session is complete. Start a new Session to keep playing.');
+  }
   switch (command.type) {
     case 'STACK_CARD':
       return combine(state, services, 'STACK_CARD', command.cardId, command.targetStackId);
@@ -1866,6 +1875,49 @@ export function executeCommand(
       );
     }
 
+    case 'CONCLUDE_SESSION': {
+      if (state.mode !== 'session') {
+        return rejectCommand(state, command.type, 'unsupported-command', 'Session conclusions are available in Session mode.');
+      }
+      if (state.pendingDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending coalition decision before concluding the Session.');
+      }
+      if (state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return rejectCommand(state, command.type, 'pending-decision', 'Resolve the pending Story choice before concluding the Session.');
+      }
+
+      const timeline = state.weekPhase === 'active'
+        ? advanceSessionTimeline(state, services, Math.max(0, state.weekLengthMs - state.elapsedMs), false)
+        : { state, events: [] };
+      if (timeline.state.pendingDecisions.some((decision) => decision.status === 'pending')
+        || timeline.state.pendingStoryDecisions.some((decision) => decision.status === 'pending')) {
+        return timeline;
+      }
+      if (timeline.state.weekPhase !== 'boundary') return timeline;
+
+      const alreadySettled = timeline.state.resolvedWeekIds.includes(`week:${timeline.state.week}`);
+      const settlement = alreadySettled
+        ? { state: timeline.state, events: [] }
+        : resolveWeek(timeline.state, services.scenario, { advanceToNextWeek: false });
+      const conclusion: GameEvent = {
+        type: 'SESSION_CONCLUDED',
+        outcome: sessionReadiness(settlement.state).ready ? 'ready' : 'not-ready',
+      };
+      const complete = accept(settlement.state, {
+        ...settlement.state,
+        paused: true,
+        runStatus: 'complete',
+      }, [conclusion]);
+      const withRecord: TermState = {
+        ...complete.state,
+        sessionRecord: buildSessionRecord(complete.state, services.scenario),
+      };
+      return {
+        state: withRecord,
+        events: [...timeline.events, ...settlement.events, ...complete.events],
+      };
+    }
+
     case 'ADVANCE_WEEK': {
       if (state.mode === 'interaction-spike') {
         return rejectCommand(state, command.type, 'unsupported-command', 'Weekly review is available in Session mode.');
@@ -1998,7 +2050,7 @@ export function executeCommand(
       if (matches.length !== 1) {
         return rejectCommand(state, command.type, 'malformed-command', 'That amendment does not identify one exact pending offer.');
       }
-      return executeCommand(state, {
+      return executeCommandCore(state, {
         type: 'RESOLVE_DECISION',
         decisionId: matches[0].decision.id,
         choiceId: matches[0].choiceId,
@@ -2017,7 +2069,7 @@ export function executeCommand(
       if (matches.length !== 1) {
         return rejectCommand(state, command.type, 'malformed-command', 'That refusal does not identify one exact pending offer.');
       }
-      return executeCommand(state, {
+      return executeCommandCore(state, {
         type: 'RESOLVE_DECISION',
         decisionId: matches[0].decision.id,
         choiceId: matches[0].choiceId,
@@ -2035,4 +2087,58 @@ export function executeCommand(
         'That is not part of this build yet.',
       );
   }
+}
+
+const READINESS_MUTATIONS = new Set<GameCommand['type']>([
+  'DOCKET_PROVISION', 'RESOLVE_DECISION', 'RESOLVE_STORY', 'TICK', 'FAST_FORWARD',
+  'ADVANCE_WEEK', 'CONCLUDE_SESSION',
+]);
+
+/** Public command boundary, including the one-time readiness preparation receipt. */
+export function executeCommand(
+  state: TermState,
+  command: GameCommand,
+  services: EngineServices,
+): EngineResult {
+  const before = sessionReadiness(state);
+  const result = executeCommandCore(state, command, services);
+  if (
+    state.mode !== 'session'
+    || !READINESS_MUTATIONS.has(command.type)
+    || before.ready
+    || !sessionReadiness(result.state).ready
+    || result.state.rewardedOccurrenceIds.includes(SESSION_READINESS_MILESTONE_ID)
+    || result.events.some((event) => event.type === 'COMMAND_REJECTED')
+  ) return result;
+
+  const reward = applyResourceDelta(result.state.resources, { politicalCapital: 1 });
+  const resourceEvent: GameEvent | undefined = (reward.applied.politicalCapital ?? 0) !== 0
+    ? {
+        type: 'RESOURCE_CHANGED',
+        changes: reward.applied,
+        reason: SESSION_READINESS_MILESTONE_ID,
+      }
+    : undefined;
+  const milestoneEvent: GameEvent = {
+    type: 'READINESS_MILESTONE_REWARDED',
+    rewardId: SESSION_READINESS_MILESTONE_ID,
+    appliedCapital: reward.applied.politicalCapital ?? 0,
+  };
+  const rewardEvents = resourceEvent ? [milestoneEvent, resourceEvent] : [milestoneEvent];
+  let rewardedState: TermState = {
+    ...result.state,
+    resources: reward.resources,
+    rewardedOccurrenceIds: [...result.state.rewardedOccurrenceIds, SESSION_READINESS_MILESTONE_ID].sort(),
+    eventLog: [...result.state.eventLog, ...rewardEvents],
+  };
+  if (rewardedState.runStatus === 'complete') {
+    rewardedState = {
+      ...rewardedState,
+      sessionRecord: buildSessionRecord(rewardedState, services.scenario),
+    };
+  }
+  return {
+    state: rewardedState,
+    events: [...result.events, ...rewardEvents],
+  };
 }

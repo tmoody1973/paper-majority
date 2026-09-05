@@ -8,6 +8,7 @@ import {
 } from '@/persistence/playerProfile';
 import {
   loadCheckpoint,
+  SAVE_KEYS,
   saveCheckpoint,
   type LoadResult,
   type SaveStorage,
@@ -20,7 +21,11 @@ export interface GameSession {
   getPersistenceNotice(): string | undefined;
   dispatch(command: GameCommand): EngineResult;
   subscribe(listener: (result: EngineResult) => void): () => void;
+  probe(storage: SaveStorage): LoadResult;
+  resume(storage: SaveStorage): LoadResult;
   recover(storage: SaveStorage): LoadResult;
+  startNew(nextState: TermState, storage: SaveStorage): { kind: 'started' | 'storage-unavailable'; message: string };
+  getPreservedSaveBytes(): string | undefined;
   /**
    * Reduced motion is presentation, not a rule: it changes no outcome and draws no
    * randomness. It lives on the session so React and Phaser read one value.
@@ -44,6 +49,7 @@ export function createGameSession(
   let storage: SaveStorage | undefined;
   let profile = emptyPlayerProfile();
   let persistenceNotice: string | undefined;
+  let preservedSaveBytes: string | undefined;
 
   const publish = (result: EngineResult) => {
     for (const listener of [...listeners]) listener(result);
@@ -56,6 +62,7 @@ export function createGameSession(
       || event.type === 'STORY_DECISION_PRESENTED'
       || event.type === 'STORY_DECISION_RESOLVED'
       || event.type === 'PACK_OPENED'
+      || event.type === 'READINESS_MILESTONE_REWARDED'
       || event.type === 'PROVISION_DOCKETED'
       || event.type === 'WEEK_RESOLVED'
       || event.type === 'SESSION_CONCLUDED') return true;
@@ -63,6 +70,41 @@ export function createGameSession(
     const work = result.state.activeWork.find((candidate) => candidate.id === event.workId);
     return work !== undefined && Object.values(work.paidCost).some((amount) => (amount ?? 0) > 0);
   });
+
+  const loadProfile = (nextStorage: SaveStorage) => {
+    const loadedProfile = loadPlayerProfile(nextStorage);
+    if (loadedProfile.kind === 'loaded' || loadedProfile.kind === 'empty') {
+      profile = loadedProfile.profile;
+    } else if (!persistenceNotice) {
+      persistenceNotice = loadedProfile.message;
+    }
+    return loadedProfile;
+  };
+
+  const resume = (nextStorage: SaveStorage): LoadResult => {
+    storage = undefined;
+    const loaded = loadCheckpoint(nextStorage, scenario);
+    if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous' || loaded.kind === 'empty') {
+      storage = nextStorage;
+    }
+    if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous') state = loaded.state;
+    persistenceNotice = loaded.kind === 'recovered-previous'
+      || loaded.kind === 'storage-unavailable'
+      || loaded.kind === 'incompatible-version'
+      || loaded.kind === 'wrong-snapshot'
+      || loaded.kind === 'corrupt'
+      ? loaded.message
+      : undefined;
+    const loadedProfile = loadProfile(nextStorage);
+    const shouldPublish = loaded.kind !== 'empty'
+      || loadedProfile.kind === 'corrupt'
+      || loadedProfile.kind === 'storage-unavailable';
+    if (shouldPublish) {
+      if (loaded.kind !== 'loaded' && loaded.kind !== 'recovered-previous') state = { ...state };
+      publish({ state, events: [] });
+    }
+    return loaded;
+  };
 
   return {
     getState: () => state,
@@ -94,42 +136,51 @@ export function createGameSession(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    probe(nextStorage) {
+      const result = loadCheckpoint(nextStorage, scenario);
+      try {
+        preservedSaveBytes = nextStorage.getItem(SAVE_KEYS.current) ?? undefined;
+      } catch {
+        preservedSaveBytes = undefined;
+      }
+      return result;
+    },
+    resume,
     recover(nextStorage) {
-      // A failed probe must revoke any earlier writer binding. Otherwise a paid
-      // command could overwrite a checkpoint this session was unable to read.
+      return resume(nextStorage);
+    },
+    startNew(nextState, nextStorage) {
       storage = undefined;
-      const loaded = loadCheckpoint(nextStorage, scenario);
-      // An unknown or mismatched save stays untouched until the player explicitly
-      // resolves it in a future save-management flow.
-      if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous' || loaded.kind === 'empty') {
-        storage = nextStorage;
-      }
-      if (loaded.kind === 'loaded' || loaded.kind === 'recovered-previous') {
-        state = loaded.state;
-      }
-      persistenceNotice = loaded.kind === 'recovered-previous'
-        || loaded.kind === 'storage-unavailable'
-        || loaded.kind === 'incompatible-version'
-        || loaded.kind === 'wrong-snapshot'
-        || loaded.kind === 'corrupt'
-        ? loaded.message
-        : undefined;
-      const loadedProfile = loadPlayerProfile(nextStorage);
-      if (loadedProfile.kind === 'loaded' || loadedProfile.kind === 'empty') {
-        profile = loadedProfile.profile;
-      } else if (!persistenceNotice) {
-        persistenceNotice = loadedProfile.message;
-      }
-      // An empty first-run probe changes no canonical or presentational value.
-      // Avoid forcing Phaser to resync its card views during initial input setup.
-      const shouldPublish = loaded.kind !== 'empty'
-        || loadedProfile.kind === 'corrupt'
-        || loadedProfile.kind === 'storage-unavailable';
-      if (shouldPublish) {
-        if (loaded.kind !== 'loaded' && loaded.kind !== 'recovered-previous') state = { ...state };
+      state = nextState;
+      persistenceNotice = undefined;
+      loadProfile(nextStorage);
+      try {
+        const current = nextStorage.getItem(SAVE_KEYS.current);
+        if (current !== null) {
+          preservedSaveBytes = current;
+          nextStorage.setItem(SAVE_KEYS.replaced, current);
+        }
+      } catch (error) {
+        const detail = error instanceof Error && error.message ? ` (${error.message})` : '';
+        persistenceNotice = `The new Session is active, but the prior checkpoint could not be preserved${detail}. It was not overwritten; keep this tab open.`;
         publish({ state, events: [] });
+        return { kind: 'storage-unavailable', message: persistenceNotice };
       }
-      return loaded;
+      const saved = saveCheckpoint(nextStorage, state, scenario);
+      if (saved.kind === 'saved') {
+        storage = nextStorage;
+        persistenceNotice = preservedSaveBytes
+          ? 'New Session started. The prior checkpoint remains available for local export.'
+          : undefined;
+        publish({ state, events: [] });
+        return { kind: 'started', message: 'New Session started.' };
+      }
+      persistenceNotice = saved.message;
+      publish({ state, events: [] });
+      return { kind: 'storage-unavailable', message: saved.message };
+    },
+    getPreservedSaveBytes() {
+      return preservedSaveBytes;
     },
     setReducedMotion(value) {
       if (state.settings.reducedMotion === value) return;
