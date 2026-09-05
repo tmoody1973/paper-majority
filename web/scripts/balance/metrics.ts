@@ -1,11 +1,15 @@
 import type { GameCommand } from '@/domain/commands';
 import { executeCommand } from '@/domain/engine';
 import type { GameEvent } from '@/domain/events';
+import { buildMatchInputs, matchPattern } from '@/domain/recipes';
 import { createRun } from '@/domain/runSetup';
 import { sessionReadiness, type SessionReadiness } from '@/domain/objectives';
+import { effectiveWorkRule } from '@/domain/work';
 import type { GoverningValue, Party, Resources, RunSettings, ScenarioDefinition, TermState } from '@/domain/types';
 import { canonicalSha256 } from '@/persistence/canonicalHash';
 import { chooseCommand, type PolicyId } from '@/../scripts/balance/policies';
+
+export type BalanceCommandExecutor = typeof executeCommand;
 
 export const COMMAND_BOUND = 10_000;
 export const RESOURCE_KEYS = [
@@ -48,6 +52,7 @@ export interface BalanceRun {
   missedObligationIds: string[];
   acceptedChoices: string[];
   rejectedChoices: string[];
+  activatedTacticIds: string[];
   usedTacticIds: string[];
   idleSimulationMs: number;
   commandCount: number;
@@ -118,10 +123,70 @@ function sameResources(a: Resources, b: Resources): boolean {
   return RESOURCE_KEYS.every((key) => a[key] === b[key]);
 }
 
+/**
+ * Report a learned Tactic as used only when a completed reservation actually
+ * depended on its captured rule change. Merely unlocking a targeted rule does
+ * not count as use.
+ */
+export function completedTacticUseIds(
+  before: TermState,
+  events: readonly GameEvent[],
+  scenario: ScenarioDefinition,
+): string[] {
+  const tacticIds = new Set<string>();
+  for (const event of events) {
+    if (event.type !== 'PATTERN_COMPLETED') continue;
+    const work = before.activeWork.find((candidate) =>
+      candidate.kind === 'pattern' && candidate.id === event.workId);
+    if (!work || work.kind !== 'pattern') continue;
+    const authoredPattern = scenario.patterns.find((pattern) => pattern.id === work.patternId);
+    if (!authoredPattern) continue;
+    const basePattern = effectiveWorkRule(
+      authoredPattern,
+      [],
+      work.staffCardIds,
+      before,
+      scenario,
+    ).effectivePattern;
+    for (const expansionId of work.effectiveExpansionIds ?? []) {
+      const expansion = scenario.tacticExpansions.find((candidate) => candidate.id === expansionId);
+      if (!expansion) continue;
+      let used = false;
+      if (expansion.effect.kind === 'resource-cost') {
+        used = work.effectivePattern.resourceCost[expansion.effect.resource]
+          !== basePattern.resourceCost[expansion.effect.resource];
+      } else if (expansion.effect.kind === 'duration-multiplier') {
+        used = work.effectivePattern.durationMs !== basePattern.durationMs;
+      } else if (expansion.effect.kind === 'procedure-eligibility') {
+        used = before.bill.stage === expansion.effect.stage
+          && !(basePattern.eligibleStages ?? []).includes(expansion.effect.stage)
+          && (work.effectivePattern.eligibleStages ?? []).includes(expansion.effect.stage);
+      } else if (expansion.effect.kind === 'widen-slot') {
+        const cards = work.cardIds
+          .map((id) => before.cards.find((card) => card.id === id))
+          .filter((card): card is NonNullable<typeof card> => card !== undefined);
+        const baseMatch = cards.length === work.cardIds.length
+          ? matchPattern(
+              buildMatchInputs(cards, scenario, before.player.party),
+              [authoredPattern],
+              [],
+              scenario.tacticExpansions,
+              before.bill.stage,
+            )
+          : undefined;
+        used = !baseMatch;
+      }
+      if (used) tacticIds.add(expansion.tacticDefinitionId);
+    }
+  }
+  return [...tacticIds].sort();
+}
+
 export function runPolicy(
   policyId: PolicyId,
   setup: BalanceSetup,
   scenario: ScenarioDefinition,
+  commandExecutor: BalanceCommandExecutor = executeCommand,
 ): BalanceRun {
   let state = createRun({ ...setup, scenario, mode: 'session' });
   const initialResources = { ...state.resources };
@@ -130,6 +195,7 @@ export function runPolicy(
   let termination: BalanceRun['termination'] = 'command-bound-exhausted';
   let firstViolatedInvariant: string | undefined;
   let idleSimulationMs = 0;
+  const usedTacticIds = new Set<string>();
 
   for (let index = 0; index < COMMAND_BOUND; index += 1) {
     if (state.runStatus === 'complete') {
@@ -138,7 +204,8 @@ export function runPolicy(
     }
     const command = chooseCommand(policyId, state, scenario);
     const before = state;
-    const result = executeCommand(state, command, { scenario });
+    const result = commandExecutor(state, command, { scenario });
+    for (const tacticId of completedTacticUseIds(before, result.events, scenario)) usedTacticIds.add(tacticId);
     const rejection = result.events.find((event) => event.type === 'COMMAND_REJECTED');
     const accepted = !rejection;
     state = result.state;
@@ -175,7 +242,7 @@ export function runPolicy(
       break;
     }
   }
-  if (state.runStatus === 'complete') termination = 'complete';
+  if (!firstViolatedInvariant && state.runStatus === 'complete') termination = 'complete';
 
   const totals = resourceTotals(state.eventLog);
   const differences = resourceDifference(initialResources, state.resources);
@@ -205,7 +272,9 @@ export function runPolicy(
     missedObligationIds: state.obligations.filter((entry) => entry.status === 'missed').map((entry) => entry.id).sort(),
     acceptedChoices: choiceIds.filter((choiceId) => !rejected.includes(choiceId)),
     rejectedChoices: rejected,
-    usedTacticIds: state.eventLog.flatMap((event) => event.type === 'TACTIC_EXPANSION_ACTIVATED' ? [event.expansionId] : []),
+    activatedTacticIds: state.eventLog.flatMap((event) =>
+      event.type === 'TACTIC_EXPANSION_ACTIVATED' ? [event.tacticDefinitionId] : []),
+    usedTacticIds: [...usedTacticIds],
     idleSimulationMs,
     commandCount: trace.length,
     commandTraceHash: canonicalSha256(trace.map((entry) => entry.command)),

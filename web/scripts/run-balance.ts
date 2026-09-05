@@ -1,12 +1,19 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { getCandidateScenario } from '@/content/loadScenario';
 import { DEFAULT_RUN_SETTINGS } from '@/domain/initialState';
-import type { GoverningValue, Party, RunSettings } from '@/domain/types';
+import type { GoverningValue, Party, RunSettings, ScenarioDefinition } from '@/domain/types';
 import { scenarioSnapshotHash } from '@/persistence/sessionIdentity';
 import { POLICY_IDS, type PolicyId } from '@/../scripts/balance/policies';
-import { RESOURCE_KEYS, runPolicy, type BalanceRun, type BalanceSetup } from '@/../scripts/balance/metrics';
+import {
+  RESOURCE_KEYS,
+  runPolicy,
+  type BalanceCommandExecutor,
+  type BalanceRun,
+  type BalanceSetup,
+} from '@/../scripts/balance/metrics';
 
 const VALUE_PAIRS: readonly (readonly [GoverningValue, GoverningValue])[] = [
   ['Tenant Stability', 'Housing Supply'],
@@ -22,6 +29,13 @@ interface CliOptions {
   seeds: number;
   parties: readonly Party[];
   pace: RunSettings['pace'];
+}
+
+export interface BalanceCliDependencies {
+  scenario?: ScenarioDefinition;
+  outputDir?: string;
+  commandExecutor?: BalanceCommandExecutor;
+  log?: (message: string) => void;
 }
 
 type RunSummary = Omit<BalanceRun, 'commandTrace'>;
@@ -107,6 +121,7 @@ function aggregate(runs: readonly RunSummary[]) {
     commandFrequencies: frequencies(runs.flatMap((run) => Object.entries(run.commandTypeCounts)
       .flatMap(([type, count]) => Array.from({ length: count }, () => type)))),
     completedPatternFrequencies: frequencies(runs.flatMap((run) => run.completedPatternIds)),
+    activatedTacticFrequencies: frequencies(runs.flatMap((run) => run.activatedTacticIds)),
     tacticFrequencies: frequencies(runs.flatMap((run) => run.usedTacticIds)),
     fulfilledObligationFrequencies: frequencies(runs.flatMap((run) => run.fulfilledObligationIds)),
     missedObligationFrequencies: frequencies(runs.flatMap((run) => run.missedObligationIds)),
@@ -198,7 +213,7 @@ function markdownReport(report: {
     'committee-specialist': 'prioritizes Bill Momentum, counsel, and early committee preparation even when optional Story costs compete with coalition work',
     'coalition-broker': 'protects Political Capital for outreach, prefers same-party offices first, and studies bipartisan coordination',
     'greedy-same-party': 'prefers same-party offices, minimizes optional Story cost, completes visible mandatory work, and does not study a Tactic',
-    'district-reward': 'prioritizes visible obligation rewards, district staff, and negotiated cost sharing',
+    'district-reward': 'uses district-focused Story choices and staff order, meets visible deadlines, and studies negotiated cost sharing',
   };
   const lines = [
     '# Session balance report',
@@ -220,12 +235,13 @@ function markdownReport(report: {
       const row = report.byPolicy[id];
       const patterns = Object.entries(row.completedPatternFrequencies).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 6)
         .map(([pattern, count]) => `${pattern} ${count}`).join(', ');
-      const tactics = Object.entries(row.tacticFrequencies).map(([tactic, count]) => `${tactic} ${count}`).join(', ') || 'none';
+      const activatedTactics = Object.entries(row.activatedTacticFrequencies).map(([tactic, count]) => `${tactic} ${count}`).join(', ') || 'none';
+      const usedTactics = Object.entries(row.tacticFrequencies).map(([tactic, count]) => `${tactic} ${count}`).join(', ') || 'none observed';
       const choices = Object.entries(row.acceptedChoiceFrequencies).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 5)
         .map(([choice, count]) => `${choice} ${count}`).join(', ');
       const actions = ['SUBMIT_WORK', 'START_ASSIGNMENT', 'RESOLVE_DECISION', 'RESOLVE_STORY', 'FAST_FORWARD']
         .map((action) => `${action} ${row.commandFrequencies[action] ?? 0}`).join(', ');
-      return `- ${id}: ${descriptions[id]}; ${row.uniqueTraceHashes} unique command traces; actions ${actions}; tactics ${tactics}; leading choices ${choices || 'none'}; leading completed paths ${patterns || 'none'}.`;
+      return `- ${id}: ${descriptions[id]}; ${row.uniqueTraceHashes} unique command traces; actions ${actions}; learned Tactics ${activatedTactics}; Tactics applied to completed work ${usedTactics}; leading choices ${choices || 'none'}; leading completed paths ${patterns || 'none'}.`;
     }),
     '',
     '## Baseline dominance checks',
@@ -244,11 +260,15 @@ function markdownReport(report: {
   return lines.join('\n');
 }
 
-async function main(): Promise<void> {
-  const options = parseArgs(process.argv.slice(2));
-  const scenario = getCandidateScenario();
+export async function runBalanceCli(
+  argv: string[],
+  dependencies: BalanceCliDependencies = {},
+): Promise<number> {
+  const options = parseArgs(argv);
+  const scenario = dependencies.scenario ?? getCandidateScenario();
   const districtIds = scenario.districts.map((district) => district.id);
-  const outputDir = resolve(process.cwd(), 'reports/session-balance');
+  const outputDir = dependencies.outputDir ?? resolve(process.cwd(), 'reports/session-balance');
+  const log = dependencies.log ?? console.log;
   const startedAt = Date.now();
   const allRuns: RunSummary[] = [];
   const failures: Array<RunSummary & { commandTrace: BalanceRun['commandTrace'] }> = [];
@@ -259,7 +279,7 @@ async function main(): Promise<void> {
       const setup = balanceSetup(seed, party, options.pace, districtIds);
       manifestSetups.push({ setupId: `${seed}:${party}`, setup });
       for (const policyId of POLICY_IDS) {
-        const run = runPolicy(policyId, setup, scenario);
+        const run = runPolicy(policyId, setup, scenario, dependencies.commandExecutor);
         const { commandTrace, ...summary } = run;
         allRuns.push(summary);
         if (run.termination !== 'complete') failures.push({ ...summary, commandTrace });
@@ -325,13 +345,16 @@ async function main(): Promise<void> {
       failures,
     })),
   ]);
-  console.log(`Session balance: ${allRuns.length} runs in ${report.elapsedMs}ms; ${failures.length} harness failures.`);
+  log(`Session balance: ${allRuns.length} runs in ${report.elapsedMs}ms; ${failures.length} harness failures.`);
   for (const id of POLICY_IDS) {
     const row = byPolicy[id];
-    console.log(`${id}: ${row.ready}/${row.runs} ready, ${row.notReady}/${row.runs} not-ready, ${row.failures} failures.`);
+    log(`${id}: ${row.ready}/${row.runs} ready, ${row.notReady}/${row.runs} not-ready, ${row.failures} failures.`);
   }
-  console.log(`Reports: ${dirname(resolve(outputDir, 'report.md'))}`);
-  if (failures.length > 0) process.exitCode = 1;
+  log(`Reports: ${dirname(resolve(outputDir, 'report.md'))}`);
+  return failures.length > 0 ? 1 : 0;
 }
 
-void main();
+const entryPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : undefined;
+if (entryPath === import.meta.url) {
+  void runBalanceCli(process.argv.slice(2)).then((exitCode) => { process.exitCode = exitCode; });
+}

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-05T15:41:52.999Z",
-  "elapsedMs": 41725,
+  "generatedAt": "2026-09-05T16:06:48.781Z",
+  "elapsedMs": 42198,
   "scenario": {
     "snapshotId": "housing-session-2026-09-04-candidate",
     "snapshotHash": "ff90f497eaf2efc4c4e18877ff360f824f2ffe2391badbb44900d6301f0a13e4"
@@ -64,9 +64,10 @@
         "pattern-shared-interest-outreach": 4000,
         "pattern-summarize-evidence": 8000
       },
-      "tacticFrequencies": {
-        "expansion-targeted-data-briefing": 2000
+      "activatedTacticFrequencies": {
+        "tactic-targeted-data-briefing": 2000
       },
+      "tacticFrequencies": {},
       "fulfilledObligationFrequencies": {
         "obligation-renter-response:pack:week:2": 2000,
         "obligation-tribal-consultation:pack:week:5": 2000
@@ -137,9 +138,10 @@
         "pattern-shared-interest-outreach": 3976,
         "pattern-summarize-evidence": 8000
       },
-      "tacticFrequencies": {
-        "expansion-early-committee-consultation": 2000
+      "activatedTacticFrequencies": {
+        "tactic-early-committee-consultation": 2000
       },
+      "tacticFrequencies": {},
       "fulfilledObligationFrequencies": {
         "obligation-renter-response:pack:week:2": 2000,
         "obligation-tribal-consultation:pack:week:5": 2000
@@ -210,9 +212,10 @@
         "pattern-shared-interest-outreach": 4000,
         "pattern-summarize-evidence": 8000
       },
-      "tacticFrequencies": {
-        "expansion-bipartisan-working-group": 2000
+      "activatedTacticFrequencies": {
+        "tactic-bipartisan-working-group": 2000
       },
+      "tacticFrequencies": {},
       "fulfilledObligationFrequencies": {
         "obligation-renter-response:pack:week:2": 2000,
         "obligation-tribal-consultation:pack:week:5": 2000
@@ -281,6 +284,7 @@
         "pattern-shared-interest-outreach": 4000,
         "pattern-summarize-evidence": 8000
       },
+      "activatedTacticFrequencies": {},
       "tacticFrequencies": {},
       "fulfilledObligationFrequencies": {
         "obligation-renter-response:pack:week:2": 2000,
@@ -352,9 +356,10 @@
         "pattern-shared-interest-outreach": 4000,
         "pattern-summarize-evidence": 8000
       },
-      "tacticFrequencies": {
-        "expansion-negotiated-cost-sharing": 2000
+      "activatedTacticFrequencies": {
+        "tactic-negotiated-cost-sharing": 2000
       },
+      "tacticFrequencies": {},
       "fulfilledObligationFrequencies": {
         "obligation-renter-response:pack:week:2": 2000,
         "obligation-tribal-consultation:pack:week:5": 2000
@@ -428,9 +433,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -501,9 +507,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -574,9 +581,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -647,9 +655,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -720,9 +729,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -793,9 +803,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -866,9 +877,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 166
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -939,9 +951,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 166
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -1012,9 +1025,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 166
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -1085,9 +1099,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 166
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -1158,9 +1173,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1231,9 +1247,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-targeted-data-briefing": 167
+        "activatedTacticFrequencies": {
+          "tactic-targeted-data-briefing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1306,9 +1323,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1379,9 +1397,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1452,9 +1471,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1524,9 +1544,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1596,9 +1617,10 @@
           "pattern-shared-interest-outreach": 331,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1669,9 +1691,10 @@
           "pattern-shared-interest-outreach": 331,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -1742,9 +1765,10 @@
           "pattern-shared-interest-outreach": 330,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 166
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -1815,9 +1839,10 @@
           "pattern-shared-interest-outreach": 330,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 166
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -1888,9 +1913,10 @@
           "pattern-shared-interest-outreach": 331,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 166
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -1960,9 +1986,10 @@
           "pattern-shared-interest-outreach": 331,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 166
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -2032,9 +2059,10 @@
           "pattern-shared-interest-outreach": 330,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2105,9 +2133,10 @@
           "pattern-shared-interest-outreach": 330,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-early-committee-consultation": 167
+        "activatedTacticFrequencies": {
+          "tactic-early-committee-consultation": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2180,9 +2209,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2252,9 +2282,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2324,9 +2355,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2396,9 +2428,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2468,9 +2501,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2540,9 +2574,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2612,9 +2647,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 166
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -2684,9 +2720,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 166
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -2756,9 +2793,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 166
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -2828,9 +2866,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 166
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -2900,9 +2939,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -2972,9 +3012,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-bipartisan-working-group": 167
+        "activatedTacticFrequencies": {
+          "tactic-bipartisan-working-group": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -3045,6 +3086,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3115,6 +3157,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3185,6 +3228,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3254,6 +3298,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3323,6 +3368,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3393,6 +3439,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3463,6 +3510,7 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
@@ -3533,6 +3581,7 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
@@ -3603,6 +3652,7 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
@@ -3672,6 +3722,7 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
@@ -3741,6 +3792,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3811,6 +3863,7 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
+        "activatedTacticFrequencies": {},
         "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
@@ -3884,9 +3937,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -3957,9 +4011,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -4030,9 +4085,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -4103,9 +4159,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -4176,9 +4233,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -4249,9 +4307,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -4322,9 +4381,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 166
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -4395,9 +4455,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 166
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -4468,9 +4529,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 166
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -4541,9 +4603,10 @@
           "pattern-shared-interest-outreach": 332,
           "pattern-summarize-evidence": 664
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 166
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 166
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 166,
           "obligation-tribal-consultation:pack:week:5": 166
@@ -4614,9 +4677,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167
@@ -4687,9 +4751,10 @@
           "pattern-shared-interest-outreach": 334,
           "pattern-summarize-evidence": 668
         },
-        "tacticFrequencies": {
-          "expansion-negotiated-cost-sharing": 167
+        "activatedTacticFrequencies": {
+          "tactic-negotiated-cost-sharing": 167
         },
+        "tacticFrequencies": {},
         "fulfilledObligationFrequencies": {
           "obligation-renter-response:pack:week:2": 167,
           "obligation-tribal-consultation:pack:week:5": 167

@@ -4,13 +4,19 @@
 >
 > The automated balance manifest covers seeds 1–1000, both parties, five policies, standard pace, and the deterministic six-district/value rotation in `web/reports/session-balance/manifest.json`. All 10,000 runs completed with zero harness failures. Ready outcomes were district advocate 2,000/2,000, committee specialist 1,892/2,000, coalition broker 2,000/2,000, greedy same-party 2,000/2,000 and district reward 2,000/2,000. The committee policy's 108 completed `not-ready` endings remain in the denominator as outcomes. Illegal commands, stuck runs, invariant violations and the 10,000-command bound remain harness failures.
 >
-> The five scripts produce different staff, Story, office-order and Tactic priorities. Their action frequencies, completed paths and trace counts are in `web/reports/session-balance/report.md`; all policy runs use player-observable information only. Matched comparisons found neither greedy same-party nor district reward dominated all three intended approaches: their readiness results carried trust, momentum, morale or idle-time tradeoffs. This supports strategy distinction in the automated model without proving that humans notice, enjoy or intentionally choose those paths.
+> The five scripts produce different staff, Story, office-order and Tactic-learning priorities. Their action frequencies, completed paths and trace counts are in `web/reports/session-balance/report.md`; all policy runs use player-observable information only. Four policies learn distinct Tactics, but none applies its learned rule to a completed target job in this cohort; no Tactic use is inferred from unlock alone. Matched comparisons found neither greedy same-party nor district reward dominated all three intended approaches. District reward and district advocate had no paired disadvantage and equal readiness, so district reward did not win more setups; the other baseline comparisons exposed trust, momentum, morale or idle-time tradeoffs. The scripts have distinct choices and investments, while human-perceived variety and actual Tactic-route appeal remain unproven.
 >
 > Actual-control browser acceptance is `web/e2e/session-accessibility.spec.ts`: it closes the opening Story, moves a real canvas card by pointer, completes the documented ready strategy through keyboard controls, checks the ending with axe, copies/exports the frozen record, reloads exact saved bytes and Resumes the same record. Existing not-ready, accept/reject/counter, Work Mat, Docket, reduced-motion and legacy fixture tests remain separate.
 >
 > **Checkpoint 2 is not accepted.** The housing content is still candidate/human-review-pending. Human source/editorial review, the MOO-746 reviewed eight-card art pilot and eight consented participant sessions are pending. `docs/playtests/session-replay-results.md` remains `NOT RUN`; bot readiness does not establish fun or human replayability. No 24-week or 77-card work is authorized before explicit acceptance.
 
 The review build is currently verified as **Paper Majority — A Congressional Strategy Game** at [http://127.0.0.1:3100](http://127.0.0.1:3100) (local Next dev process PID 20039). If the process has ended, restart the same worktree with the command below and verify the title before review.
+
+## Current Session startup
+
+```bash
+npm --prefix /Users/tarikmoody/Projects/paper-majority/.worktrees/replayable-session/web run dev -- --hostname 127.0.0.1 --port 3100
+```
 
 ## Current Session commands
 
@@ -28,7 +34,7 @@ npm --prefix web run build
 
 Playwright owns `http://127.0.0.1:3100` for its suite. If a verified Paper Majority server is already running there, use `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`; never reuse ports 3000/3001 without checking the page title.
 
-> **Active implementation — 2026-09-04:** Tarik authorized the [replayable Session plan](superpowers/plans/2026-09-04-replayable-session.md). Work runs in `.worktrees/replayable-session` on `codex/replayable-session`, with progress tracked in that worktree's `.superpowers/sdd/2026-09-04-replayable-session/progress.md`. The historical Phase 1 report below remains evidence of that earlier build. Its old stop instruction does not override the new execution request; human replay, content and art acceptance remain pending.
+> **Replayable Session implementation — 2026-09-05:** Tarik authorized the [replayable Session plan](superpowers/plans/2026-09-04-replayable-session.md). The implementation is on `codex/replayable-session`; current automated evidence is in `web/reports/session-balance/` and the Session command block above. The historical Phase 1 report below remains evidence of that earlier build. Its old stop instruction does not override the completed six-week implementation; human replay, content and art acceptance remain pending.
 
 **Written:** 2026-08-26 · **HEAD:** `776b295` · **Branch:** `main`
 

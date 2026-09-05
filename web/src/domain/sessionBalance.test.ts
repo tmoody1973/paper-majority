@@ -1,3 +1,7 @@
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { getCandidateScenario } from '@/content/loadScenario';
@@ -6,9 +10,17 @@ import { DEFAULT_RUN_SETTINGS } from '@/domain/initialState';
 import { createRun } from '@/domain/runSetup';
 import type { GameCommand } from '@/domain/commands';
 import type { Resources, ScenarioDefinition, TermState } from '@/domain/types';
+import { previewWork } from '@/domain/work';
 import { loadCheckpoint, saveCheckpoint, type SaveStorage } from '@/persistence/saveRepository';
-import { chooseCommand, POLICY_IDS } from '@/../scripts/balance/policies';
-import { RESOURCE_KEYS, runPolicy, type BalanceSetup } from '@/../scripts/balance/metrics';
+import { chooseCommand, POLICY_IDS, type PolicyId } from '@/../scripts/balance/policies';
+import {
+  completedTacticUseIds,
+  RESOURCE_KEYS,
+  runPolicy,
+  type BalanceCommandExecutor,
+  type BalanceSetup,
+} from '@/../scripts/balance/metrics';
+import { runBalanceCli } from '@/../scripts/run-balance';
 
 const scenario = getCandidateScenario();
 
@@ -44,6 +56,53 @@ function cardId(state: TermState, definitionId: string, form: 'raw' | 'summary' 
   return card.id;
 }
 
+function resourceEventTotals(state: TermState): Resources {
+  const totals = Object.fromEntries(RESOURCE_KEYS.map((key) => [key, state.eventLog.reduce(
+    (sum, event) => sum + (event.type === 'RESOURCE_CHANGED' ? event.changes[key] ?? 0 : 0), 0,
+  )])) as unknown as Resources;
+  return totals;
+}
+
+function expectResourceAudit(state: TermState, initial: Resources): void {
+  const difference = Object.fromEntries(RESOURCE_KEYS.map((key) => [key, state.resources[key] - initial[key]]));
+  expect(resourceEventTotals(state)).toEqual(difference);
+}
+
+function drivePolicyUntil(
+  state: TermState,
+  predicate: (candidate: TermState) => boolean,
+  policyId: PolicyId = 'greedy-same-party',
+): TermState {
+  for (let index = 0; index < 100 && !predicate(state); index += 1) {
+    state = apply(state, chooseCommand(policyId, state, scenario));
+  }
+  expect(predicate(state)).toBe(true);
+  return state;
+}
+
+function outreachCardIds(state: TermState, officeDefinitionId: string): [string, string] {
+  return [cardId(state, 'staff-policy-aide'), cardId(state, officeDefinitionId)];
+}
+
+function patternCardIds(state: TermState, patternId: string): string[] | undefined {
+  const cards = state.cards.filter((card) => card.location === 'desk' && card.status === 'idle');
+  let match: string[] | undefined;
+  function visit(start: number, selected: string[]): void {
+    if (match) return;
+    if (selected.length >= 2) {
+      const preview = previewWork(state, scenario, selected);
+      if (preview.accepted && preview.patternId === patternId) {
+        match = selected;
+        return;
+      }
+    }
+    if (selected.length === 4) return;
+    for (let index = start; index < cards.length; index += 1) visit(index + 1, [...selected, cards[index].id]);
+  }
+  visit(0, []);
+  return match;
+}
+
 class MemoryStorage implements SaveStorage {
   values = new Map<string, string>();
   getItem(key: string) { return this.values.get(key) ?? null; }
@@ -72,6 +131,27 @@ describe('Session balance policies', () => {
     expect(run.commandCount).toBeLessThan(10_000);
   });
 
+  it('distinguishes a learned but unused Tactic from one applied to completed work', () => {
+    const learnedOnly = runPolicy('district-reward', setup(17), scenario);
+    expect(learnedOnly.activatedTacticIds).toContain('tactic-negotiated-cost-sharing');
+    expect(learnedOnly.usedTacticIds).toEqual([]);
+
+    let state = createRun({ ...setup(1), scenario, mode: 'session' });
+    const targetPatternId = 'pattern-tactic-costly-drafting';
+    state = drivePolicyUntil(state, (candidate) =>
+      candidate.unlockedSlotExpansions[targetPatternId]?.includes('expansion-negotiated-cost-sharing') === true
+        && patternCardIds(candidate, targetPatternId) !== undefined, 'district-reward');
+    const cards = patternCardIds(state, targetPatternId)!;
+    state = apply(state, { type: 'SUBMIT_WORK', cardIds: cards });
+    const completion = executeCommand(state, { type: 'FAST_FORWARD' }, { scenario });
+    expect(completion.events).toContainEqual(expect.objectContaining({
+      type: 'PATTERN_COMPLETED', patternId: targetPatternId,
+    }));
+    expect(completedTacticUseIds(state, completion.events, scenario)).toEqual([
+      'tactic-negotiated-cost-sharing',
+    ]);
+  });
+
   it.each(['relaxed', 'brisk'] as const)('keeps %s pace fast-forward inside every boundary', (pace) => {
     const run = runPolicy('district-advocate', setup(29, pace), scenario);
     expect(run.termination).toBe('complete');
@@ -79,12 +159,120 @@ describe('Session balance policies', () => {
     expect(run.resourceEventTotals).toEqual(run.finalMinusInitialResources);
   });
 
-  it('does not farm repeat outreach or reward receipts across bill revisions', () => {
-    const run = runPolicy('coalition-broker', setup(73), scenario);
-    expect(run.termination).toBe('complete');
-    expect(run.outreachOccurrenceIds.length).toBe(new Set(run.outreachOccurrenceIds).size);
-    expect(run.rewardedOccurrenceIds.length).toBe(new Set(run.rewardedOccurrenceIds).size);
-    expect(run.outreachOccurrenceIds.length).toBeLessThanOrEqual(4);
+  it('rejects repeated resolved outreach and keeps cross-revision rewards once-only and net costly', () => {
+    let state = createRun({ ...setup(1), scenario, mode: 'session' });
+    const initialResources = { ...state.resources };
+    const oldOccurrence = 'demand-renter-stability:revision:0';
+    state = drivePolicyUntil(state, (candidate) =>
+      candidate.rewardedOccurrenceIds.includes(oldOccurrence) && candidate.activeWork.length === 0);
+    expect(state.bill.revision).toBe(2);
+    expect(state.rewardedOccurrenceIds.filter((id) => id === oldOccurrence)).toHaveLength(1);
+
+    const beforeRepeatCapital = state.resources.politicalCapital;
+    state = apply(state, {
+      type: 'SUBMIT_WORK',
+      cardIds: outreachCardIds(state, 'coalition-office-maxine-waters'),
+    });
+    state = apply(state, { type: 'FAST_FORWARD' });
+    const pending = state.pendingDecisions.find((entry) => entry.status === 'pending')!;
+    expect(pending.occurrenceId).toBe('demand-renter-stability:revision:2');
+    state = apply(state, {
+      type: 'RESOLVE_DECISION',
+      decisionId: pending.id,
+      choiceId: 'choice-accept-renter-stability',
+      expectedBillRevision: pending.expectedBillRevision,
+    });
+    expect(state.resources.politicalCapital).toBe(beforeRepeatCapital - 1);
+    expect(state.rewardedOccurrenceIds.filter((id) => id === oldOccurrence)).toHaveLength(1);
+    expect(state.rewardedOccurrenceIds.filter((id) => id === pending.occurrenceId)).toHaveLength(1);
+
+    const beforeDuplicate = state;
+    const duplicate = executeCommand(state, {
+      type: 'SUBMIT_WORK',
+      cardIds: outreachCardIds(state, 'coalition-office-maxine-waters'),
+    }, { scenario });
+    expect(duplicate.events).toEqual([expect.objectContaining({ type: 'COMMAND_REJECTED', reason: 'duplicate-outreach' })]);
+    expect(duplicate.state).toBe(beforeDuplicate);
+    expect(duplicate.state.resources).toEqual(beforeDuplicate.resources);
+    expect(duplicate.state.simulationMs).toBe(beforeDuplicate.simulationMs);
+    expect(state.eventLog.filter((event) =>
+      event.type === 'RESOURCE_CHANGED' && event.reason === `promise-fulfilled:${oldOccurrence}`)).toHaveLength(1);
+    expectResourceAudit(state, initialResources);
+  });
+
+  it('rejects another attempt after an office has explicitly refused the current revision', () => {
+    let state = createRun({ ...setup(1), scenario, mode: 'session' });
+    const initialResources = { ...state.resources };
+    state = drivePolicyUntil(state, (candidate) =>
+      candidate.pendingDecisions.some((entry) => entry.status === 'pending'));
+    const pending = state.pendingDecisions.find((entry) => entry.status === 'pending')!;
+    const rejectChoiceId = pending.choiceIds.find((id) =>
+      scenario.decisionChoices.find((choice) => choice.id === id)?.action === 'reject')!;
+    state = apply(state, {
+      type: 'RESOLVE_DECISION',
+      decisionId: pending.id,
+      choiceId: rejectChoiceId,
+      expectedBillRevision: pending.expectedBillRevision,
+    });
+    expect(state.rewardedOccurrenceIds).not.toContain(pending.occurrenceId);
+
+    const beforeDuplicate = state;
+    const duplicate = executeCommand(state, {
+      type: 'SUBMIT_WORK',
+      cardIds: outreachCardIds(state, pending.officeDefinitionId),
+    }, { scenario });
+    expect(duplicate.events).toEqual([expect.objectContaining({ type: 'COMMAND_REJECTED', reason: 'duplicate-outreach' })]);
+    expect(duplicate.state).toBe(beforeDuplicate);
+    expect(duplicate.state.resources).toEqual(beforeDuplicate.resources);
+    expect(duplicate.state.simulationMs).toBe(beforeDuplicate.simulationMs);
+    expectResourceAudit(state, initialResources);
+  });
+
+  it('retains a terminal audit fault as a traced CLI failure', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'paper-majority-terminal-audit-'));
+    const terminalFault: BalanceCommandExecutor = (state, command, context) => {
+      const result = executeCommand(state, command, context);
+      if (result.state.runStatus !== 'complete') return result;
+      return {
+        ...result,
+        state: {
+          ...result.state,
+          resources: {
+            ...result.state.resources,
+            districtTrust: result.state.resources.districtTrust - 1,
+          },
+        },
+      };
+    };
+    try {
+      const exitCode = await runBalanceCli(
+        ['--mode', 'session', '--seeds', '1', '--parties', 'democratic', '--pace', 'standard'],
+        { scenario, outputDir, commandExecutor: terminalFault, log: () => undefined },
+      );
+      expect(exitCode).toBe(1);
+      const report = JSON.parse(await readFile(join(outputDir, 'results.json'), 'utf8')) as {
+        failures: Array<{
+          termination: string;
+          firstViolatedInvariant?: string;
+          commandTrace: Array<{ command: GameCommand }>;
+        }>;
+      };
+      expect(report.failures).toHaveLength(POLICY_IDS.length);
+      for (const failure of report.failures) {
+        expect(failure.termination).toBe('rejected');
+        expect(failure.firstViolatedInvariant).toMatch(/^resource audit mismatch for districtTrust:/);
+        expect(failure.commandTrace.at(-1)?.command.type).toBe('CONCLUDE_SESSION');
+      }
+      const traceIndex = JSON.parse(await readFile(join(outputDir, 'trace-index.json'), 'utf8')) as Array<{
+        termination: string;
+        firstViolatedInvariant?: string;
+      }>;
+      expect(traceIndex).toHaveLength(POLICY_IDS.length);
+      expect(traceIndex.every((entry) =>
+        entry.termination === 'rejected' && entry.firstViolatedInvariant?.includes('districtTrust'))).toBe(true);
+    } finally {
+      await rm(outputDir, { recursive: true, force: true });
+    }
   });
 
   it('rejects a stale coalition confirmation without charging or advancing time', () => {
