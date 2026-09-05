@@ -200,11 +200,22 @@ describe('Session work reservations', () => {
       id: 'card-tactic', definitionId: tacticDefinition.id, stackId: 'stack-card-tactic', x: 600, y: 300,
       remainingMs: 0, status: 'idle', form: 'raw', location: 'desk', sourceDefinitionIds: [],
     };
+    const secondAide: CardInstance = {
+      ...aide, id: 'card-second-aide', stackId: 'stack-card-second-aide', x: 720, y: 300,
+    };
+    const secondTactic: CardInstance = {
+      ...tactic, id: 'card-second-tactic', stackId: 'stack-card-second-tactic', x: 840, y: 300,
+    };
     const studyState = {
       ...opening(),
       paused: false,
-      cards: [...opening().cards, tactic],
-      stacks: [...opening().stacks, { id: tactic.stackId, cardIds: [tactic.id] }],
+      cards: [...opening().cards, tactic, secondAide, secondTactic],
+      stacks: [
+        ...opening().stacks,
+        { id: tactic.stackId, cardIds: [tactic.id] },
+        { id: secondAide.stackId, cardIds: [secondAide.id] },
+        { id: secondTactic.stackId, cardIds: [secondTactic.id] },
+      ],
     };
     const studyScenario = structuredClone(sessionScenario);
     studyScenario.tacticExpansions.push({
@@ -218,7 +229,41 @@ describe('Session work reservations', () => {
       expansionIds: ['expansion-bipartisan-outreach', 'expansion-second-rule'],
       staffCardIds: [aide.id],
     });
+    expect([...(studying.state.stacks.find((stack) => stack.id === tactic.stackId)?.cardIds ?? [])].sort()).toEqual(
+      [aide.id, tactic.id].sort(),
+    );
+    expect(studying.state.cards.find((entry) => entry.id === aide.id)?.stackId).toBe(tactic.stackId);
     expect(studying.state.cards.find((entry) => entry.id === aide.id)?.remainingMs).toBe(0);
+
+    const replenishedButFull = {
+      ...studying.state,
+      staffCapacity: 1,
+      resources: { ...studying.state.resources, staffAttention: 3 },
+    };
+    const capacityBlocked = executeCommand(replenishedButFull, {
+      type: 'START_ASSIGNMENT',
+      assignmentKind: 'study-tactic',
+      staffCardId: secondAide.id,
+      targetCardId: secondTactic.id,
+    }, { scenario: studyScenario });
+    expect(capacityBlocked.events).toContainEqual(expect.objectContaining({
+      type: 'COMMAND_REJECTED', reason: 'insufficient-resources',
+    }));
+    expect(capacityBlocked.state).toBe(replenishedButFull);
+
+    const cancelledStudy = executeCommand(studying.state, {
+      type: 'SEPARATE_STACK',
+      stackId: tactic.stackId,
+      cardId: aide.id,
+      x: aide.x - 100,
+      y: aide.y - 100,
+    }, { scenario: studyScenario });
+    expect(cancelledStudy.state.activeWork).toEqual([]);
+    expect(cancelledStudy.state.resources.staffAttention).toBe(studyState.resources.staffAttention);
+    expect(cancelledStudy.state.cards.find((entry) => entry.id === aide.id)?.stackId).not.toBe(tactic.stackId);
+    expect(cancelledStudy.state.cards.find((entry) => entry.id === tactic.id)?.status).toBe('idle');
+    expect(cancelledStudy.state.unlockedSlotExpansions['pattern-draft-policy']).toBeUndefined();
+
     studyScenario.tacticExpansions = [];
     let studied = studying.state;
     for (let second = 0; second < 20; second += 1) {

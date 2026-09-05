@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { GameShell } from '@/components/GameShell';
 import { createRun } from '@/domain/initialState';
+import type { CardInstance } from '@/domain/types';
 import { sessionScenario, sessionSetup } from '@/test/fixtures/session';
 
 export default function SessionWorkbenchPage() {
@@ -16,7 +17,24 @@ export default function SessionWorkbenchPage() {
     ...expansion,
     studyDurationMs: 1_200,
   }));
-  const initialState = createRun({ ...sessionSetup, scenario, mode: 'session' });
+  const baseState = createRun({ ...sessionSetup, scenario, mode: 'session' });
+  const tactic: CardInstance = {
+    id: 'card-workbench-tactic',
+    definitionId: 'tactic-bipartisan-working-group',
+    stackId: 'stack-workbench-tactic',
+    x: 920,
+    y: 610,
+    remainingMs: 0,
+    status: 'idle',
+    form: 'raw',
+    location: 'desk',
+    sourceDefinitionIds: [],
+  };
+  const initialState = {
+    ...baseState,
+    cards: [...baseState.cards, tactic],
+    stacks: [...baseState.stacks, { id: tactic.stackId, cardIds: [tactic.id] }],
+  };
 
   return <GameShell scenario={scenario} initialState={initialState} />;
 }

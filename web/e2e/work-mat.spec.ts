@@ -178,3 +178,42 @@ test('three-input Work Mat is usable by pointer while paused and keyboard while 
   expect(finished.resources.staffAttention).toBe(keyboardBefore);
   expect(browserErrors).toEqual([]);
 });
+
+test('Session study forms a real pile and dragging staff off cancels it', async ({ page }) => {
+  await page.goto('/workbench');
+  await page.waitForFunction(() => Boolean(window.__congressGameTestApi));
+  await page.waitForFunction(() => Boolean((window as unknown as Record<string, unknown>).__congressGameCamera));
+  await expect(page.locator('canvas')).toBeVisible({ timeout: 15_000 });
+
+  const aide = await idFor(page, 'staff-policy-aide');
+  const tactic = await idFor(page, 'tactic-bipartisan-working-group');
+  const canvas = await page.locator('canvas').boundingBox();
+  const target = await page.evaluate((id) => {
+    const camera = (window as unknown as {
+      __congressGameCamera: { getScreenPoint(cardId: string): { x: number; y: number } | undefined };
+    }).__congressGameCamera;
+    return camera.getScreenPoint(id);
+  }, tactic);
+  if (!canvas || !target) throw new Error('missing Session study drag target');
+
+  const before = (await state(page)).resources.staffAttention;
+  await dragDeskCard(page, aide, { x: canvas.x + target.x, y: canvas.y + target.y });
+  await expect.poll(async () => (await state(page)).activeWork[0]?.kind, { timeout: 10_000 }).toBe('study');
+  const studying = await state(page);
+  expect(studying.cards.find((card) => card.id === aide)?.stackId).toBe(
+    studying.cards.find((card) => card.id === tactic)?.stackId,
+  );
+  expect(studying.stacks.find((stack) => stack.cardIds.includes(tactic))?.cardIds).toEqual(
+    expect.arrayContaining([aide, tactic]),
+  );
+
+  await dragDeskCard(page, aide, { x: canvas.x + 32, y: canvas.y + 32 });
+  await expect.poll(async () => (await state(page)).activeWork.length, { timeout: 10_000 }).toBe(0);
+  const cancelled = await state(page);
+  expect(cancelled.resources.staffAttention).toBe(before);
+  expect(cancelled.cards.find((card) => card.id === aide)?.stackId).not.toBe(
+    cancelled.cards.find((card) => card.id === tactic)?.stackId,
+  );
+  expect(cancelled.cards.find((card) => card.id === aide)?.status).toBe('idle');
+  expect(cancelled.cards.find((card) => card.id === tactic)?.status).toBe('idle');
+});

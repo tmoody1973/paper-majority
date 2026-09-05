@@ -318,6 +318,13 @@ function startSessionStudy(
   const studyCost = Math.max(0, ...expansions.map((expansion) => expansion.studyCost));
   const durationMs = Math.max(1, ...expansions.map((expansion) => expansion.studyDurationMs));
   const cost: Partial<Resources> = { staffAttention: studyCost };
+  const heldAttention = state.activeWork.reduce(
+    (sum, work) => sum + (work.paidCost.staffAttention ?? 0),
+    0,
+  );
+  if (heldAttention + studyCost > state.staffCapacity) {
+    return rejectCommand(state, 'START_ASSIGNMENT', 'insufficient-resources', 'The office does not have enough staff capacity for that study.');
+  }
   if (!canAfford(state.resources, cost)) {
     return rejectCommand(state, 'START_ASSIGNMENT', 'insufficient-resources', 'No staffer is free to take that on right now.');
   }
@@ -359,8 +366,11 @@ function startSessionStudy(
       ...state,
       resources: charged.resources,
       cards: state.cards.map((card) =>
-        reservation.cardIds.includes(card.id) ? { ...card, status: 'working', remainingMs: 0 } : card,
+        reservation.cardIds.includes(card.id)
+          ? { ...card, stackId: tactic.stackId, status: 'working', remainingMs: 0 }
+          : card,
       ),
+      stacks: mergeIntoStack(state.stacks, staffCardId, tactic.stackId),
       activeWork: [...state.activeWork, reservation],
     },
     events,
